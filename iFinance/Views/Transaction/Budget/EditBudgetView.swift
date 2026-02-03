@@ -46,7 +46,7 @@ struct EditBudgetView: View {
         // 这里可以添加保存预算的逻辑
 
         // 如果你使用CoreData，可以在这里添加CoreData保存逻辑
-        print("预算已保存: ¥\(budget)")
+        print("预算已保存: ¥\(budget)。")
     }
 }
 
