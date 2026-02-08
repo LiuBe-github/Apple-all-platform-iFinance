@@ -17,51 +17,53 @@ struct BillsCardView: View {
     
     var body: some View {
         // 按日分组的账单列表
-        NavigationLink(
-            destination: EditBillView().toolbar(.hidden, for: .tabBar)
-        ) {
-            VStack {
-                ForEach(groupedBills, id: \.date) { group in
-                    // 日期标题和当日总支出
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text(formatDateForHeader(group.date))
-                                .font(.headline)
-                                .foregroundColor(.primary)
-                            
-                            Spacer()
-                            
-                            let totalAmount = calculateTotalAmount(for: group.bills)
-                            Text(totalAmount < 0 ? "支出：¥\(abs(totalAmount).formatted(.number.precision(.fractionLength(2))))" : "收入：¥\(totalAmount.formatted(.number.precision(.fractionLength(2))))")
-                                .font(.subheadline)
-                                .foregroundColor(totalAmount < 0 ? .red : .green)
-                        }
-                        .padding(.horizontal)
-                        .padding(.vertical, 4)
+        VStack {
+            ForEach(groupedBills, id: \.date) { group in
+                // 日期标题和当日总支出
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text(formatDateForHeader(group.date))
+                            .font(.headline)
+                            .foregroundColor(.primary)
                         
-                        // 分隔线
-                        Divider()
-                            .padding(.horizontal)
-                        // 当日账单列表
-                        LazyVStack(spacing: 0) {
-                            ForEach(group.bills.sorted { lhs, rhs in
-                                // 按时间降序排列（最新的在上面）
-                                (lhs.date ?? Date()) > (rhs.date ?? Date())
-                            }, id: \.self) { bill in
+                        Spacer()
+                        
+                        let totalAmount = calculateTotalAmount(for: group.bills)
+                        Text(totalAmount < 0 ? "支出：¥\(abs(totalAmount).formatted(.number.precision(.fractionLength(2))))" : "收入：¥\(totalAmount.formatted(.number.precision(.fractionLength(2))))")
+                            .font(.subheadline)
+                            .foregroundColor(totalAmount < 0 ? .red : .green)
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 4)
+                    
+                    // 分隔线
+                    Divider()
+                        .padding(.horizontal)
+                    
+                    // 当日账单列表
+                    LazyVStack(spacing: 0) {
+                        ForEach(group.bills.sorted { lhs, rhs in
+                            // 按时间降序排列（最新的在上面）
+                            (lhs.date ?? Date()) > (rhs.date ?? Date())
+                        }, id: \.self) { bill in
+                            NavigationLink(
+                                destination: EditBillView(bill: bill).toolbar(.hidden, for: .tabBar)
+                            ) {
                                 TransactionRowView(bill: bill)
                             }
                         }
                     }
                 }
-                .padding()
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(
-                    RoundedRectangle(cornerRadius: 24)
-                        .fill(.background)
-                        .shadow(radius: 3)
-                )
             }
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(.background)
+                    .shadow(radius: 3)
+            )
         }
+    
     }
     
     func getDateFormatter() -> DateFormatter {

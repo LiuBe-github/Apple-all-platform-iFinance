@@ -6,10 +6,12 @@
 //
 
 import SwiftUI
-internal import CoreData
 
 struct HeaderView: View {
     @State private var showingAddBillView = false
+    
+    // 从 UserDefaults 读取头像数据（自动监听变化）
+    @AppStorage("UserProfileAvatarData") private var avatarData: Data?
     
     var isTransactionView: Bool = false
     
@@ -32,16 +34,27 @@ struct HeaderView: View {
             NavigationLink {
                 ProfileView()
             } label: {
-                Image(systemName: "person.circle.fill")
-                    .font(.system(size: 30))
-                    .foregroundColor(.blue)
-                    .accessibilityLabel("编辑个人资料")
-                    .accessibilityAddTraits(.isButton)
+                Group {
+                    if let avatarData = avatarData,
+                       let uiImage = UIImage(data: avatarData) {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 45, height: 45)
+                            .clipShape(Circle())
+                    } else {
+                        Image(systemName: "person.circle.fill")
+                            .font(.system(size: 30))
+                    }
+                }
+                .foregroundColor(.blue)
+                .accessibilityLabel("编辑个人资料")
+                .accessibilityAddTraits(.isButton)
             }
             .padding()
         }
         .sheet(isPresented: $showingAddBillView) {
-            AddBillView() // 弹出的视图
+            AddBillView()
                 .presentationDragIndicator(.visible)
         }
         .frame(width: 400, height: 10)

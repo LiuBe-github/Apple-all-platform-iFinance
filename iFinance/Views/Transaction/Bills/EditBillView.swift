@@ -6,13 +6,199 @@
 //
 
 import SwiftUI
+internal import CoreData
 
 struct EditBillView: View {
+    @ObservedObject var bill: Bill
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.managedObjectContext) private var viewContext
+    
+    // 表单状态（绑定到 Core Data 属性）
+    @State private var amountString = ""
+    @State private var selectedType = "expenditure"
+    @State private var note = ""
+    @State private var category = ""
+    @State private var selectedDate = Date()
+    // MARK: - State for alert
+    @State private var showingAlert = false
+    @State private var showingDeleteConfirmation = false
+    
+    init(bill: Bill) {
+        self.bill = bill
+        
+        // 初始化表单状态
+        _amountString = State(initialValue: bill.amount?.stringValue ?? "")
+        _selectedType = State(initialValue: bill.type ?? "expenditure")
+        _note = State(initialValue: bill.note ?? "")
+        _category = State(initialValue: bill.category ?? "")
+        _selectedDate = State(initialValue: bill.date ?? Date())
+    }
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        NavigationStack {
+            Form {
+                Section("日期") {
+                    DatePicker(
+                        "选择日期",
+                        selection: $selectedDate,
+                        displayedComponents: .date
+                    )
+                }
+                
+                Section("金额") {
+                    TextField("输入金额", text: $amountString)
+                        .keyboardType(.decimalPad)
+                        .onSubmit {
+                            validateAmount()
+                        }
+                        .onChange(of: amountString) { _, newValue in
+                            // 可选：实时清理非法字符（只保留数字和小数点）
+                            let filtered = newValue.filter { "0123456789.".contains($0) }
+                            if filtered != newValue {
+                                amountString = filtered
+                            }
+                        }
+                }
+                .alert("金额无效", isPresented: $showingAlert) {
+                    Button("确定", role: .cancel) {}
+                } message: {
+                    Text("请输入大于 0 的有效金额。")
+                }
+                
+                Section("类型") {
+                    Picker("账单类型", selection: $selectedType) {
+                        Text("支出").tag("expenditure")
+                        Text("收入").tag("income")
+                    }
+                    .pickerStyle(SegmentedPickerStyle())
+                }
+                
+                Section("分类") {
+                    TextField("例如：餐饮、交通、工资", text: $category)
+                }
+                
+                Section("备注") {
+                    TextField("可选备注", text: $note)
+                }
+                
+                Section {
+                    Button("删除此账单") {
+                        showingDeleteConfirmation = true
+                    }
+                    .foregroundColor(.red)
+                    .frame(maxWidth: .infinity)
+                    .alert("删除账单", isPresented: $showingDeleteConfirmation) {
+                        Button("取消", role: .cancel) {}
+                        Button("删除", role: .destructive) {
+                            deleteBill()
+                        }
+                    } message: {
+                        Text("确定要删除这条账单吗？此操作无法撤销。")
+                    }
+                }
+                .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                
+            }
+            .navigationTitle("编辑账单")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("保存") {
+                        saveBill()
+                    }
+                    .disabled(!isValidInput)
+                    .alert("金额无效", isPresented: $showingAlert) {
+                        Button("确定", role: .cancel) {}
+                    } message: {
+                        Text("请输入大于 0 的有效金额。")
+                    }
+                }
+            }
+            .onAppear {
+                setupInitialValues()
+            }
+        }
+    }
+    
+    // 验证输入是否有效（至少金额要能转成数字）
+    private var isValidInput: Bool {
+        !amountString.isEmpty && Double(amountString) != nil
+    }
+    
+    private func setupInitialValues() {
+        amountString = bill.amount?.stringValue ?? ""
+        selectedType = bill.type ?? "expenditure"
+        note = bill.note ?? ""
+        category = bill.category ?? ""
+        selectedDate = bill.date ?? Date()
+    }
+    
+    private func saveBill() {
+        guard let amountDouble = Double(amountString), amountDouble > 0 else {
+            showingAlert = true
+            return
+        }
+        
+        // 更新 Core Data 对象
+        bill.amount = NSDecimalNumber(value: amountDouble)
+        bill.type = selectedType
+        bill.note = note
+        bill.category = category
+        bill.date = selectedDate
+        
+        // 保存上下文
+        do {
+            try viewContext.save()
+            dismiss()
+        } catch {
+            print("❌ 保存账单失败: \(error)")
+        }
+    }
+    
+    // 删除账单的函数
+    private func deleteBill() {
+        // 从 Core Data 上下文中删除对象
+        viewContext.delete(bill)
+        
+        do {
+            try viewContext.save()
+            print("✅ 账单删除成功")
+            dismiss() // 返回到上一个页面
+        } catch {
+            print("❌ 删除账单失败: \(error)")
+            // 可以在这里显示一个错误提示给用户
+            showingAlert = true
+        }
+    }
+    
+    
+    // MARK: - Validation
+    private func validateAmount() {
+        guard let amount = Double(amountString),
+              amount > 0 else {
+            showingAlert = true
+            return
+        }
+        // 如果需要，可以在这里做其他处理（比如自动保存）
     }
 }
 
+// MARK: - 预览支持
 #Preview {
-    EditBillView()
+    let context = PersistenceController.preview.container.viewContext
+    
+    // 创建预览用的账单
+    let previewBill = Bill(context: context)
+    previewBill.id = UUID()
+    previewBill.amount = NSDecimalNumber(string: "123.45")
+    previewBill.type = "expenditure"
+    previewBill.category = "餐饮"
+    previewBill.note = "午餐"
+    previewBill.date = Date()
+    
+    return NavigationStack {
+        EditBillView(bill: previewBill)
+    }
+    .environment(\.managedObjectContext, context)
 }

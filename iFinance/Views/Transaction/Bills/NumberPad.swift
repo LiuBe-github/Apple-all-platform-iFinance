@@ -15,6 +15,7 @@ struct NumberPad: View {
     @Binding var selectedDate: Date
     @State private var isEditingNote = false
     @State private var showDatePicker = false
+    
     let onSave: (() -> Void)?
     
     var body: some View {

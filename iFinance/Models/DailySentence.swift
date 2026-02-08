@@ -6,3 +6,9 @@
 //
 
 import Foundation
+
+struct DailySentence: Codable {
+    let content: String
+    let note: String
+    let picture2: String
+}

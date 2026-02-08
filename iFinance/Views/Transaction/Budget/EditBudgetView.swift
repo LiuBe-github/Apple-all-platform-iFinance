@@ -42,7 +42,7 @@ struct EditBudgetView: View {
         }
     }
     
-    private func saveBudget() {
+    private func saveBudget() { // MARK: 这个函数压根没用，考虑删掉
         // 这里可以添加保存预算的逻辑
 
         // 如果你使用CoreData，可以在这里添加CoreData保存逻辑

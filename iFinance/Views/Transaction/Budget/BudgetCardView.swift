@@ -17,7 +17,7 @@ struct BudgetCardView: View {
     ) private var bills: FetchedResults<Bill>
     
     // 示例数据（实际项目中应从 ViewModel 或 State 获取）
-    @State private var monthlyBudget: Double = 3000.0 // MARK: 此预算金额需要用CoreData做持久化
+    @AppStorage("monthly_budget_amount") private var monthlyBudget: Double = 3000.0 // MARK: 此预算金额需要用CoreData做持久化
     
     // 自动获取当前月份的所有支出账单
     @FetchRequest private var currentMonthBills: FetchedResults<Bill>
@@ -60,7 +60,7 @@ struct BudgetCardView: View {
     
     var body: some View {
         NavigationLink(
-            destination: EditBudgetView(budget: $monthlyBudget)
+            destination: BudgetView()
                 .toolbar(.hidden, for: .tabBar)
         ) {
             VStack(alignment: .leading, spacing: 9) {
@@ -68,12 +68,13 @@ struct BudgetCardView: View {
                 Text("MONTHLY BUDGET")
                     .font(.caption)
                     .fontWeight(.bold)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.white)
                 
                 // 预算总额
                 Text("¥\(monthlyBudget, specifier: "%.2f")")
                     .font(.largeTitle)
                     .fontWeight(.bold)
+                    .foregroundStyle(.white)
                 
                 // 进度信息
                 VStack(alignment: .leading, spacing: 4) {
@@ -82,14 +83,14 @@ struct BudgetCardView: View {
                     HStack {
                         Text("Spent ¥\(spentThisMonth, specifier: "%.2f")")
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.white)
                         
                         Spacer()
                         
                         Text("\(percentage, specifier: "%.2f")%")
                             .font(.subheadline)
                             .fontWeight(.medium)
-                            .foregroundStyle(percentage > 80 ? .red : .secondary)
+                            .foregroundStyle(percentage > 80 ? .red : .white)
                     }
                     
                     // 进度条
@@ -97,28 +98,38 @@ struct BudgetCardView: View {
                         ZStack(alignment: .leading) {
                             // 背景条
                             Capsule()
-                                .fill(Color.gray.opacity(0.2))
-                                .frame(height: 8)
+                                .fill(Color.white)
+                                .frame(height: 10)
                             
-                            // 填充条（现在可以用 percentage 了）
+                            // 填充条
                             Capsule()
-                                .fill(percentage > 80 ? Color.red : Color.blue)
+                                .fill(percentage > 80 ? Color.red : Color.green)
                                 .frame(
                                     width: geometry.size.width * CGFloat(min(1.0, spentThisMonth / monthlyBudget)),
-                                    height: 8
+                                    height: 10
                                 )
                         }
                     }
-                    .frame(height: 8)
+                    .frame(height: 10)
                 }
             }
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 24)
-                    .fill(.background)
-                    .shadow(radius: 3)
+                    .fill(
+                        LinearGradient(
+                            gradient: Gradient(colors: [
+                                Color.orange,
+                                Color.purple,
+                                Color.blue
+                            ]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
             )
+            .shadow(radius: 3)
         }
         .buttonStyle(PlainButtonStyle()) // 去除按钮默认样式，保持视觉一致
     }

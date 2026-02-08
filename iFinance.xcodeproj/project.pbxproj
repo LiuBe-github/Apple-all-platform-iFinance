@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		9A494E7C2F35F15000252FE8 /* Nuke in Frameworks */ = {isa = PBXBuildFile; productRef = 9A494E7B2F35F15000252FE8 /* Nuke */; };
+		9A494E7E2F35F15000252FE8 /* NukeExtensions in Frameworks */ = {isa = PBXBuildFile; productRef = 9A494E7D2F35F15000252FE8 /* NukeExtensions */; };
+		9A494E802F35F15000252FE8 /* NukeUI in Frameworks */ = {isa = PBXBuildFile; productRef = 9A494E7F2F35F15000252FE8 /* NukeUI */; };
 		9A8B0C6B2F0EA15A003ECE8B /* WatchiFinance Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 9A8B0C4B2F0EA158003ECE8B /* WatchiFinance Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -154,6 +157,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9A494E802F35F15000252FE8 /* NukeUI in Frameworks */,
+				9A494E7C2F35F15000252FE8 /* Nuke in Frameworks */,
+				9A494E7E2F35F15000252FE8 /* NukeExtensions in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -270,6 +276,9 @@
 			);
 			name = iFinance;
 			packageProductDependencies = (
+				9A494E7B2F35F15000252FE8 /* Nuke */,
+				9A494E7D2F35F15000252FE8 /* NukeExtensions */,
+				9A494E7F2F35F15000252FE8 /* NukeUI */,
 			);
 			productName = iFinance;
 			productReference = 9A8B0C152F0EA0EE003ECE8B /* iFinance.app */;
@@ -511,6 +520,9 @@
 			);
 			mainGroup = 9A8B0C0C2F0EA0EE003ECE8B;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				9A494E7A2F35F15000252FE8 /* XCRemoteSwiftPackageReference "Nuke" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 9A8B0C162F0EA0EE003ECE8B /* Products */;
 			projectDirPath = "";
@@ -1385,6 +1397,35 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		9A494E7A2F35F15000252FE8 /* XCRemoteSwiftPackageReference "Nuke" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kean/Nuke";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.8.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		9A494E7B2F35F15000252FE8 /* Nuke */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9A494E7A2F35F15000252FE8 /* XCRemoteSwiftPackageReference "Nuke" */;
+			productName = Nuke;
+		};
+		9A494E7D2F35F15000252FE8 /* NukeExtensions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9A494E7A2F35F15000252FE8 /* XCRemoteSwiftPackageReference "Nuke" */;
+			productName = NukeExtensions;
+		};
+		9A494E7F2F35F15000252FE8 /* NukeUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9A494E7A2F35F15000252FE8 /* XCRemoteSwiftPackageReference "Nuke" */;
+			productName = NukeUI;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 9A8B0C0D2F0EA0EE003ECE8B /* Project object */;
 }
