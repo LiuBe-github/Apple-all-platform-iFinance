@@ -1,0 +1,503 @@
+
+[
+    {
+        "content": "价格是你付出的，价值是你得到的。",
+        "note": "—— 沃伦·巴菲特",
+        "picture2": "https://picsum.photos/id/1/360/480"
+    },
+    {
+        "content": "风险来自于你不知道自己在做什么。",
+        "note": "—— 沃伦·巴菲特",
+        "picture2": "https://picsum.photos/id/2/360/480"
+    },
+    {
+        "content": "通货膨胀是隐形的税收。",
+        "note": "—— 米尔顿·弗里德曼",
+        "picture2": "https://picsum.photos/id/3/360/480"
+    },
+    {
+        "content": "市场可以保持非理性的时间，比你能保持偿付能力的时间更长。",
+        "note": "—— 约翰·梅纳德·凯恩斯",
+        "picture2": "https://picsum.photos/id/4/360/480"
+    },
+    {
+        "content": "不要把所有鸡蛋放在一个篮子里。",
+        "note": "—— 投资谚语",
+        "picture2": "https://picsum.photos/id/5/360/480"
+    },
+    {
+        "content": "时间是优秀企业的朋友，平庸企业的敌人。",
+        "note": "—— 沃伦·巴菲特",
+        "picture2": "https://picsum.photos/id/6/360/480"
+    },
+    {
+        "content": "复利是世界第八大奇迹。",
+        "note": "—— 阿尔伯特·爱因斯坦（常被引用）",
+        "picture2": "https://picsum.photos/id/7/360/480"
+    },
+    {
+        "content": "现金是氧气，99%的时间你不会注意到它，但当它消失时，那就是你唯一想到的东西。",
+        "note": "—— 沃伦·巴菲特",
+        "picture2": "https://picsum.photos/id/8/360/480"
+    },
+    {
+        "content": "预测未来的最好方式就是创造它。",
+        "note": "—— 彼得·德鲁克",
+        "picture2": "https://picsum.photos/id/9/360/480"
+    },
+    {
+        "content": "利润不是目的，而是生存的必要条件。",
+        "note": "—— 彼得·德鲁克",
+        "picture2": "https://picsum.photos/id/10/360/480"
+    },
+    {
+        "content": "长期来看，股市是称重机；短期来看，它是投票机。",
+        "note": "—— 本杰明·格雷厄姆",
+        "picture2": "https://picsum.photos/id/11/360/480"
+    },
+    {
+        "content": "别人贪婪时我恐惧，别人恐惧时我贪婪。",
+        "note": "—— 沃伦·巴菲特",
+        "picture2": "https://picsum.photos/id/12/360/480"
+    },
+    {
+        "content": "第一条规则：永远不要亏钱。第二条规则：永远不要忘记第一条。",
+        "note": "—— 沃伦·巴菲特",
+        "picture2": "https://picsum.photos/id/13/360/480"
+    },
+    {
+        "content": "如果你不愿意持有一只股票十年，那就不要持有它十分钟。",
+        "note": "—— 沃伦·巴菲特",
+        "picture2": "https://picsum.photos/id/14/360/480"
+    },
+    {
+        "content": "投资的第一条原则是不要赔钱，第二条原则是记住第一条。",
+        "note": "—— 沃伦·巴菲特",
+        "picture2": "https://picsum.photos/id/15/360/480"
+    },
+    {
+        "content": "只有当潮水退去，你才知道谁在裸泳。",
+        "note": "—— 沃伦·巴菲特",
+        "picture2": "https://picsum.photos/id/16/360/480"
+    },
+    {
+        "content": "分散投资是对无知的保护。如果你知道自己在做什么，就不需要分散太多。",
+        "note": "—— 沃伦·巴菲特",
+        "picture2": "https://picsum.photos/id/17/360/480"
+    },
+    {
+        "content": "价格波动不是风险，本金永久性损失才是真正的风险。",
+        "note": "—— 塞斯·卡拉曼",
+        "picture2": "https://picsum.photos/id/18/360/480"
+    },
+    {
+        "content": "在别人看不清方向时，看清方向；在别人不敢行动时，果断行动。",
+        "note": "—— 霍华德·马克斯",
+        "picture2": "https://picsum.photos/id/19/360/480"
+    },
+    {
+        "content": "牛市赚钱，熊市保本，震荡市练功。",
+        "note": "—— 投资智慧",
+        "picture2": "https://picsum.photos/id/20/360/480"
+    },
+    {
+        "content": "资产配置是投资中唯一免费的午餐。",
+        "note": "—— 哈里·马科维茨",
+        "picture2": "https://picsum.photos/id/21/360/480"
+    },
+    {
+        "content": "历史不会重复，但会押韵。",
+        "note": "—— 马克·吐温（常用于金融周期）",
+        "picture2": "https://picsum.photos/id/22/360/480"
+    },
+    {
+        "content": "流动性危机时，现金为王。",
+        "note": "—— 金融常识",
+        "picture2": "https://picsum.photos/id/23/360/480"
+    },
+    {
+        "content": "低买高卖听起来简单，但最难的是判断什么是‘低’和‘高’。",
+        "note": "—— 投资箴言",
+        "picture2": "https://picsum.photos/id/24/360/480"
+    },
+    {
+        "content": "成功的投资=深入研究+耐心等待+果断行动。",
+        "note": "—— 价值投资理念",
+        "picture2": "https://picsum.photos/id/25/360/480"
+    },
+    {
+        "content": "不要试图预测市场，而要准备应对市场。",
+        "note": "—— 霍华德·马克斯",
+        "picture2": "https://picsum.photos/id/26/360/480"
+    },
+    {
+        "content": "最危险的四个字是：‘这次不同’。",
+        "note": "—— 杰里米·格兰瑟姆",
+        "picture2": "https://picsum.photos/id/27/360/480"
+    },
+    {
+        "content": "投资是一场马拉松，不是百米冲刺。",
+        "note": "—— 长期主义",
+        "picture2": "https://picsum.photos/id/28/360/480"
+    },
+    {
+        "content": "不懂不做，不熟不投。",
+        "note": "—— 巴菲特原则",
+        "picture2": "https://picsum.photos/id/29/360/480"
+    },
+    {
+        "content": "安全边际是投资的核心。",
+        "note": "—— 本杰明·格雷厄姆",
+        "picture2": "https://picsum.photos/id/30/360/480"
+    },
+    {
+        "content": "市场总是在绝望中见底，在犹豫中上涨，在疯狂中见顶。",
+        "note": "—— 市场周期理论",
+        "picture2": "https://picsum.photos/id/31/360/480"
+    },
+    {
+        "content": "财富是对认知的补偿，而不是对勤奋的奖励。",
+        "note": "—— 查理·芒格",
+        "picture2": "https://picsum.photos/id/32/360/480"
+    },
+    {
+        "content": "反过来想，总是反过来想。",
+        "note": "—— 查理·芒格",
+        "picture2": "https://picsum.photos/id/33/360/480"
+    },
+    {
+        "content": "宏观是我们必须接受的，微观才是我们可以作为的。",
+        "note": "—— 凯恩斯",
+        "picture2": "https://picsum.photos/id/34/360/480"
+    },
+    {
+        "content": "货币是经济的血液。",
+        "note": "—— 经济学原理",
+        "picture2": "https://picsum.photos/id/35/360/480"
+    },
+    {
+        "content": "供给创造自己的需求。",
+        "note": "—— 萨伊定律",
+        "picture2": "https://picsum.photos/id/36/360/480"
+    },
+    {
+        "content": "看不见的手引导市场走向均衡。",
+        "note": "—— 亚当·斯密",
+        "picture2": "https://picsum.photos/id/37/360/480"
+    },
+    {
+        "content": "机会成本是你为选择所放弃的最佳替代方案。",
+        "note": "—— 经济学基础",
+        "picture2": "https://picsum.photos/id/38/360/480"
+    },
+    {
+        "content": "沉没成本不应影响未来决策。",
+        "note": "—— 理性决策原则",
+        "picture2": "https://picsum.photos/id/39/360/480"
+    },
+    {
+        "content": "边际效用递减是消费的基本规律。",
+        "note": "—— 微观经济学",
+        "picture2": "https://picsum.photos/id/40/360/480"
+    },
+    {
+        "content": "比较优势决定贸易模式。",
+        "note": "—— 大卫·李嘉图",
+        "picture2": "https://picsum.photos/id/41/360/480"
+    },
+    {
+        "content": "外部性需要政府干预来纠正。",
+        "note": "—— 庇古",
+        "picture2": "https://picsum.photos/id/42/360/480"
+    },
+    {
+        "content": "信息不对称导致市场失灵。",
+        "note": "—— 乔治·阿克洛夫",
+        "picture2": "https://picsum.photos/id/43/360/480"
+    },
+    {
+        "content": "激励决定行为。",
+        "note": "—— 经济学第一课",
+        "picture2": "https://picsum.photos/id/44/360/480"
+    },
+    {
+        "content": "交易让双方都变得更好。",
+        "note": "—— 自愿交换原理",
+        "picture2": "https://picsum.photos/id/45/360/480"
+    },
+    {
+        "content": "稀缺性是经济学的起点。",
+        "note": "—— 资源有限，欲望无限",
+        "picture2": "https://picsum.photos/id/46/360/480"
+    },
+    {
+        "content": "产权清晰是市场有效运行的前提。",
+        "note": "—— 科斯定理",
+        "picture2": "https://picsum.photos/id/47/360/480"
+    },
+    {
+        "content": "理性预期改变政策效果。",
+        "note": "—— 罗伯特·卢卡斯",
+        "picture2": "https://picsum.photos/id/48/360/480"
+    },
+    {
+        "content": "滞胀打破了菲利普斯曲线的幻想。",
+        "note": "—— 1970年代经济现实",
+        "picture2": "https://picsum.photos/id/49/360/480"
+    },
+    {
+        "content": "量化宽松是央行的非常规武器。",
+        "note": "—— 后金融危机时代",
+        "picture2": "https://picsum.photos/id/50/360/480"
+    },
+    {
+        "content": "比特币是数字黄金，还是泡沫？",
+        "note": "—— 加密货币争议",
+        "picture2": "https://picsum.photos/id/51/360/480"
+    },
+    {
+        "content": "ESG投资正在重塑资本流向。",
+        "note": "—— 可持续金融趋势",
+        "picture2": "https://picsum.photos/id/52/360/480"
+    },
+    {
+        "content": "零利率时代，如何保值增值？",
+        "note": "—— 当代投资者挑战",
+        "picture2": "https://picsum.photos/id/53/360/480"
+    },
+    {
+        "content": "房地产是周期之母。",
+        "note": "—— 任泽平",
+        "picture2": "https://picsum.photos/id/54/360/480"
+    },
+    {
+        "content": "人口结构决定长期经济走势。",
+        "note": "—— 宏观基本面",
+        "picture2": "https://picsum.photos/id/55/360/480"
+    },
+    {
+        "content": "技术进步是经济增长的终极源泉。",
+        "note": "—— 罗伯特·索洛",
+        "picture2": "https://picsum.photos/id/56/360/480"
+    },
+    {
+        "content": "创新是创造性破坏的过程。",
+        "note": "—— 约瑟夫·熊彼特",
+        "picture2": "https://picsum.photos/id/57/360/480"
+    },
+    {
+        "content": "全球化带来效率，也带来脆弱性。",
+        "note": "—— 供应链反思",
+        "picture2": "https://picsum.photos/id/58/360/480"
+    },
+    {
+        "content": "数字经济正在重构价值链条。",
+        "note": "—— 平台经济时代",
+        "picture2": "https://picsum.photos/id/59/360/480"
+    },
+    {
+        "content": "数据是新时代的石油。",
+        "note": "—— 数字经济比喻",
+        "picture2": "https://picsum.photos/id/60/360/480"
+    },
+    {
+        "content": "算法正在成为新的资本形式。",
+        "note": "—— AI与金融",
+        "picture2": "https://picsum.photos/id/61/360/480"
+    },
+    {
+        "content": "负利率是对储蓄者的惩罚。",
+        "note": "—— 货币政策副作用",
+        "picture2": "https://picsum.photos/id/62/360/480"
+    },
+    {
+        "content": "M2增长过快可能引发通胀预期。",
+        "note": "—— 货币数量论",
+        "picture2": "https://picsum.photos/id/63/360/480"
+    },
+    {
+        "content": "财政赤字货币化需谨慎对待。",
+        "note": "—— 现代货币理论争议",
+        "picture2": "https://picsum.photos/id/64/360/480"
+    },
+    {
+        "content": "人民币国际化是长期战略。",
+        "note": "—— 金融开放",
+        "picture2": "https://picsum.photos/id/65/360/480"
+    },
+    {
+        "content": "北向资金是A股风向标之一。",
+        "note": "—— 外资动向",
+        "picture2": "https://picsum.photos/id/66/360/480"
+    },
+    {
+        "content": "注册制改革提升市场效率。",
+        "note": "—— 资本市场改革",
+        "picture2": "https://picsum.photos/id/67/360/480"
+    },
+    {
+        "content": "科创板支持硬科技企业发展。",
+        "note": "—— 中国资本市场创新",
+        "picture2": "https://picsum.photos/id/68/360/480"
+    },
+    {
+        "content": "REITs让普通人参与不动产投资。",
+        "note": "—— 金融产品创新",
+        "picture2": "https://picsum.photos/id/69/360/480"
+    },
+    {
+        "content": "养老第三支柱需要个人主动规划。",
+        "note": "—— 养老金体系",
+        "picture2": "https://picsum.photos/id/70/360/480"
+    },
+    {
+        "content": "保险是风险管理的基础工具。",
+        "note": "—— 金融保障",
+        "picture2": "https://picsum.photos/id/71/360/480"
+    },
+    {
+        "content": "信用是金融的基石。",
+        "note": "—— 金融本质",
+        "picture2": "https://picsum.photos/id/72/360/480"
+    },
+    {
+        "content": "杠杆能放大收益，也能加速毁灭。",
+        "note": "—— 金融双刃剑",
+        "picture2": "https://picsum.photos/id/73/360/480"
+    },
+    {
+        "content": "黑天鹅事件提醒我们保持敬畏。",
+        "note": "—— 纳西姆·塔勒布",
+        "picture2": "https://picsum.photos/id/74/360/480"
+    },
+    {
+        "content": "反脆弱性比韧性更重要。",
+        "note": "—— 纳西姆·塔勒布",
+        "picture2": "https://picsum.photos/id/75/360/480"
+    },
+    {
+        "content": "尾部风险常被低估。",
+        "note": "—— 风险管理",
+        "picture2": "https://picsum.photos/id/76/360/480"
+    },
+    {
+        "content": "夏普比率衡量风险调整后收益。",
+        "note": "—— 投资绩效指标",
+        "picture2": "https://picsum.photos/id/77/360/480"
+    },
+    {
+        "content": "最大回撤反映投资者心理承受力。",
+        "note": "—— 风险指标",
+        "picture2": "https://picsum.photos/id/78/360/480"
+    },
+    {
+        "content": "贝塔衡量系统性风险，阿尔法代表超额收益。",
+        "note": "—— CAPM模型",
+        "picture2": "https://picsum.photos/id/79/360/480"
+    },
+    {
+        "content": "有效市场假说仍有争议。",
+        "note": "—— 尤金·法玛 vs 行为金融",
+        "picture2": "https://picsum.photos/id/80/360/480"
+    },
+    {
+        "content": "行为偏差导致非理性决策。",
+        "note": "—— 丹尼尔·卡尼曼",
+        "picture2": "https://picsum.photos/id/81/360/480"
+    },
+    {
+        "content": "损失厌恶使人们过度保守。",
+        "note": "—— 前景理论",
+        "picture2": "https://picsum.photos/id/82/360/480"
+    },
+    {
+        "content": "锚定效应影响估值判断。",
+        "note": "—— 认知偏差",
+        "picture2": "https://picsum.photos/id/83/360/480"
+    },
+    {
+        "content": "羊群效应加剧市场波动。",
+        "note": "—— 群体心理",
+        "picture2": "https://picsum.photos/id/84/360/480"
+    },
+    {
+        "content": "过度自信是投资者最大敌人。",
+        "note": "—— 行为金融",
+        "picture2": "https://picsum.photos/id/85/360/480"
+    },
+    {
+        "content": "情绪指标可作为逆向参考。",
+        "note": "—— 市场情绪分析",
+        "picture2": "https://picsum.photos/id/86/360/480"
+    },
+    {
+        "content": "技术分析是概率游戏，不是水晶球。",
+        "note": "—— 技术派反思",
+        "picture2": "https://picsum.photos/id/87/360/480"
+    },
+    {
+        "content": "基本面分析关注企业内在价值。",
+        "note": "—— 价值投资核心",
+        "picture2": "https://picsum.photos/id/88/360/480"
+    },
+    {
+        "content": "护城河决定企业长期竞争力。",
+        "note": "—— 沃伦·巴菲特",
+        "picture2": "https://picsum.photos/id/89/360/480"
+    },
+    {
+        "content": "自由现金流是企业健康的血液。",
+        "note": "—— 财务分析重点",
+        "picture2": "https://picsum.photos/id/90/360/480"
+    },
+    {
+        "content": "ROE是衡量股东回报的关键指标。",
+        "note": "—— 杜邦分析",
+        "picture2": "https://picsum.photos/id/91/360/480"
+    },
+    {
+        "content": "PEG比率结合成长与估值。",
+        "note": "—— 彼得·林奇",
+        "picture2": "https://picsum.photos/id/92/360/480"
+    },
+    {
+        "content": "市盈率不是越低越好，要看增长质量。",
+        "note": "—— 估值艺术",
+        "picture2": "https://picsum.photos/id/93/360/480"
+    },
+    {
+        "content": "市净率适用于重资产行业。",
+        "note": "—— 估值方法选择",
+        "picture2": "https://picsum.photos/id/94/360/480"
+    },
+    {
+        "content": "DCF模型依赖假设，需谨慎使用。",
+        "note": "—— 估值难点",
+        "picture2": "https://picsum.photos/id/95/360/480"
+    },
+    {
+        "content": "可比公司法需注意业务差异。",
+        "note": "—— 相对估值",
+        "picture2": "https://picsum.photos/id/96/360/480"
+    },
+    {
+        "content": "并购溢价常隐藏商誉风险。",
+        "note": "—— 财务报表分析",
+        "picture2": "https://picsum.photos/id/97/360/480"
+    },
+    {
+        "content": "商誉减值会冲击利润表。",
+        "note": "—— 会计准则影响",
+        "picture2": "https://picsum.photos/id/98/360/480"
+    },
+    {
+        "content": "研发费用化还是资本化影响利润。",
+        "note": "—— 会计政策选择",
+        "picture2": "https://picsum.photos/id/99/360/480"
+    },
+    {
+        "content": "经济护城河比财务护城河更持久。",
+        "note": "—— 竞争优势本质",
+        "picture2": "https://picsum.photos/id/100/360/480"
+    }
+]
