@@ -65,3 +65,4 @@ enum ExpenditureCategory: String, CaseIterable, TransactionCategory {
         }
     }
 }
+	

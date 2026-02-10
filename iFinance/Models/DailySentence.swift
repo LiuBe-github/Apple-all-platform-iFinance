@@ -7,7 +7,8 @@
 
 import Foundation
 
-struct DailySentence: Codable {
+struct DailySentence: Codable, Identifiable {
+    let id = UUID()
     let content: String
     let note: String
     let picture2: String
