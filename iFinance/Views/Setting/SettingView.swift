@@ -10,38 +10,43 @@ import SwiftUI
 struct SettingView: View {
     @AppStorage("selectedTheme") private var selectedTheme: ThemeMode = .system
     
+    // 动态读取版本号，避免硬编码
+    private var appVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "未知"
+    }
+    
     var body: some View {
         NavigationStack {
             Form {
                 Section("关于你") {
                     NavigationLink(destination: ProfileView()) {
-                        Text("个人设置")
+                        Label("个人设置", systemImage: "person.circle")
                     }
                 }
                 
                 Section("iCloud") {
                     NavigationLink(destination: iCloudSyncView()) {
-                        Text("iCloud云同步设置")
+                        Label("iCloud 云同步设置", systemImage: "icloud")
                     }
                 }
                 
                 Section("账单导入导出") {
-                    List {
-                        NavigationLink(destination: ProfileView()) {
-                            Text("账单导入")
-                        }
-                        NavigationLink(destination: ProfileView()) {
-                            Text("账单导出")
-                        }
+                    // ✅ 去掉多余的 List 嵌套
+                    NavigationLink("账单导入") {
+                        Text("账单导入，功能开发中...")
+                    }
+                    NavigationLink("账单导出") {
+                        Text("账单导出，功能开发中...")
                     }
                 }
+                
                 Section("外观") {
                     Picker("主题模式", selection: $selectedTheme) {
                         Text("浅色").tag(ThemeMode.light)
                         Text("深色").tag(ThemeMode.dark)
                         Text("跟随系统").tag(ThemeMode.system)
                     }
-                    .pickerStyle(MenuPickerStyle())
+                    .pickerStyle(.menu)
                 }
                 
                 Section("通用") {
@@ -51,7 +56,13 @@ struct SettingView: View {
                 Section("关于") {
                     NavigationLink("帮助与反馈") { Text("功能开发中") }
                     NavigationLink("关于我们") { Text("功能开发中") }
-                    NavigationLink("版本信息") { Text("v1.0.0") }
+                    // ✅ 动态版本号
+                    HStack {
+                        Text("版本信息")
+                        Spacer()
+                        Text("v\(appVersion)")
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
             .navigationTitle("设置")
