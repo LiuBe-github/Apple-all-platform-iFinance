@@ -16,6 +16,11 @@ struct BudgetView: View {
     @FetchRequest private var currentMonthExpenditures: FetchedResults<Bill>
     @AppStorage("monthly_budget_amount") private var monthlyBudget: Double = 3000.0
     
+    // 修改预算相关状态
+    @State private var isEditingBudget = false
+    @State private var budgetInput = ""
+    @FocusState private var isBudgetFieldFocused: Bool
+    
     init() {
         let calendar = Calendar.current
         let today = Date()
@@ -98,6 +103,20 @@ struct BudgetView: View {
         .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
         .navigationTitle("预算")
         .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    budgetInput = String(format: "%.0f", monthlyBudget)
+                    isEditingBudget = true
+                } label: {
+                    Image(systemName: "slider.horizontal.3")
+                        .font(.system(size: 16, weight: .medium))
+                }
+            }
+        }
+        .sheet(isPresented: $isEditingBudget) {
+            budgetEditSheet
+        }
     }
     
     // MARK: - 顶部 Summary
@@ -273,6 +292,149 @@ struct BudgetView: View {
         f.maximumFractionDigits  = value >= 10_000 ? 0 : 2
         f.minimumFractionDigits  = value >= 10_000 ? 0 : 2
         return f.string(from: NSNumber(value: value)) ?? "¥\(value)"
+    }
+    
+    // MARK: - 预算编辑 Sheet
+    private var budgetEditSheet: some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+                // 当前预算显示
+                VStack(spacing: 8) {
+                    Text("当前月度预算")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Text(formatAmount(monthlyBudget))
+                        .font(.system(size: 48, weight: .bold, design: .rounded))
+                        .foregroundStyle(.primary)
+                }
+                .padding(.top, 32)
+                .padding(.bottom, 40)
+                
+                // 输入区域
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("新的预算金额")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.secondary)
+                    
+                    HStack(spacing: 8) {
+                        Text("¥")
+                            .font(.system(size: 24, weight: .medium))
+                            .foregroundStyle(.secondary)
+                        
+                        TextField("", text: $budgetInput)
+                            .font(.system(size: 32, weight: .semibold, design: .rounded))
+                            .keyboardType(.decimalPad)
+                            .focused($isBudgetFieldFocused)
+                            .multilineTextAlignment(.leading)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 16)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(Color(UIColor.secondarySystemGroupedBackground))
+                    )
+                    
+                    // 快捷金额按钮
+                    VStack(spacing: 10) {
+                        Text("快捷设置")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        LazyVGrid(columns: [
+                            GridItem(.flexible()),
+                            GridItem(.flexible()),
+                            GridItem(.flexible())
+                        ], spacing: 10) {
+                            quickAmountButton(1000)
+                            quickAmountButton(3000)
+                            quickAmountButton(5000)
+                            quickAmountButton(8000)
+                            quickAmountButton(10000)
+                            quickAmountButton(15000)
+                        }
+                    }
+                    .padding(.top, 12)
+                }
+                .padding(.horizontal, 20)
+                
+                Spacer()
+                
+                // 保存按钮
+                Button {
+                    saveBudget()
+                } label: {
+                    Text("保存")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 52)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(isValidInput ? Color.blue : Color.gray.opacity(0.3))
+                        )
+                }
+                .disabled(!isValidInput)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 20)
+            }
+            .background(Color(UIColor.systemGroupedBackground))
+            .navigationTitle("调整预算")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("取消") {
+                        isEditingBudget = false
+                    }
+                }
+            }
+            .onAppear {
+                isBudgetFieldFocused = true
+            }
+        }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+    }
+    
+    // 快捷金额按钮
+    private func quickAmountButton(_ amount: Double) -> some View {
+        Button {
+            budgetInput = String(format: "%.0f", amount)
+        } label: {
+            Text(formatAmount(amount))
+                .font(.system(size: 14, weight: .medium, design: .rounded))
+                .foregroundStyle(.primary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Color(UIColor.tertiarySystemGroupedBackground))
+                )
+        }
+    }
+    
+    // 验证输入是否有效
+    private var isValidInput: Bool {
+        guard let value = Double(budgetInput), value > 0, value <= 1_000_000 else {
+            return false
+        }
+        return true
+    }
+    
+    // 保存预算
+    private func saveBudget() {
+        guard let newValue = Double(budgetInput), newValue > 0 else { return }
+        
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+            monthlyBudget = newValue
+        }
+        
+        // 触觉反馈
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.success)
+        
+        isEditingBudget = false
     }
 }
 

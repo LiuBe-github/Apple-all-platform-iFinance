@@ -8,7 +8,7 @@
 import Foundation
 
 struct DailySentence: Codable, Identifiable {
-    let id = UUID()
+    var id = UUID()
     let content: String
     let note: String
     let picture2: String
