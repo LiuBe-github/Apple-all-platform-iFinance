@@ -26,7 +26,7 @@ struct BudgetView: View {
         let today = Date()
         guard
             let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: today)),
-            let endOfMonth   = calendar.date(byAdding: .month, value: 1, to: startOfMonth)
+            let endOfMonth = calendar.date(byAdding: .month, value: 1, to: startOfMonth)
         else {
             let req: NSFetchRequest<Bill> = Bill.fetchRequest()
             req.sortDescriptors = [NSSortDescriptor(keyPath: \Bill.date, ascending: false)]
@@ -47,15 +47,21 @@ struct BudgetView: View {
         currentMonthExpenditures.reduce(0) { $0 + ($1.amount?.doubleValue ?? 0) }
     }
     
-    private var remaining: Double { max(monthlyBudget - totalExpenditure, 0) }
-    private var progress: Double  { monthlyBudget > 0 ? min(totalExpenditure / monthlyBudget, 1) : 0 }
-    private var isOver: Bool      { totalExpenditure > monthlyBudget }
+    private var remaining: Double {
+        max(monthlyBudget - totalExpenditure, 0)
+    }
+    private var progress: Double {
+        monthlyBudget > 0 ? min(totalExpenditure / monthlyBudget, 1) : 0
+    }
+    private var isOver: Bool {
+        totalExpenditure > monthlyBudget
+    }
     
     private var accentColor: Color {
         switch progress {
-        case ..<0.6:  return Color(red: 0.18, green: 0.78, blue: 0.44)  // 绿
-        case ..<0.85: return Color(red: 1.0,  green: 0.62, blue: 0.0)   // 橙
-        default:      return Color(red: 1.0,  green: 0.27, blue: 0.23)  // 红
+        case ..<0.6: return Color(red: 0.18, green: 0.78, blue: 0.44)  // 绿
+        case ..<0.85: return Color(red: 1.0, green: 0.62, blue: 0.0)   // 橙
+        default: return Color(red: 1.0, green: 0.27, blue: 0.23)  // 红
         }
     }
     
@@ -75,7 +81,7 @@ struct BudgetView: View {
     
     private var monthLabel: String {
         let f = DateFormatter()
-        f.locale    = Locale(identifier: "zh_CN")
+        f.locale = Locale(identifier: "zh_CN")
         f.dateFormat = "yyyy年M月"
         return f.string(from: Date())
     }
@@ -286,11 +292,11 @@ struct BudgetView: View {
     // MARK: 金额格式化
     private func formatAmount(_ value: Double) -> String {
         let f = NumberFormatter()
-        f.numberStyle            = .currency
-        f.currencySymbol         = "¥"
-        f.locale                 = Locale(identifier: "zh_CN")
-        f.maximumFractionDigits  = value >= 10_000 ? 0 : 2
-        f.minimumFractionDigits  = value >= 10_000 ? 0 : 2
+        f.numberStyle = .currency
+        f.currencySymbol = "¥"
+        f.locale = Locale(identifier: "zh_CN")
+        f.maximumFractionDigits = value >= 10_000 ? 0 : 2
+        f.minimumFractionDigits = value >= 10_000 ? 0 : 2
         return f.string(from: NSNumber(value: value)) ?? "¥\(value)"
     }
     
@@ -469,9 +475,9 @@ struct CategoryRowView: View {
     
     private func formatAmount(_ v: Double) -> String {
         let f = NumberFormatter()
-        f.numberStyle           = .currency
-        f.currencySymbol        = "¥"
-        f.locale                = Locale(identifier: "zh_CN")
+        f.numberStyle = .currency
+        f.currencySymbol = "¥"
+        f.locale = Locale(identifier: "zh_CN")
         f.maximumFractionDigits = v >= 10_000 ? 0 : 2
         f.minimumFractionDigits = v >= 10_000 ? 0 : 2
         return f.string(from: NSNumber(value: v)) ?? "¥\(v)"

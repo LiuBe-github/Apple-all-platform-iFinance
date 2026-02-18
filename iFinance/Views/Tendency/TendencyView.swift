@@ -12,16 +12,22 @@ internal import CoreData
 // MARK: - DateFormatter 复用
 private extension DateFormatter {
     static let yearMonth: DateFormatter = {
-        let f = DateFormatter(); f.locale = Locale(identifier: "zh_CN")
-        f.dateFormat = "yyyy年MM月"; return f
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "zh_CN")
+        f.dateFormat = "yyyy年MM月"
+        return f
     }()
     static let month: DateFormatter = {
-        let f = DateFormatter(); f.locale = Locale(identifier: "zh_CN")
-        f.dateFormat = "M月"; return f
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "zh_CN")
+        f.dateFormat = "M月"
+        return f
     }()
     static let fullDate: DateFormatter = {
-        let f = DateFormatter(); f.locale = Locale(identifier: "zh_CN")
-        f.dateFormat = "yyyy年M月d日"; return f
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "zh_CN")
+        f.dateFormat = "yyyy年M月d日"
+        return f
     }()
 }
 
@@ -73,8 +79,12 @@ private struct SwipeChartContainer<ChartContent: View>: View {
                 .padding(.horizontal, 4)
                 .allowsHitTesting(false)
             }
-            .onAppear { pageWidth = w }
-            .onChange(of: geo.size.width) { _, newWidth in pageWidth = newWidth }
+            .onAppear {
+                pageWidth = w
+            }
+            .onChange(of: geo.size.width) {
+                _, newWidth in pageWidth = newWidth
+            }
             .contentShape(Rectangle())
             .gesture(
                 DragGesture(minimumDistance: 12)
@@ -95,7 +105,7 @@ private struct SwipeChartContainer<ChartContent: View>: View {
                     }
                     .onEnded { value in
                         // 最终 snap
-                        let x     = value.predictedEndTranslation.width
+                        let x = value.predictedEndTranslation.width
                         let delta = Int((-x / pageWidth).rounded())
                         let final = (baseOffset + delta).clamped(to: maxOffset...0)
                         onOffsetChange(final)
@@ -111,22 +121,26 @@ private struct SwipeChartContainer<ChartContent: View>: View {
 
 // MARK: - Comparable clamped helper
 private extension Comparable {
-    func clamped(to range: PartialRangeThrough<Self>) -> Self { min(self, range.upperBound) }
-    func clamped(to range: ClosedRange<Self>) -> Self { max(range.lowerBound, min(self, range.upperBound)) }
+    func clamped(to range: PartialRangeThrough<Self>) -> Self {
+        min(self, range.upperBound)
+    }
+    func clamped(to range: ClosedRange<Self>) -> Self {
+        max(range.lowerBound, min(self, range.upperBound))
+    }
 }
 
 // MARK: - 主视图
 struct TendencyView: View {
     @Environment(\.managedObjectContext) private var viewContext
     
-    @State private var selectedIncomeTimeRange  = "6个月"
+    @State private var selectedIncomeTimeRange = "6个月"
     @State private var selectedExpenseTimeRange = "周"
     
     // 页偏移：0 = 当前页，负数 = 过去的页
-    @State private var incomeOffset  = 0
+    @State private var incomeOffset = 0
     @State private var expenseOffset = 0
     
-    @State private var heatmapDates:  [Date]    = TendencyView.buildHeatmapDates()
+    @State private var heatmapDates:  [Date] = TendencyView.buildHeatmapDates()
     @State private var datesWithBill: Set<Date> = []
     
     let timeRanges = ["日", "周", "月", "6个月", "年"]
@@ -142,7 +156,7 @@ struct TendencyView: View {
     }
     
     private static func buildHeatmapDates() -> [Date] {
-        let cal   = Calendar.current
+        let cal = Calendar.current
         let today = Date().startOfDay
         let start = cal.date(byAdding: .day, value: -364, to: today)!
         return (0...364).compactMap { cal.date(byAdding: .day, value: $0, to: start)?.startOfDay }
@@ -150,21 +164,21 @@ struct TendencyView: View {
     
     // MARK: - 锚点日期（当前页末尾）
     private func anchorDate(range: String, offset: Int) -> Date {
-        let cal   = Calendar.current
+        let cal = Calendar.current
         let today = cal.startOfDay(for: Date())
         switch range {
-        case "日":    return cal.date(byAdding: .day,   value: offset,     to: today)!
-        case "周":    return cal.date(byAdding: .day,   value: offset * 7, to: today)!
-        case "月":    return cal.date(byAdding: .month, value: offset,     to: today)!
+        case "日": return cal.date(byAdding: .day, value: offset, to: today)!
+        case "周": return cal.date(byAdding: .day, value: offset * 7, to: today)!
+        case "月": return cal.date(byAdding: .month, value: offset, to: today)!
         case "6个月": return cal.date(byAdding: .month, value: offset * 6, to: today)!
-        case "年":    return cal.date(byAdding: .year,  value: offset,     to: today)!
-        default:      return today
+        case "年": return cal.date(byAdding: .year, value: offset, to: today)!
+        default: return today
         }
     }
     
     // MARK: - 日期范围文字
     private func dateRangeText(range: String, offset: Int) -> String {
-        let cal    = Calendar.current
+        let cal = Calendar.current
         let anchor = anchorDate(range: range, offset: offset)
         
         switch range {
@@ -180,7 +194,7 @@ struct TendencyView: View {
             return rangeString(from: start, to: anchor)
             
         case "6个月":
-            let endMonth   = cal.date(from: cal.dateComponents([.year, .month], from: anchor))!
+            let endMonth = cal.date(from: cal.dateComponents([.year, .month], from: anchor))!
             let startMonth = cal.date(byAdding: .month, value: -5, to: endMonth)!
             return "\(DateFormatter.yearMonth.string(from: startMonth))至\(DateFormatter.yearMonth.string(from: endMonth))"
             
@@ -193,8 +207,8 @@ struct TendencyView: View {
     
     private func rangeString(from start: Date, to end: Date) -> String {
         let cal = Calendar.current
-        let sc  = cal.dateComponents([.year, .month, .day], from: start)
-        let ec  = cal.dateComponents([.year, .month, .day], from: end)
+        let sc = cal.dateComponents([.year, .month, .day], from: start)
+        let ec = cal.dateComponents([.year, .month, .day], from: end)
         if sc.year == ec.year && sc.month == ec.month {
             return "\(ec.year!)年\(ec.month!)月\(sc.day!)日至\(ec.day!)日"
         }
@@ -208,10 +222,14 @@ struct TendencyView: View {
                 // 支出趋势
                 Section(header: Text("支出趋势").font(.headline)) {
                     Picker("", selection: $selectedExpenseTimeRange) {
-                        ForEach(timeRanges, id: \.self) { Text($0).tag($0) }
+                        ForEach(timeRanges, id: \.self) {
+                            Text($0).tag($0)
+                        }
                     }
                     .pickerStyle(.segmented)
-                    .onChange(of: selectedExpenseTimeRange) { expenseOffset = 0 }
+                    .onChange(of: selectedExpenseTimeRange) {
+                        expenseOffset = 0
+                    }
                     
                     averageView(data: expenseData, color: .red)
                     
@@ -300,7 +318,7 @@ struct TendencyView: View {
     ) -> some View {
         let chartH: CGFloat = 180
         let axisH:  CGFloat = 32
-        let total           = chartH + axisH
+        let total = chartH + axisH
         
         if data.isEmpty {
             Text(emptyText)
@@ -311,7 +329,9 @@ struct TendencyView: View {
             SwipeChartContainer(
                 offset: offset.wrappedValue,
                 maxOffset: maxHistoryPages,
-                onOffsetChange: { offset.wrappedValue = $0 }
+                onOffsetChange: {
+                    offset.wrappedValue = $0
+                }
             ) {
                 chartInner(data: data, color: color, range: range,
                            chartHeight: chartH, axisLabelHeight: axisH)
@@ -408,21 +428,34 @@ struct TendencyView: View {
     
     // MARK: - 格式化
     private func formatY(_ v: Double) -> String {
-        if v >= 10_000 { let w = v/10_000; return w == w.rounded() ? "\(Int(w))万" : String(format:"%.1f万",w) }
-        if v >= 1_000  { let q = v/1_000;  return q == q.rounded() ? "\(Int(q))千" : String(format:"%.1f千",q) }
+        if v >= 10_000 {
+            let w = v/10_000
+            return w == w.rounded() ? "\(Int(w))万" : String(format:"%.1f万",w)
+        }
+        if v >= 1_000  {
+            let q = v/1_000
+            return q == q.rounded() ? "\(Int(q))千" : String(format:"%.1f千",q)
+        }
         if v == 0 { return "0" }
         return v.truncatingRemainder(dividingBy:1) == 0 ? "\(Int(v))" : String(format:"%.1f",v)
     }
     
     private func formatAvg(_ v: Double) -> String {
-        if v >= 10_000 { let w = v/10_000; return w.truncatingRemainder(dividingBy:1)==0 ? "\(Int(w))万" : String(format:"%.2f万",w) }
+        if v >= 10_000 {
+            let w = v/10_000
+            return w.truncatingRemainder(dividingBy:1)==0 ? "\(Int(w))万" : String(format:"%.2f万",w)
+        }
         return v.truncatingRemainder(dividingBy:1)==0 ? "\(Int(v))" : String(format:"%.2f",v)
     }
     
     private func barCount(for range: String) -> Int {
         switch range {
-        case "日":return 4; case "周":return 7; case "月":return 30
-        case "6个月":return 6; case "年":return 12; default:return 6
+        case "日":return 4
+        case "周":return 7
+        case "月":return 30
+        case "6个月":return 6
+        case "年":return 12
+        default:return 6
         }
     }
     
@@ -460,19 +493,26 @@ struct TendencyView: View {
             NSPredicate(format: "date >= %@", twoYearsAgo as NSDate)
         ])
         request.sortDescriptors = [NSSortDescriptor(key: "date", ascending: true)]
-        do { return groupByPeriod(try viewContext.fetch(request), range: range, offset: offset) }
-        catch { print("❌ \(error)"); return [] }
+        do {
+            return groupByPeriod(try viewContext.fetch(request), range: range, offset: offset)
+        } catch {
+            print("❌ \(error)")
+            return []
+        }
     }
     
     // MARK: - 聚合
     private func groupByPeriod(_ bills: [Bill], range: String, offset: Int) -> [ChartDataPoint] {
         guard !bills.isEmpty else { return [] }
-        let cal    = Calendar.current
+        let cal = Calendar.current
         let anchor = anchorDate(range: range, offset: offset)
         
         func total(_ b: [Bill]) -> Double { b.reduce(0) { $0 + ($1.amount?.doubleValue ?? 0) } }
         func billsIn(start: Date, end: Date) -> [Bill] {
-            bills.filter { guard let d = $0.date else { return false }; return d >= start && d < end }
+            bills.filter {
+                guard let d = $0.date else { return false }
+                return d >= start && d < end
+            }
         }
         
         switch range {
@@ -486,8 +526,8 @@ struct TendencyView: View {
             }
             
         case "周":
-            let weekStart       = cal.date(byAdding: .day, value: -6, to: anchor)!
-            let weekdays        = ["周日","周一","周二","周三","周四","周五","周六"]
+            let weekStart = cal.date(byAdding: .day, value: -6, to: anchor)!
+            let weekdays = ["周日","周一","周二","周三","周四","周五","周六"]
             return (0..<7).compactMap { cal.date(byAdding: .day, value: $0, to: weekStart) }.map { day in
                 let e = cal.date(byAdding: .day, value: 1, to: day)!
                 return ChartDataPoint(label: weekdays[cal.component(.weekday, from: day)-1],
@@ -517,7 +557,10 @@ struct TendencyView: View {
         case "年":
             let year = cal.component(.year, from: anchor)
             return (1...12).compactMap { month -> ChartDataPoint? in
-                var c = DateComponents(); c.year = year; c.month = month; c.day = 1
+                var c = DateComponents()
+                c.year = year
+                c.month = month
+                c.day = 1
                 guard let s = cal.date(from: c), let e = cal.date(byAdding: .month, value: 1, to: s) else { return nil }
                 return ChartDataPoint(label: DateFormatter.month.string(from: s),
                                       value: total(billsIn(start: s, end: e)))
@@ -530,13 +573,19 @@ struct TendencyView: View {
 
 // MARK: - 数据模型
 struct ChartDataPoint: Identifiable {
-    let id = UUID(); let label: String; let value: Double
+    let id = UUID()
+    let label: String
+    let value: Double
 }
 
 // MARK: - Date 扩展
 extension Date {
-    var startOfDay: Date { Calendar.current.startOfDay(for: self) }
+    var startOfDay: Date {
+        Calendar.current.startOfDay(for: self)
+    }
 }
 
 // MARK: - 预览
-#Preview { TendencyView() }
+#Preview {
+    TendencyView()
+}

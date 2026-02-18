@@ -13,18 +13,22 @@ private final class ImageCache {
     static let shared = ImageCache()
     private let cache = NSCache<NSString, UIImage>()
     private init() {
-        cache.countLimit  = 30
+        cache.countLimit = 30
         cache.totalCostLimit = 1024 * 1024 * 80  // 80 MB
     }
     
-    func get(_ key: String) -> UIImage?          { cache.object(forKey: key as NSString) }
-    func set(_ image: UIImage, for key: String)  { cache.setObject(image, forKey: key as NSString) }
+    func get(_ key: String) -> UIImage? {
+        cache.object(forKey: key as NSString)
+    }
+    func set(_ image: UIImage, for key: String) {
+        cache.setObject(image, forKey: key as NSString)
+    }
 }
 
 // MARK: - 图片加载器
 @MainActor
 private final class ImageLoader: ObservableObject {
-    @Published var image:    UIImage?
+    @Published var image: UIImage?
     @Published var isLoaded: Bool = false
     
     private var currentURL: URL?
@@ -32,7 +36,7 @@ private final class ImageLoader: ObservableObject {
     func load(url: URL) {
         // 命中缓存直接返回，不产生任何网络请求
         if let cached = ImageCache.shared.get(url.absoluteString) {
-            self.image    = cached
+            self.image = cached
             self.isLoaded = true
             return
         }
@@ -46,7 +50,7 @@ private final class ImageLoader: ObservableObject {
                 else { return }
                 
                 ImageCache.shared.set(uiImage, for: url.absoluteString)
-                self.image    = uiImage
+                self.image = uiImage
                 self.isLoaded = true
             } catch {
                 // 加载失败时不改变状态，卡片显示兜底渐变
@@ -119,7 +123,7 @@ struct SentenceCardView: View {
                 // ── 底部渐变遮罩 ──
                 LinearGradient(
                     stops: [
-                        .init(color: .clear,               location: 0.0),
+                        .init(color: .clear, location: 0.0),
                         .init(color: .black.opacity(0.12), location: 0.42),
                         .init(color: .black.opacity(0.70), location: 0.76),
                         .init(color: .black.opacity(0.86), location: 1.0),
@@ -165,6 +169,8 @@ struct SentenceCardView: View {
 
 // MARK: - 主视图
 struct HomeView: View {
+    @Environment(\.displayScale) private var displayScale
+    
     @State private var sentences: [DailySentence] = []
     @State private var currentSentence: DailySentence?
     @State private var nextSentence: DailySentence?   // 预加载的下一条
@@ -177,100 +183,107 @@ struct HomeView: View {
     // 分享
     @State private var shareImage: UIImage?
     
-    private let cardWidth:  CGFloat = UIScreen.main.bounds.width - 40
-    private let cardHeight: CGFloat = 500
-    
+   
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                if isInitialLoading {
-                    Spacer()
-                    ProgressView().scaleEffect(1.3)
-                    Spacer()
-                } else if let s = currentSentence {
-                    Spacer(minLength: 16)
-                    
-                    // ── 名言卡片 ──
-                    SentenceCardView(sentence: s)
-                        .frame(width: cardWidth, height: cardHeight)
-                        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-                        .shadow(color: .black.opacity(0.18), radius: 20, x: 0, y: 8)
-                        .opacity(cardOpacity)
-                        .scaleEffect(cardScale)
-                    
-                    Spacer(minLength: 28)
-                    
-                    // ── 操作按钮 ──
-                    HStack(spacing: 48) {
-                        // 刷新
-                        Button {
-                            guard !isRefreshing else { return }
-                            refresh()
-                        } label: {
-                            Image(systemName: "arrow.clockwise")
-                                .font(.system(size: 17, weight: .medium))
-                                .rotationEffect(.degrees(rotationAngle))
-                                .frame(width: 50, height: 50)
-                                .background(Color(UIColor.secondarySystemGroupedBackground))
-                                .clipShape(Circle())
-                                .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: 2)
-                        }
-                        .foregroundStyle(.primary)
-                        .disabled(isRefreshing)
+            GeometryReader { geometry in
+                let cardWidth = max(100, geometry.size.width - 40)
+                let cardHeight: CGFloat = 500
+                
+                VStack(spacing: 0) {
+                    if isInitialLoading {
+                        Spacer()
+                        ProgressView().scaleEffect(1.3)
+                        Spacer()
+                    } else if let s = currentSentence {
+                        Spacer(minLength: 16)
                         
-                        // 分享
-                        Button {
-                            renderAndShare(sentence: s)
-                        } label: {
-                            Image(systemName: "square.and.arrow.up")
-                                .font(.system(size: 17, weight: .medium))
-                                .frame(width: 50, height: 50)
-                                .background(Color(UIColor.secondarySystemGroupedBackground))
-                                .clipShape(Circle())
-                                .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: 2)
+                        // ── 名言卡片 ──
+                        SentenceCardView(sentence: s)
+                            .frame(width: cardWidth, height: cardHeight)
+                            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+                            .shadow(color: .black.opacity(0.18), radius: 20, x: 0, y: 8)
+                            .opacity(cardOpacity)
+                            .scaleEffect(cardScale)
+                        
+                        Spacer(minLength: 28)
+                        
+                        // ── 操作按钮 ──
+                        HStack(spacing: 48) {
+                            // 刷新
+                            Button {
+                                guard !isRefreshing else { return }
+                                refresh()
+                            } label: {
+                                Image(systemName: "arrow.clockwise")
+                                    .font(.system(size: 17, weight: .medium))
+                                    .rotationEffect(.degrees(rotationAngle))
+                                    .frame(width: 50, height: 50)
+                                    .background(Color(UIColor.secondarySystemGroupedBackground))
+                                    .clipShape(Circle())
+                                    .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: 2)
+                            }
+                            .foregroundStyle(.primary)
+                            .disabled(isRefreshing)
+                            
+                            // 分享
+                            Button {
+                                renderAndShare(sentence: s, cardWidth: cardWidth, cardHeight: cardHeight)
+                            } label: {
+                                Image(systemName: "square.and.arrow.up")
+                                    .font(.system(size: 17, weight: .medium))
+                                    .frame(width: 50, height: 50)
+                                    .background(Color(UIColor.secondarySystemGroupedBackground))
+                                    .clipShape(Circle())
+                                    .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: 2)
+                            }
+                            .foregroundStyle(.primary)
                         }
-                        .foregroundStyle(.primary)
+                        .padding(.bottom, 20)
                     }
-                    .padding(.bottom, 20)
                 }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    HeaderView(isTransactionView: false)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
+                .toolbar {
+                    ToolbarItem(placement: .principal) {
+                        HeaderView(isTransactionView: false)
+                    }
                 }
-            }
-            .sheet(item: $shareImage) { image in
-                ShareSheet(items: [image])
-                    .presentationDetents([.medium, .large])
-            }
-            .onAppear {
-                loadSentences()
+                .sheet(item: $shareImage) { image in
+                    ShareSheet(items: [image])
+                        .presentationDetents([.medium, .large])
+                }
+                .onAppear {
+                    loadSentences()
+                }
             }
         }
     }
     
     // MARK: - 加载 JSON
     private func loadSentences() {
-        guard let url  = Bundle.main.url(forResource: "EconomicQuotes", withExtension: "json"),
+        guard let url = Bundle.main.url(forResource: "EconomicQuotes", withExtension: "json"),
               let data = try? Data(contentsOf: url),
               let list = try? JSONDecoder().decode([DailySentence].self, from: data)
         else {
             isInitialLoading = false
             return
         }
-        sentences       = list
+        sentences = list
         currentSentence = list.randomElement()
         isInitialLoading = false
         
         // 首次加载后立即预加载下一条
-        Task { await prepareNext() }
+        Task {
+            await prepareNext()
+        }
     }
     
     // MARK: - 预加载下一条图片
     private func prepareNext() async {
-        let filtered = sentences.filter { $0.id != currentSentence?.id }
+        let filtered = sentences.filter {
+            $0.id != currentSentence?.id
+        }
         guard let next = (filtered.isEmpty ? sentences : filtered).randomElement() else { return }
         nextSentence = next
         
@@ -315,20 +328,23 @@ struct HomeView: View {
             isRefreshing = false
             
             // 后台预加载再下一条
-            Task { await prepareNext() }
+            Task {
+                await prepareNext()
+            }
         }
     }
     
-    // MARK: - 分享
     @MainActor
-    private func renderAndShare(sentence: DailySentence) {
+    private func renderAndShare(sentence: DailySentence, cardWidth: CGFloat, cardHeight: CGFloat) {
         let renderer = ImageRenderer(
             content: SentenceCardView(sentence: sentence)
                 .frame(width: cardWidth, height: cardHeight)
                 .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         )
-        renderer.scale = UIScreen.main.scale
-        if let img = renderer.uiImage { shareImage = img }
+        renderer.scale = displayScale  // ✅ 已通过 @Environment 获取
+        if let img = renderer.uiImage {
+            shareImage = img
+        }
     }
 }
 
@@ -343,8 +359,12 @@ struct ShareSheet: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> UIActivityViewController {
         UIActivityViewController(activityItems: items, applicationActivities: nil)
     }
-    func updateUIViewController(_ vc: UIActivityViewController, context: Context) {}
+    func updateUIViewController(_ vc: UIActivityViewController, context: Context) {
+        
+    }
 }
 
 // MARK: - 预览
-#Preview { HomeView() }
+#Preview {
+    HomeView()
+}

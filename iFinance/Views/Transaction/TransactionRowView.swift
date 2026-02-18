@@ -20,34 +20,40 @@ struct TransactionRowView: View {
     
     private var resolvedCategory: BillCategory {
         guard let raw = bill.category else { return .unknown }
-        if let c = ExpenditureCategory(rawValue: raw) { return .expenditure(c) }
-        if let c = IncomeCategory(rawValue: raw)      { return .income(c) }
-        if bill.type == "transfer"                    { return .transfer }
+        if let c = ExpenditureCategory(rawValue: raw) {
+            return .expenditure(c)
+        }
+        if let c = IncomeCategory(rawValue: raw) {
+            return .income(c)
+        }
+        if bill.type == "transfer" {
+            return .transfer
+        }
         return .unknown
     }
     
     private var icon: String {
         switch resolvedCategory {
         case .expenditure(let c): return c.icon
-        case .income(let c):      return c.icon
-        case .transfer:           return "arrow.left.arrow.right"
-        case .unknown:            return "questionmark"
+        case .income(let c): return c.icon
+        case .transfer: return "arrow.left.arrow.right"
+        case .unknown: return "questionmark"
         }
     }
     
     private var categoryName: String {
         switch resolvedCategory {
         case .expenditure(let c): return c.rawValue
-        case .income(let c):      return c.rawValue
-        case .transfer:           return "转账"
-        case .unknown:            return bill.category ?? "未分类"
+        case .income(let c): return c.rawValue
+        case .transfer: return "转账"
+        case .unknown: return bill.category ?? "未分类"
         }
     }
     
     private var iconColor: Color {
         switch resolvedCategory {
         case .expenditure:
-            return Color(red: 1.0,  green: 0.27, blue: 0.23)  // 红
+            return Color(red: 1.0, green: 0.27, blue: 0.23)  // 红
         case .income:
             return Color(red: 0.18, green: 0.78, blue: 0.44)  // 绿
         case .transfer:
@@ -66,9 +72,9 @@ struct TransactionRowView: View {
     private var amountText: String {
         let abs = Swift.abs(amount)
         let f = NumberFormatter()
-        f.numberStyle           = .currency
-        f.currencySymbol        = "¥"
-        f.locale                = Locale(identifier: "zh_CN")
+        f.numberStyle = .currency
+        f.currencySymbol  = "¥"
+        f.locale = Locale(identifier: "zh_CN")
         f.maximumFractionDigits = 2
         f.minimumFractionDigits = 2
         let str = f.string(from: NSNumber(value: abs)) ?? "¥\(abs)"
@@ -88,7 +94,7 @@ struct TransactionRowView: View {
     private var timeText: String {
         guard let date = bill.date else { return "" }
         let f = DateFormatter()
-        f.locale     = Locale(identifier: "zh_CN")
+        f.locale = Locale(identifier: "zh_CN")
         f.dateFormat = "HH:mm"
         return f.string(from: date)
     }
