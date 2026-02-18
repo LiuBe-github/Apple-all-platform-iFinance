@@ -35,7 +35,7 @@ struct BudgetCardView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.colorScheme) private var colorScheme
     
-    @AppStorage("monthly_budget_amount") private var monthlyBudget: Double = 3000.0
+    @AppStorage("monthly_budget_amount") private var monthlyBudget: Double = 0.0
     
     @FetchRequest private var currentMonthBills: FetchedResults<Bill>
     
@@ -44,7 +44,7 @@ struct BudgetCardView: View {
         let today = Date()
         guard
             let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: today)),
-            let endOfMonth   = calendar.date(byAdding: .month, value: 1, to: startOfMonth)
+            let endOfMonth = calendar.date(byAdding: .month, value: 1, to: startOfMonth)
         else {
             let request: NSFetchRequest<Bill> = Bill.fetchRequest()
             request.sortDescriptors = [NSSortDescriptor(keyPath: \Bill.date, ascending: false)]
@@ -238,9 +238,9 @@ struct BudgetCardView: View {
     // MARK: 金额格式化（中文，带千分位）
     private func formatted(_ value: Double) -> String {
         let formatter = NumberFormatter()
-        formatter.numberStyle       = .currency
-        formatter.currencySymbol    = "¥"
-        formatter.locale            = Locale(identifier: "zh_CN")
+        formatter.numberStyle = .currency
+        formatter.currencySymbol = "¥"
+        formatter.locale = Locale(identifier: "zh_CN")
         formatter.maximumFractionDigits = value >= 10_000 ? 0 : 2
         formatter.minimumFractionDigits = value >= 10_000 ? 0 : 2
         return formatter.string(from: NSNumber(value: value)) ?? "¥\(value)"

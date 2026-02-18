@@ -5,6 +5,7 @@
 //  Created by 刘不易 on 2026/2/6.
 //
 
+// MARK: This file has been deprecated.
 import SwiftUI
 internal import CoreData
 
