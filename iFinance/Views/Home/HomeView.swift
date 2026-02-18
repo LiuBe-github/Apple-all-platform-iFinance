@@ -307,7 +307,7 @@ struct HomeView: View {
         // 卡片淡出缩小
         withAnimation(.easeIn(duration: 0.20)) {
             cardOpacity = 0
-            cardScale   = 0.95
+            cardScale = 0.95
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
@@ -323,7 +323,7 @@ struct HomeView: View {
             // 卡片弹入
             withAnimation(.spring(response: 0.36, dampingFraction: 0.80)) {
                 cardOpacity = 1
-                cardScale   = 1
+                cardScale = 1
             }
             isRefreshing = false
             
