@@ -10,7 +10,6 @@ import SwiftUI
 struct SettingView: View {
     @AppStorage("selectedTheme") private var selectedTheme: ThemeMode = .system
     
-    // 动态读取版本号，避免硬编码
     private var appVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "未知"
     }
@@ -31,7 +30,6 @@ struct SettingView: View {
                 }
                 
                 Section("账单导入导出") {
-                    // ✅ 去掉多余的 List 嵌套
                     NavigationLink("账单导入") {
                         Text("账单导入，功能开发中...")
                     }
@@ -50,13 +48,18 @@ struct SettingView: View {
                 }
                 
                 Section("通用") {
-                    NavigationLink("语言") { Text("功能开发中") }
+                    NavigationLink("语言") {
+                        LanguageSettingView()
+                    }
                 }
                 
                 Section("关于") {
-                    NavigationLink("帮助与反馈") { Text("功能开发中") }
-                    NavigationLink("关于我们") { Text("功能开发中") }
-                    // ✅ 动态版本号
+                    NavigationLink("帮助与反馈") {
+                        Text("功能开发中")
+                    }
+                    NavigationLink("关于我们") {
+                        Text("功能开发中")
+                    }
                     HStack {
                         Text("版本信息")
                         Spacer()

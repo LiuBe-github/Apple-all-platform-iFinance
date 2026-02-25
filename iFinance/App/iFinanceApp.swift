@@ -12,6 +12,10 @@ internal import CoreData
 struct iFinanceApp: App {
     @AppStorage("selectedTheme") private var selectedTheme: ThemeMode = .system
     
+    init() {
+        LanguageManager.shared.applyLanguage()
+    }
+    
     let persistenceController = PersistenceController.shared
 
     var body: some Scene {

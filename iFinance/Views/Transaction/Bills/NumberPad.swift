@@ -263,9 +263,16 @@ struct NumberButton: View {
                     Image(systemName: systemImage)
                         .foregroundColor(.primary)
                 } else {
-                    Text(value)
-                        .font(.title3)
-                        .fontWeight(.medium)
+                    if value == "." {
+                        Text(value)
+                            .font(.largeTitle)
+                            .fontWeight(.medium)
+                            .foregroundStyle(.black)
+                    } else {
+                        Text(value)
+                            .font(.title3)
+                            .fontWeight(.medium)
+                    }
                 }
             }
         }
