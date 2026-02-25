@@ -137,7 +137,7 @@ struct NumberPad: View {
                 
                 // 第四行
                 HStack(spacing: 8) {
-                    NumberButton(value: ".", systemImage: "dot.square") {
+                    NumberButton(value: ".") {
                         handleNumberTap(".")
                     }
                     
@@ -176,17 +176,25 @@ struct NumberPad: View {
     }
     
     private func handleNumberTap(_ number: String) {
-        // 如果当前显示的是0.00，则替换为新数字
+        // 1. 防止重复输入小数点
+        if number == "." && displayText.contains(".") {
+            return
+        }
+        
         if displayText == "0.00" {
-            displayText = number
+            // 2. 如果当前是 0.00 且输入的是小数点，应该显示 "0." 而不是直接替换
+            if number == "." {
+                displayText = "0."
+            } else {
+                displayText = number
+            }
         } else {
-            // 防止输入多个小数点后的位数
+            // 3. 限制小数位
             if displayText.contains(".") {
-                let parts = displayText.split(separator: ".", maxSplits: 1, omittingEmptySubsequences: false)
+                let parts = displayText.split(separator: ".")
                 if parts.count > 1 {
                     let decimalPart = parts[1]
                     if decimalPart.count >= 2 && number != "." {
-                        // 已经有两个小数位，不允许再输入数字
                         return
                     }
                 }
