@@ -115,8 +115,15 @@ struct BudgetView: View {
                     budgetInput = String(format: "%.0f", monthlyBudget)
                     isEditingBudget = true
                 } label: {
-                    Image(systemName: "slider.horizontal.3")
-                        .font(.system(size: 16, weight: .medium))
+                    HStack(spacing: 4) {
+                        Image(systemName: "slider.horizontal.3")
+                            .font(.system(size: 14, weight: .medium))
+                        Text("调整预算")
+                            .font(.system(size: 15, weight: .medium))
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .foregroundStyle(.blue)
                 }
             }
         }
