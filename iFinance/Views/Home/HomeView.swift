@@ -200,6 +200,7 @@ struct HomeView: View {
                         
                         // ── 名言卡片 ──
                         SentenceCardView(sentence: s)
+                            .id(s.id)
                             .frame(width: cardWidth, height: cardHeight)
                             .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
                             .shadow(color: .black.opacity(0.18), radius: 20, x: 0, y: 8)
