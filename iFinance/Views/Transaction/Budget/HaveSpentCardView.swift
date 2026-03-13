@@ -67,7 +67,7 @@ struct HaveSpentCardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 9) {
             // 标题
-            Text("EXPENDITURE OF THIS MONTH")
+            Text("budget.this_month_expense")
                 .font(.caption)
                 .fontWeight(.bold)
                 .foregroundStyle(.white)
@@ -102,4 +102,3 @@ struct HaveSpentCardView: View {
     HaveSpentCardView()
         .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
 }
-

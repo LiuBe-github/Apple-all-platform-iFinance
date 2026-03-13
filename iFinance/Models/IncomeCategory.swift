@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftUI
 
 enum IncomeCategory: String, CaseIterable, TransactionCategory {
     case salary = "工资"
@@ -19,6 +20,27 @@ enum IncomeCategory: String, CaseIterable, TransactionCategory {
     case refundTax = "退税"
     case unexpectedIncom = "意外收入"
     case other = "其他"
+
+    var localizedKey: String {
+        switch self {
+        case .salary: return "cat.inc.salary"
+        case .bonus: return "cat.inc.bonus"
+        case .workOvertime: return "cat.inc.overtime"
+        case .wealthy: return "cat.inc.benefit"
+        case .publicReserveFund: return "cat.inc.fund"
+        case .redPacket: return "cat.inc.redpacket"
+        case .partTime: return "cat.inc.parttime"
+        case .sideOccupation: return "cat.inc.side"
+        case .refundTax: return "cat.inc.tax"
+        case .unexpectedIncom: return "cat.inc.unexpected"
+        case .other: return "cat.inc.other"
+        }
+    }
+
+    var localizedDisplayName: String {
+        let text = L10n.string(localizedKey)
+        return text == localizedKey ? rawValue : text
+    }
     
     var icon: String {
         switch self {

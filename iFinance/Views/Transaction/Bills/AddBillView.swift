@@ -69,7 +69,7 @@ struct AddBillView: View {
                             .padding(.horizontal, 8)
                             .padding(.top, -10)
                         } else { // MARK: 后期完善转账的基本逻辑
-                            Text("此功能还在开发当中哦😀！敬请期待！")
+                            Text("bill.transfer_todo")
                                 .padding(.horizontal)
                         }
                         
@@ -105,12 +105,12 @@ struct AddBillView: View {
                     }
                 }
                 ToolbarItem(placement: .title) {
-                    Picker("视图", selection:  $transactionType) {
-                        Text("支出")
+                    Picker("bill.view_picker", selection:  $transactionType) {
+                        Text("bill.type_expenditure")
                             .tag(TransactionType.expenditure)
-                        Text("收入")
+                        Text("bill.type_income")
                             .tag(TransactionType.income)
-                        Text("转账")
+                        Text("bill.type_transfer")
                             .tag(TransactionType.transfer)
                     }
                     .frame(width: 300)
@@ -119,7 +119,7 @@ struct AddBillView: View {
             }
         }
         .alert(alertMessage, isPresented: $showingAlert) {
-            Button("确定", role: .cancel){ }
+            Button("common.ok", role: .cancel){ }
         }
         
     }
@@ -127,7 +127,7 @@ struct AddBillView: View {
     private func saveBill() {
         let result = parseExpression(displayText)
         guard result > 0 else {
-            showAlert(message: "金额必须大于 0")
+            showAlert(message: String(localized: "bill.amount_gt_zero"))
             return
         }
         
@@ -135,13 +135,13 @@ struct AddBillView: View {
         switch transactionType {
         case .expenditure:
             guard let cat = selectedExpenditureCategory else {
-                showAlert(message: "请选择分类")
+                showAlert(message: String(localized: "bill.choose_category"))
                 return
             }
             categoryString = cat.rawValue
         case .income:
             guard let cat = selectedIncomeCategory else {
-                showAlert(message: "请选择分类")
+                showAlert(message: String(localized: "bill.choose_category"))
                 return
             }
             categoryString = cat.rawValue
@@ -175,7 +175,7 @@ struct AddBillView: View {
             let nsError = error as NSError
             print("❌ 保存失败: \(error.localizedDescription)")
             print("Domain: \(nsError.domain), Code: \(nsError.code)")
-            showAlert(message: "保存失败，请查看控制台日志")
+            showAlert(message: String(localized: "bill.save_failed"))
         }
     }
     

@@ -40,7 +40,7 @@ struct BillsCardView: View {
             Image(systemName: "tray")
                 .font(.system(size: 32, weight: .light))
                 .foregroundStyle(.tertiary)
-            Text("暂无账单记录")
+            Text("bill.empty")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
@@ -140,28 +140,19 @@ private struct DayGroupCard: View {
     // MARK: 日期格式
     private var dayLabel: String {
         let cal = Calendar.current
-        if cal.isDateInToday(date)     { return "今天" }
-        if cal.isDateInYesterday(date) { return "昨天" }
+        if cal.isDateInToday(date)     { return String(localized: "common.today") }
+        if cal.isDateInYesterday(date) { return String(localized: "common.yesterday") }
         
-        let f = DateFormatter()
-        f.locale    = Locale(identifier: "zh_CN")
-        f.dateFormat = "M月d日"
-        return f.string(from: date)
+        return date.formatted(.dateTime.month(.abbreviated).day())
     }
     
     private var weekdayLabel: String {
         // 今天/昨天不再重复显示星期
         let cal = Calendar.current
         if cal.isDateInToday(date) || cal.isDateInYesterday(date) {
-            let f = DateFormatter()
-            f.locale    = Locale(identifier: "zh_CN")
-            f.dateFormat = "M月d日  EEEE"
-            return f.string(from: date)
+            return date.formatted(.dateTime.month(.abbreviated).day().weekday(.wide))
         }
-        let f = DateFormatter()
-        f.locale    = Locale(identifier: "zh_CN")
-        f.dateFormat = "EEEE"
-        return f.string(from: date)
+        return date.formatted(.dateTime.weekday(.wide))
     }
 }
 

@@ -17,10 +17,10 @@ struct EditBudgetView: View {
     var body: some View {
         NavigationStack {
             VStack {
-                Text("Edit Monthly Budget")
+                Text("budget.adjust")
                     .font(.title2)
                 
-                TextField("Enter budget", value: $budget, formatter: NumberFormatter())
+                TextField(String(localized: "budget.enter_amount"), value: $budget, formatter: NumberFormatter())
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .keyboardType(.decimalPad)
                     .padding()
@@ -31,7 +31,7 @@ struct EditBudgetView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
+                    Button("common.done") {
                         // 保存预算数值的逻辑
                         saveBudget()
                         // 退出当前页面

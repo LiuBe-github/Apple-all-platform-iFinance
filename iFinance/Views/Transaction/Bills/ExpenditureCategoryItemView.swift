@@ -42,7 +42,7 @@ struct ExpenditureCategoryItemView: View {
             .buttonStyle(PlainButtonStyle())
             
             // 文字标签
-            Text(category.rawValue)
+            Text(category.localizedDisplayName)
                 .font(.caption)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)

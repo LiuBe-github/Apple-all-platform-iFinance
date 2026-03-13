@@ -22,7 +22,7 @@ struct BudgetCardSecondaryView: View {
         ) {
             VStack(alignment: .leading, spacing: 9) {
                 // 标题
-                Text("MONTHLY BUDGET")
+                Text("budget.monthly_limit")
                     .font(.caption)
                     .fontWeight(.bold)
                     .foregroundStyle(.white)
@@ -34,7 +34,7 @@ struct BudgetCardSecondaryView: View {
                     .foregroundStyle(.white)
                 
                 // 标题
-                Text("CLICK TO EDIT👆🏻")
+                Text("budget.tap_to_edit")
                     .font(.caption)
                     .fontWeight(.bold)
                     .foregroundStyle(.white)
@@ -65,4 +65,3 @@ struct BudgetCardSecondaryView: View {
     BudgetCardSecondaryView()
         .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
 }
-

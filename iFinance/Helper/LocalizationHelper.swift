@@ -7,6 +7,21 @@
 
 import SwiftUI
 
+enum L10n {
+    static func string(_ key: String) -> String {
+        let selected = UserDefaults.standard.string(forKey: "app_language") ?? AppLanguage.system.rawValue
+        guard selected != AppLanguage.system.rawValue else {
+            return NSLocalizedString(key, comment: "")
+        }
+
+        guard let path = Bundle.main.path(forResource: selected, ofType: "lproj"),
+              let bundle = Bundle(path: path) else {
+            return NSLocalizedString(key, comment: "")
+        }
+        return NSLocalizedString(key, bundle: bundle, comment: "")
+    }
+}
+
 enum AppLanguage: String, CaseIterable, Identifiable {
     case system = "system"
     case zhHans = "zh-Hans"
@@ -51,7 +66,6 @@ enum AppLanguage: String, CaseIterable, Identifiable {
 
 struct LanguageSettingView: View {
     @AppStorage("app_language") private var selectedLanguage: String = AppLanguage.system.rawValue
-    @State private var showRestartAlert = false
     
     private var currentLanguage: AppLanguage {
         AppLanguage(rawValue: selectedLanguage) ?? .system
@@ -90,27 +104,17 @@ struct LanguageSettingView: View {
                     .buttonStyle(.plain)
                 }
             } header: {
-                Text("选择语言")
+                Text("settings.language.select")
                     .font(.subheadline)
                     .fontWeight(.medium)
             } footer: {
-                Text("更改语言后需要重启应用才能生效")
+                Text("settings.language.footer")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
         }
-        .navigationTitle("语言")
+        .navigationTitle("settings.language")
         .navigationBarTitleDisplayMode(.inline)
-        .alert("需要重启应用", isPresented: $showRestartAlert) {
-            Button("稍后") {
-                showRestartAlert = false
-            }
-            Button("立即退出") {
-                exit(0)
-            }
-        } message: {
-            Text("语言设置已保存，需要重启应用后生效。是否立即退出应用？")
-        }
     }
     
     private func selectLanguage(_ language: AppLanguage) {
@@ -122,10 +126,6 @@ struct LanguageSettingView: View {
         
         let generator = UINotificationFeedbackGenerator()
         generator.notificationOccurred(.success)
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            showRestartAlert = true
-        }
     }
 }
 

@@ -21,7 +21,7 @@ struct HeaderView: View {
                 Button {
                     showingAddBillView = true
                 } label: {
-                    Text("记一笔！")
+                    Text("header.add_bill")
                         .font(.title.bold())
                         .buttonStyle(.plain)
                         .foregroundStyle(.blue)
@@ -48,7 +48,7 @@ struct HeaderView: View {
                     }
                 }
                 .foregroundColor(.blue)
-                .accessibilityLabel("编辑个人资料")
+                .accessibilityLabel("header.edit_profile")
                 .accessibilityAddTraits(.isButton)
             }
             .padding()

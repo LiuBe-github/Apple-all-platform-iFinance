@@ -24,25 +24,25 @@ struct ContentView: View {
         TabView(selection: $selection) {
             HomeView()
                 .tabItem {
-                    Label("首页", systemImage: "house")
+                    Label("tab.home", systemImage: "house")
                 }
                 .tag(Tab.home)
             
             TransactionView()
                 .tabItem {
-                    Label("账本", systemImage: "long.text.page.and.pencil.fill") // MARK: 做transaction的好国际化
+                    Label("tab.transaction", systemImage: "long.text.page.and.pencil.fill")
                 }
                 .tag(Tab.transaction)
             
             TendencyView()
                 .tabItem {
-                    Label("趋势", systemImage: "chart.bar") // MARK: 做好tendency的国际化
+                    Label("tab.tendency", systemImage: "chart.bar")
                 }
                 .tag(Tab.tendency)
             
             SettingView()
                 .tabItem {
-                    Label("设置", systemImage: "gear")
+                    Label("tab.setting", systemImage: "gear")
                 }
                 .tag(Tab.setting)
         }
