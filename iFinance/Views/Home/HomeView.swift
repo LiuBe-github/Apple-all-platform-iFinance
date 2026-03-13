@@ -8,6 +8,11 @@
 import SwiftUI
 import Combine
 
+private struct SharePayload: Identifiable {
+    let id = UUID()
+    let imageURL: URL
+}
+
 // MARK: - 图片缓存（内存级，进程内复用）
 private final class ImageCache {
     static let shared = ImageCache()
@@ -148,7 +153,7 @@ struct SentenceCardView: View {
                     
                     HStack {
                         Spacer()
-                        Text("— \(sentence.note)")
+                        Text("\(sentence.note)")
                             .font(.system(size: 14, weight: .regular, design: .serif))
                             .foregroundStyle(.white.opacity(0.72))
                             .italic()
@@ -181,7 +186,9 @@ struct HomeView: View {
     @State private var rotationAngle: Double = 0
     
     // 分享
-    @State private var shareImage: UIImage?
+    @State private var sharePayload: SharePayload?
+    @State private var sharedTempURL: URL?
+    @State private var shareError: String?
     
    
     var body: some View {
@@ -190,70 +197,91 @@ struct HomeView: View {
                 let cardWidth = max(100, geometry.size.width - 40)
                 let cardHeight: CGFloat = 500
                 
-                VStack(spacing: 0) {
-                    if isInitialLoading {
-                        Spacer()
-                        ProgressView().scaleEffect(1.3)
-                        Spacer()
-                    } else if let s = currentSentence {
-                        Spacer(minLength: 16)
-                        
-                        // ── 名言卡片 ──
-                        SentenceCardView(sentence: s)
-                            .id(s.id)
-                            .frame(width: cardWidth, height: cardHeight)
-                            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-                            .shadow(color: .black.opacity(0.18), radius: 20, x: 0, y: 8)
-                            .opacity(cardOpacity)
-                            .scaleEffect(cardScale)
-                        
-                        Spacer(minLength: 28)
-                        
-                        // ── 操作按钮 ──
-                        HStack(spacing: 48) {
-                            // 刷新
-                            Button {
-                                guard !isRefreshing else { return }
-                                refresh()
-                            } label: {
-                                Image(systemName: "arrow.clockwise")
-                                    .font(.system(size: 17, weight: .medium))
-                                    .rotationEffect(.degrees(rotationAngle))
-                                    .frame(width: 50, height: 50)
-                                    .background(Color(UIColor.secondarySystemGroupedBackground))
-                                    .clipShape(Circle())
-                                    .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: 2)
+                ZStack {
+                    AppBackgroundView()
+
+                    VStack(spacing: 0) {
+                        if isInitialLoading {
+                            Spacer()
+                            ProgressView().scaleEffect(1.3)
+                            Spacer()
+                        } else if let s = currentSentence {
+                            Spacer(minLength: 16)
+
+                            // ── 名言卡片 ──
+                            SentenceCardView(sentence: s)
+                                .id(s.id)
+                                .frame(width: cardWidth, height: cardHeight)
+                                .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+                                .shadow(color: .black.opacity(0.18), radius: 20, x: 0, y: 8)
+                                .opacity(cardOpacity)
+                                .scaleEffect(cardScale)
+
+                            Spacer(minLength: 28)
+
+                            // ── 操作按钮 ──
+                            HStack(spacing: 48) {
+                                // 刷新
+                                Button {
+                                    guard !isRefreshing else { return }
+                                    refresh()
+                                } label: {
+                                    Image(systemName: "arrow.clockwise")
+                                        .font(.system(size: 17, weight: .medium))
+                                        .rotationEffect(.degrees(rotationAngle))
+                                        .frame(width: 50, height: 50)
+                                        .background(.ultraThinMaterial, in: Circle())
+                                        .overlay(
+                                            Circle().stroke(.white.opacity(0.5), lineWidth: 0.8)
+                                        )
+                                        .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: 2)
+                                }
+                                .foregroundStyle(.primary)
+                                .disabled(isRefreshing)
+
+                                // 分享
+                                Button {
+                                    renderAndShare(sentence: s, cardWidth: cardWidth, cardHeight: cardHeight)
+                                } label: {
+                                    Image(systemName: "square.and.arrow.up")
+                                        .font(.system(size: 17, weight: .medium))
+                                        .frame(width: 50, height: 50)
+                                        .background(.ultraThinMaterial, in: Circle())
+                                        .overlay(
+                                            Circle().stroke(.white.opacity(0.5), lineWidth: 0.8)
+                                        )
+                                        .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: 2)
+                                }
+                                .foregroundStyle(.primary)
                             }
-                            .foregroundStyle(.primary)
-                            .disabled(isRefreshing)
-                            
-                            // 分享
-                            Button {
-                                renderAndShare(sentence: s, cardWidth: cardWidth, cardHeight: cardHeight)
-                            } label: {
-                                Image(systemName: "square.and.arrow.up")
-                                    .font(.system(size: 17, weight: .medium))
-                                    .frame(width: 50, height: 50)
-                                    .background(Color(UIColor.secondarySystemGroupedBackground))
-                                    .clipShape(Circle())
-                                    .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: 2)
-                            }
-                            .foregroundStyle(.primary)
+                            .padding(.bottom, 20)
                         }
-                        .padding(.bottom, 20)
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
                 .toolbar {
                     ToolbarItem(placement: .principal) {
                         HeaderView(isTransactionView: false)
                     }
                 }
-                .sheet(item: $shareImage) { image in
-                    ShareSheet(items: [image])
+                .sheet(item: $sharePayload, onDismiss: {
+                    if let url = sharedTempURL {
+                        try? FileManager.default.removeItem(at: url)
+                    }
+                    sharedTempURL = nil
+                }) { payload in
+                    ShareSheet(items: [payload.imageURL])
                         .presentationDetents([.medium, .large])
                 }
+                .alert("home.share_failed", isPresented: Binding(
+                    get: { shareError != nil },
+                    set: { if !$0 { shareError = nil } }
+                ), actions: {
+                    Button("common.ok") { shareError = nil }
+                }, message: {
+                    Text(shareError ?? L10n.string("common.unknown_error"))
+                })
+                .navigationTitle("home.title")
                 .onAppear {
                     loadSentences()
                 }
@@ -343,15 +371,26 @@ struct HomeView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         )
         renderer.scale = displayScale  // ✅ 已通过 @Environment 获取
-        if let img = renderer.uiImage {
-            shareImage = img
+        guard let image = renderer.uiImage else {
+            shareError = L10n.string("home.share_error_render")
+            return
+        }
+
+        guard let data = image.jpegData(compressionQuality: 0.92) else {
+            shareError = L10n.string("home.share_error_encode")
+            return
+        }
+
+        let fileName = "iFinance-quote-\(UUID().uuidString.prefix(8)).jpg"
+        let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+        do {
+            try data.write(to: fileURL, options: .atomic)
+            sharedTempURL = fileURL
+            sharePayload = SharePayload(imageURL: fileURL)
+        } catch {
+            shareError = String(format: L10n.string("home.share_error_write"), error.localizedDescription)
         }
     }
-}
-
-// MARK: - UIImage Identifiable
-extension UIImage: @retroactive Identifiable {
-    public var id: ObjectIdentifier { ObjectIdentifier(self) }
 }
 
 // MARK: - 分享 Sheet

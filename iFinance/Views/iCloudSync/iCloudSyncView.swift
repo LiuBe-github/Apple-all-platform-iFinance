@@ -15,24 +15,24 @@ struct iCloudSyncView: View {
     var body: some View {
         Form {
             Section {
-                Toggle("开启同步", isOn: $isSyncEnabled)
+                Toggle("icloud.enable_sync", isOn: $isSyncEnabled)
             }
             
             Section {
                 HStack {
-                    Text("网络")
+                    Text("icloud.network")
                     Spacer()
                     if !networkMonitor.isConnected {
-                        Text("网络丢失")
+                        Text("icloud.network_lost")
                             .foregroundStyle(.red)
                     } else {
-                        Text("正常")
+                        Text("icloud.network_ok")
                             .foregroundStyle(.green)
                     }
                 }
             }
         }
-        .navigationTitle("iCloud云同步设置")
+        .navigationTitle("settings.icloud")
     }
 }
 

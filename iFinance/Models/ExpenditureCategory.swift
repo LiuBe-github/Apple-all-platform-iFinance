@@ -34,6 +34,41 @@ enum ExpenditureCategory: String, CaseIterable, TransactionCategory {
     case vacation = "度假"
     case cigaretteAndAlcohol = "烟酒"
     case lottery = "彩票"
+
+    var localizedKey: String {
+        switch self {
+        case .foodAndBeverage: return "cat.exp.food"
+        case .shopping: return "cat.exp.shopping"
+        case .clothing: return "cat.exp.clothing"
+        case .daily: return "cat.exp.daily"
+        case .digital: return "cat.exp.digital"
+        case .makeup: return "cat.exp.makeup"
+        case .skincare: return "cat.exp.skincare"
+        case .app: return "cat.exp.app"
+        case .housing: return "cat.exp.housing"
+        case .traffic: return "cat.exp.traffic"
+        case .entertainment: return "cat.exp.entertainment"
+        case .medical: return "cat.exp.medical"
+        case .communication: return "cat.exp.communication"
+        case .car: return "cat.exp.car"
+        case .study: return "cat.exp.study"
+        case .office: return "cat.exp.office"
+        case .sport: return "cat.exp.sport"
+        case .social: return "cat.exp.social"
+        case .personal: return "cat.exp.personal"
+        case .child: return "cat.exp.child"
+        case .pet: return "cat.exp.pet"
+        case .travel: return "cat.exp.travel"
+        case .vacation: return "cat.exp.vacation"
+        case .cigaretteAndAlcohol: return "cat.exp.alcohol"
+        case .lottery: return "cat.exp.lottery"
+        }
+    }
+
+    var localizedDisplayName: String {
+        let text = L10n.string(localizedKey)
+        return text == localizedKey ? rawValue : text
+    }
     
     var icon: String {
         switch self {

@@ -41,12 +41,12 @@ struct TransactionRowView: View {
         }
     }
     
-    private var categoryName: String {
+    private var categoryText: Text {
         switch resolvedCategory {
-        case .expenditure(let c): return c.rawValue
-        case .income(let c): return c.rawValue
-        case .transfer: return "转账"
-        case .unknown: return bill.category ?? "未分类"
+        case .expenditure(let c): return Text(c.localizedDisplayName)
+        case .income(let c): return Text(c.localizedDisplayName)
+        case .transfer: return Text("bill.type_transfer")
+        case .unknown: return Text(bill.category ?? String(localized: "bill.uncategorized"))
         }
     }
     
@@ -115,7 +115,7 @@ struct TransactionRowView: View {
             
             // 分类名 + 时间
             VStack(alignment: .leading, spacing: 3) {
-                Text(categoryName)
+                categoryText
                     .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(.primary)
                     .lineLimit(1)

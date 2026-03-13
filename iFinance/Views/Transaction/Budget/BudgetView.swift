@@ -80,10 +80,7 @@ struct BudgetView: View {
     }
     
     private var monthLabel: String {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "zh_CN")
-        f.dateFormat = "yyyy年M月"
-        return f.string(from: Date())
+        Date().formatted(.dateTime.year().month(.wide))
     }
     
     // MARK: Body
@@ -107,7 +104,7 @@ struct BudgetView: View {
             }
         }
         .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
-        .navigationTitle("预算")
+        .navigationTitle("budget.title")
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -118,7 +115,7 @@ struct BudgetView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "slider.horizontal.3")
                             .font(.system(size: 14, weight: .medium))
-                        Text("调整预算")
+                        Text("budget.adjust")
                             .font(.system(size: 15, weight: .medium))
                     }
                     .padding(.horizontal, 12)
@@ -147,7 +144,7 @@ struct BudgetView: View {
                         .foregroundStyle(.primary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.6)
-                    Text("月度预算上限")
+                    Text("budget.monthly_limit")
                         .font(.caption)
                         .foregroundStyle(.tertiary)
                 }
@@ -167,7 +164,7 @@ struct BudgetView: View {
                     VStack(spacing: 1) {
                         Text("\(Int(progress * 100))%")
                             .font(.system(size: 15, weight: .bold, design: .rounded))
-                        Text("已用")
+                        Text("budget.used")
                             .font(.system(size: 9, weight: .medium))
                             .foregroundStyle(.secondary)
                     }
@@ -190,8 +187,8 @@ struct BudgetView: View {
                 
                 HStack {
                     Label(
-                        isOver ? "已超支 \(formatAmount(totalExpenditure - monthlyBudget))"
-                        : "已花 \(formatAmount(totalExpenditure))",
+                        isOver ? String(format: String(localized: "budget.over_amount"), formatAmount(totalExpenditure - monthlyBudget))
+                        : String(format: String(localized: "budget.spent_amount"), formatAmount(totalExpenditure)),
                         systemImage: isOver ? "exclamationmark.triangle.fill" : "arrow.up.right"
                     )
                     .font(.caption)
@@ -200,7 +197,7 @@ struct BudgetView: View {
                     
                     Spacer()
                     
-                    Text(isOver ? "超支" : "剩余 \(formatAmount(remaining))")
+                    Text(isOver ? String(localized: "budget.over") : String(format: String(localized: "budget.remaining_amount"), formatAmount(remaining)))
                         .font(.caption)
                         .foregroundStyle(isOver ? .red : .secondary)
                 }
@@ -208,14 +205,14 @@ struct BudgetView: View {
             
             // ── 三格统计栏 ──
             HStack(spacing: 0) {
-                statCell(title: "已花", value: formatAmount(totalExpenditure), color: accentColor)
+                statCell(title: String(localized: "budget.spent"), value: formatAmount(totalExpenditure), color: accentColor)
                 divider
-                statCell(title: isOver ? "超支" : "剩余",
+                statCell(title: isOver ? String(localized: "budget.over") : String(localized: "budget.remaining"),
                          value: formatAmount(isOver ? totalExpenditure - monthlyBudget : remaining),
                          color: isOver ? .red : .primary)
                 divider
-                statCell(title: "笔数",
-                         value: "\(currentMonthExpenditures.count)笔",
+                statCell(title: String(localized: "budget.count"),
+                         value: String(format: String(localized: "budget.count_value"), currentMonthExpenditures.count),
                          color: .primary)
             }
             .padding(.vertical, 14)
@@ -252,12 +249,12 @@ struct BudgetView: View {
         VStack(spacing: 0) {
             // 标题行
             HStack {
-                Text("支出分类")
+                Text("budget.categories")
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .foregroundStyle(.primary)
                 Spacer()
-                Text("共 \(categoryItems.count) 项")
+                Text(String(format: String(localized: "budget.categories_count"), categoryItems.count))
                     .font(.caption)
                     .foregroundStyle(.tertiary)
             }
@@ -290,7 +287,7 @@ struct BudgetView: View {
             Image(systemName: "tray")
                 .font(.system(size: 36, weight: .light))
                 .foregroundStyle(.tertiary)
-            Text("本月暂无支出记录")
+            Text("budget.empty")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
@@ -301,7 +298,7 @@ struct BudgetView: View {
         let f = NumberFormatter()
         f.numberStyle = .currency
         f.currencySymbol = "¥"
-        f.locale = Locale(identifier: "zh_CN")
+        f.locale = .autoupdatingCurrent
         f.maximumFractionDigits = value >= 10_000 ? 0 : 2
         f.minimumFractionDigits = value >= 10_000 ? 0 : 2
         return f.string(from: NSNumber(value: value)) ?? "¥\(value)"
@@ -313,7 +310,7 @@ struct BudgetView: View {
             VStack(spacing: 0) {
                 // 当前预算显示
                 VStack(spacing: 8) {
-                    Text("当前月度预算")
+                    Text("budget.current_monthly")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     Text(formatAmount(monthlyBudget))
@@ -325,7 +322,7 @@ struct BudgetView: View {
                 
                 // 输入区域
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("新的预算金额")
+                    Text("budget.new_amount")
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundStyle(.secondary)
@@ -350,7 +347,7 @@ struct BudgetView: View {
                     
                     // 快捷金额按钮
                     VStack(spacing: 10) {
-                        Text("快捷设置")
+                        Text("budget.quick_set")
                             .font(.caption)
                             .foregroundStyle(.tertiary)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -378,7 +375,7 @@ struct BudgetView: View {
                 Button {
                     saveBudget()
                 } label: {
-                    Text("保存")
+                    Text("common.save")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
@@ -393,11 +390,11 @@ struct BudgetView: View {
                 .padding(.bottom, 20)
             }
             .background(Color(UIColor.systemGroupedBackground))
-            .navigationTitle("调整预算")
+            .navigationTitle("budget.adjust")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") {
+                    Button("auth.cancel") {
                         isEditingBudget = false
                     }
                 }
@@ -484,7 +481,7 @@ struct CategoryRowView: View {
         let f = NumberFormatter()
         f.numberStyle = .currency
         f.currencySymbol = "¥"
-        f.locale = Locale(identifier: "zh_CN")
+        f.locale = .autoupdatingCurrent
         f.maximumFractionDigits = v >= 10_000 ? 0 : 2
         f.minimumFractionDigits = v >= 10_000 ? 0 : 2
         return f.string(from: NSNumber(value: v)) ?? "¥\(v)"
@@ -507,7 +504,7 @@ struct CategoryRowView: View {
                 // 中间：分类名 + 进度条
                 VStack(alignment: .leading, spacing: 5) {
                     HStack(alignment: .firstTextBaseline) {
-                        Text(category.rawValue)
+                        Text(category.localizedDisplayName)
                             .font(.system(size: 15, weight: .medium))
                             .foregroundStyle(.primary)
                         Spacer()

@@ -37,16 +37,16 @@ struct EditBillView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("日期") {
+                Section("bill.date") {
                     DatePicker(
-                        "选择日期",
+                        "bill.select_date",
                         selection: $selectedDate,
                         displayedComponents: .date
                     )
                 }
                 
-                Section("金额") {
-                    TextField("输入金额", text: $amountString)
+                Section("bill.amount") {
+                    TextField("bill.input_amount", text: $amountString)
                         .keyboardType(.decimalPad)
                         .onSubmit {
                             validateAmount()
@@ -59,59 +59,59 @@ struct EditBillView: View {
                             }
                         }
                 }
-                .alert("金额无效", isPresented: $showingAlert) {
-                    Button("确定", role: .cancel) {}
+                .alert("bill.amount_invalid", isPresented: $showingAlert) {
+                    Button("common.ok", role: .cancel) {}
                 } message: {
-                    Text("请输入大于 0 的有效金额。")
+                    Text("bill.amount_invalid_msg")
                 }
                 
-                Section("类型") {
-                    Picker("账单类型", selection: $selectedType) {
-                        Text("支出").tag("expenditure")
-                        Text("收入").tag("income")
+                Section("bill.type") {
+                    Picker("bill.type_picker", selection: $selectedType) {
+                        Text("bill.type_expenditure").tag("expenditure")
+                        Text("bill.type_income").tag("income")
                     }
                     .pickerStyle(SegmentedPickerStyle())
                 }
                 
-                Section("分类") {
-                    TextField("例如：餐饮、交通、工资", text: $category)
+                Section("bill.category") {
+                    TextField("bill.category_placeholder", text: $category)
                 }
                 
-                Section("备注") {
-                    TextField("可选备注", text: $note)
+                Section("bill.note") {
+                    TextField("bill.note_placeholder", text: $note)
                 }
                 
                 Section {
-                    Button("删除此账单") {
+                    Button("bill.delete") {
                         showingDeleteConfirmation = true
                     }
                     .foregroundColor(.red)
                     .frame(maxWidth: .infinity)
-                    .alert("删除账单", isPresented: $showingDeleteConfirmation) {
-                        Button("取消", role: .cancel) {}
-                        Button("删除", role: .destructive) {
+                    .alert("bill.delete_title", isPresented: $showingDeleteConfirmation) {
+                        Button("auth.cancel", role: .cancel) {}
+                        Button("bill.delete_confirm", role: .destructive) {
                             deleteBill()
                         }
                     } message: {
-                        Text("确定要删除这条账单吗？此操作无法撤销。")
+                        Text("bill.delete_message")
                     }
                 }
                 .listRowSeparator(.hidden)
                 .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
                 
             }
-            .navigationTitle("编辑账单")
+            .navigationTitle("bill.edit_title")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("保存") {
+                    Button("common.save") {
                         saveBill()
                     }
                     .disabled(!isValidInput)
-                    .alert("金额无效", isPresented: $showingAlert) {
-                        Button("确定", role: .cancel) {}
+                    .alert("bill.amount_invalid", isPresented: $showingAlert) {
+                        Button("common.ok", role: .cancel) {}
                     } message: {
-                        Text("请输入大于 0 的有效金额。")
+                        Text("bill.amount_invalid_msg")
                     }
                 }
             }

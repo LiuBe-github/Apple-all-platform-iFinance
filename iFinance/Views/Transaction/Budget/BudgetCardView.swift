@@ -88,10 +88,7 @@ struct BudgetCardView: View {
     
     /// 当前月份中文描述
     private var monthLabel: String {
-        let f = DateFormatter()
-        f.locale    = Locale(identifier: "zh_CN")
-        f.dateFormat = "yyyy年M月"
-        return f.string(from: Date())
+        Date().formatted(.dateTime.year().month(.wide))
     }
     
     // MARK: Body
@@ -124,7 +121,7 @@ struct BudgetCardView: View {
                     .minimumScaleFactor(0.6)
                     .lineLimit(1)
                 
-                Text("月度预算")
+                Text("budget.monthly_limit")
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
                 
@@ -133,7 +130,7 @@ struct BudgetCardView: View {
                 // 已花 / 剩余 两列
                 HStack(spacing: 20) {
                     amountColumn(
-                        title: "已花",
+                        title: String(localized: "budget.spent"),
                         value: spent,
                         color: accentColor
                     )
@@ -142,7 +139,7 @@ struct BudgetCardView: View {
                         .fill(Color.secondary.opacity(0.2))
                         .frame(width: 1, height: 32)
                     amountColumn(
-                        title: isOverBudget ? "已超支" : "剩余",
+                        title: isOverBudget ? String(localized: "budget.over") : String(localized: "budget.remaining"),
                         value: isOverBudget ? spent - monthlyBudget : remaining,
                         color: isOverBudget ? .red : .secondary
                     )
@@ -169,7 +166,7 @@ struct BudgetCardView: View {
                     Text("\(Int(progress * 100))%")
                         .font(.system(size: 16, weight: .bold, design: .rounded))
                         .foregroundStyle(.primary)
-                    Text("已用")
+                    Text("budget.used")
                         .font(.system(size: 9, weight: .medium))
                         .foregroundStyle(.secondary)
                 }
@@ -217,7 +214,7 @@ struct BudgetCardView: View {
             .frame(height: 5)
             
             if isOverBudget {
-                Label("已超出预算", systemImage: "exclamationmark.triangle.fill")
+                Label("budget.exceeded", systemImage: "exclamationmark.triangle.fill")
                     .font(.caption2)
                     .fontWeight(.medium)
                     .foregroundStyle(.red)
@@ -240,7 +237,7 @@ struct BudgetCardView: View {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.currencySymbol = "¥"
-        formatter.locale = Locale(identifier: "zh_CN")
+        formatter.locale = .autoupdatingCurrent
         formatter.maximumFractionDigits = value >= 10_000 ? 0 : 2
         formatter.minimumFractionDigits = value >= 10_000 ? 0 : 2
         return formatter.string(from: NSNumber(value: value)) ?? "¥\(value)"

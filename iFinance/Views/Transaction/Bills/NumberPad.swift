@@ -60,7 +60,7 @@ struct NumberPad: View {
                 
                 ZStack {
                     if note.isEmpty && !isEditingNote {
-                        Text("添加备注...")
+                        Text("bill.note_add")
                             .foregroundColor(.gray)
                             .font(.caption)
                     }
@@ -153,7 +153,7 @@ struct NumberPad: View {
                     Button(action: {
                         onSave?()
                     }) {
-                        Text("完成")
+                        Text("common.done")
                             .font(.title3)
                             .fontWeight(.bold)
                             .foregroundColor(.white)
@@ -318,18 +318,18 @@ struct DatePickerView: View {
     var body: some View {
         NavigationView {
             VStack {
-                DatePicker("选择日期和时间", selection: $selectedDate, displayedComponents: [.date, .hourAndMinute])
+                DatePicker("bill.select_datetime", selection: $selectedDate, displayedComponents: [.date, .hourAndMinute])
                     .datePickerStyle(GraphicalDatePickerStyle())
                     .padding()
                 
                 Spacer()
             }
-            .navigationBarTitle("选择时间", displayMode: .inline)
+            .navigationBarTitle("bill.select_time", displayMode: .inline)
             .navigationBarItems(
-                leading: Button("取消") {
+                leading: Button("auth.cancel") {
                     dismiss()
                 },
-                trailing: Button("确定") {
+                trailing: Button("common.confirm") {
                     onConfirm()
                     dismiss()
                 }
