@@ -110,18 +110,19 @@ struct AddBillView: View {
                 // 固定在底部的数字键盘
                 if showNumberPad {
                     NumberPad(
-                        displayText:  $displayText,
-                        currentOperator:  $currentOperator,
-                        transactionType:  $transactionType,
-                        note:  $note,
-                        selectedDate:  $selectedDate
+                        displayText: $displayText,
+                        currentOperator: $currentOperator,
+                        transactionType: $transactionType,
+                        note: $note,
+                        selectedDate: $selectedDate
                     ) {
                         saveBill()
                         // 解析显示文本获取最终数值
 //                        let result = parseExpression(displayText)
                     }
                     .transition(.move(edge: .bottom))
-                    .background(Color(UIColor.systemBackground).shadow(radius: 10))
+                    .background(Color(UIColor.systemBackground))
+                    .padding(.bottom, -20)
                 }
             }
             .toolbar {
