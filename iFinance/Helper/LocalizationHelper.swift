@@ -1,5 +1,5 @@
 //
-//  LanguageSettingView.swift
+//  LocalizationHelper.swift
 //  iFinance
 //
 //  Created by 刘不易 on 2026/2/25.

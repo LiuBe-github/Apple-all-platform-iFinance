@@ -34,6 +34,8 @@
 "settings.about" = "情報";
 "settings.help_feedback" = "ヘルプとフィードバック";
 "settings.about_us" = "このアプリについて";
+"settings.about_me" = "私について";
+"settings.wechat_section" = "私のWeChat";
 "settings.version" = "バージョン";
 "settings.export_success" = "書き出し成功";
 "settings.export_success_msg" = "CSVが作成されました。共有シートから保存または送信できます。";
@@ -56,6 +58,8 @@
 "settings.build_number" = "ビルド";
 "settings.disclaimer" = "免責事項";
 "settings.disclaimer_text" = "本アプリは個人の家計管理用であり、投資助言ではありません。";
+"settings.wechat_section" = "連絡先";
+"settings.wechat_desc" = "WeChatでスキャン";
 
 "tendency.expense" = "支出トレンド";
 "tendency.income" = "収入トレンド";
@@ -115,6 +119,11 @@
 "bill.type_income" = "収入";
 "bill.type_transfer" = "振替";
 "bill.transfer_todo" = "この機能は開発中です。";
+"bill.transfer_hint" = "振替元と振替先を入力";
+"bill.transfer_from" = "振替元";
+"bill.transfer_to" = "振替先";
+"bill.transfer_swap" = "入替";
+"bill.transfer_account_required" = "振替元と振替先を入力してください。";
 "bill.amount_gt_zero" = "金額は 0 より大きくしてください";
 "bill.choose_category" = "カテゴリを選択してください";
 "bill.save_failed" = "保存に失敗しました";
