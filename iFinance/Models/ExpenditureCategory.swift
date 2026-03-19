@@ -1,5 +1,5 @@
 //
-//  BillCategory.swift
+//  ExpenditureCategory.swift
 //  iFinance
 //
 //  Created by 刘不易 on 2026/1/13.

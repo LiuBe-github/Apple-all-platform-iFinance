@@ -39,6 +39,8 @@ struct AddBillView: View {
     @State private var selectedDate: Date = Date()
     @State private var showingAlert = false
     @State private var alertMessage = ""
+    @State private var transferFrom: String = ""
+    @State private var transferTo: String = ""
     
     var body: some View {
         NavigationStack {
@@ -68,9 +70,35 @@ struct AddBillView: View {
                             }
                             .padding(.horizontal, 8)
                             .padding(.top, -10)
-                        } else { // MARK: 后期完善转账的基本逻辑
-                            Text("bill.transfer_todo")
-                                .padding(.horizontal)
+                        } else {
+                            VStack(alignment: .leading, spacing: 16) {
+                                Text("bill.transfer_hint")
+                                    .font(.footnote)
+                                    .foregroundStyle(.secondary)
+
+                                VStack(spacing: 12) {
+                                    transferField(
+                                        titleKey: "bill.transfer_from",
+                                        text: $transferFrom,
+                                        systemImage: "arrow.up.right"
+                                    )
+
+                                    transferField(
+                                        titleKey: "bill.transfer_to",
+                                        text: $transferTo,
+                                        systemImage: "arrow.down.left"
+                                    )
+                                }
+
+                                Button {
+                                    swap(&transferFrom, &transferTo)
+                                } label: {
+                                    Label("bill.transfer_swap", systemImage: "arrow.left.arrow.right")
+                                }
+                                .buttonStyle(.bordered)
+                                .tint(.blue)
+                            }
+                            .padding(.horizontal)
                         }
                         
                         // 占位符，确保内容不会被底部键盘遮挡
@@ -82,18 +110,19 @@ struct AddBillView: View {
                 // 固定在底部的数字键盘
                 if showNumberPad {
                     NumberPad(
-                        displayText:  $displayText,
-                        currentOperator:  $currentOperator,
-                        transactionType:  $transactionType,
-                        note:  $note,
-                        selectedDate:  $selectedDate
+                        displayText: $displayText,
+                        currentOperator: $currentOperator,
+                        transactionType: $transactionType,
+                        note: $note,
+                        selectedDate: $selectedDate
                     ) {
                         saveBill()
                         // 解析显示文本获取最终数值
 //                        let result = parseExpression(displayText)
                     }
                     .transition(.move(edge: .bottom))
-                    .background(Color(UIColor.systemBackground).shadow(radius: 10))
+                    .background(Color(UIColor.systemBackground))
+                    .padding(.bottom, -20)
                 }
             }
             .toolbar {
@@ -146,6 +175,11 @@ struct AddBillView: View {
             }
             categoryString = cat.rawValue
         case .transfer:
+            guard !transferFrom.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                  !transferTo.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                showAlert(message: String(localized: "bill.transfer_account_required"))
+                return
+            }
             categoryString = "transfer"
         }
         
@@ -159,7 +193,16 @@ struct AddBillView: View {
         newBill.type = transactionType == .expenditure ? "expenditure" :
         transactionType == .income ? "income" : "transfer"
         newBill.category = categoryString       // 可为 nil
-        newBill.note = note.isEmpty ? nil : note // 可为 nil
+        if transactionType == .transfer {
+            let route = "\(transferFrom) → \(transferTo)"
+            if note.isEmpty {
+                newBill.note = route
+            } else {
+                newBill.note = "\(note) · \(route)"
+            }
+        } else {
+            newBill.note = note.isEmpty ? nil : note
+        }
         newBill.createdAt = Date()
         newBill.createdBy = "user"
         newBill.updatedAt = Date()
@@ -189,6 +232,27 @@ struct AddBillView: View {
         formatter.dateStyle = .medium
         formatter.timeStyle = .short
         return formatter.string(from: date)
+    }
+
+    private func transferField(titleKey: LocalizedStringKey, text: Binding<String>, systemImage: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: systemImage)
+                .foregroundStyle(.blue)
+                .frame(width: 22)
+            Text(titleKey)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            TextField("", text: text)
+                .textInputAutocapitalization(.words)
+                .disableAutocorrection(true)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color(UIColor.secondarySystemBackground))
+        )
     }
     
     // 解析表达式并计算结果

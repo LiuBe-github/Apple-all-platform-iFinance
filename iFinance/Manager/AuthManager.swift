@@ -1,3 +1,10 @@
+//
+//  AuthManager.swift
+//  iFinance
+//
+//  Created by 刘不易 on 2026/2/25.
+//
+
 import Foundation
 import Combine
 import CryptoKit
@@ -44,7 +51,7 @@ final class AuthManager: ObservableObject {
     }
 
     func bootstrap() {
-        nickname = defaults.string(forKey: Keys.nickname) ?? "用户123"
+        nickname = defaults.string(forKey: Keys.nickname) ?? "User"
         currentEmail = defaults.string(forKey: Keys.email) ?? ""
         currentPhone = defaults.string(forKey: Keys.phone) ?? ""
         if let providerRaw = defaults.string(forKey: Keys.provider) {

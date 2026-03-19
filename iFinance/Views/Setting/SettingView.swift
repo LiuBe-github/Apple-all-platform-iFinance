@@ -48,7 +48,7 @@ struct SettingView: View {
     @State private var resultMessage = ""
     @State private var showResultAlert = false
 
-    private let feedbackEmail = "support@ifinance.app"
+    private let feedbackEmail = "liubeol@outlook.com"
 
     private var appVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? String(localized: "common.unknown")
@@ -115,7 +115,7 @@ struct SettingView: View {
                         NavigationLink {
                             AboutAppView(version: appVersion, build: buildNumber)
                         } label: {
-                            Label("settings.about_us", systemImage: "info.circle")
+                            Label("settings.about_me", systemImage: "info.circle")
                         }
 
                         HStack {
@@ -415,8 +415,23 @@ private struct AboutAppView: View {
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
+
+            Section("settings.wechat_section") {
+                VStack(spacing: 8) {
+                    Image("MyWeChat")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 180, height: 180)
+                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    Text("settings.wechat_desc")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 6)
+            }
         }
-        .navigationTitle("settings.about_us")
+        .navigationTitle("settings.about_me")
         .navigationBarTitleDisplayMode(.inline)
     }
 }

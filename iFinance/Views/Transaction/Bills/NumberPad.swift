@@ -15,72 +15,87 @@ struct NumberPad: View {
     @Binding var selectedDate: Date
     @State private var isEditingNote = false
     @State private var showDatePicker = false
+    @State private var keyboardHeight: CGFloat = 0
+    @FocusState private var isNoteFocused: Bool
     
     let onSave: (() -> Void)?
     
     var body: some View {
         VStack(spacing: 12) {
-            // 金额输入框
-            HStack {
-                Text("¥")
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                
-                TextField("", text: $displayText)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                    .keyboardType(.decimalPad)
-                    .foregroundColor({
-                        switch transactionType {
-                        case .expenditure: return .red
-                        case .income: return .green
-                        case .transfer: return .yellow
-                        }
-                    }())
-            }
-            .padding(.horizontal)
-            
-            // 时间和备注
-            HStack {
-                Button(action: {
-                    showDatePicker = true
-                }) {
-                    HStack {
-                        Text(getFormattedDateString(selectedDate))
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        Image(systemName: "chevron.down")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
+            VStack(spacing: 10) {
+                HStack(spacing: 8) {
+                    Text("¥")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.secondary)
+
+                    Text(displayText)
+                        .font(.system(size: 30, weight: .semibold, design: .rounded))
+                        .foregroundColor({
+                            switch transactionType {
+                            case .expenditure: return .red
+                            case .income: return .green
+                            case .transfer: return .orange
+                            }
+                        }())
+
+                    Spacer()
                 }
-                
-                Spacer()
-                
-                ZStack {
-                    if note.isEmpty && !isEditingNote {
-                        Text("bill.note_add")
-                            .foregroundColor(.gray)
-                            .font(.caption)
+
+                Divider()
+                    .foregroundStyle(.secondary.opacity(0.2))
+
+                HStack {
+                    Button(action: {
+                        showDatePicker = true
+                    }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "clock")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Text(getFormattedDateString(selectedDate))
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
                     }
-                    
-                    TextField("", text: $note)
-                        .font(.caption)
-                        .foregroundColor(.primary)
-                        .onTapGesture {
-                            isEditingNote = true
+
+                    Spacer()
+
+                    ZStack(alignment: .leading) {
+                        if note.isEmpty && !isEditingNote {
+                            Text("bill.note_add")
+                                .foregroundColor(.gray)
+                                .font(.caption)
                         }
-                        .onSubmit {
-                            isEditingNote = false
-                        }
+
+                        TextField("", text: $note)
+                            .font(.caption)
+                            .foregroundColor(.primary)
+                            .focused($isNoteFocused)
+                            .onTapGesture {
+                                isEditingNote = true
+                                isNoteFocused = true
+                            }
+                            .onSubmit {
+                                isEditingNote = false
+                                isNoteFocused = false
+                            }
+                    }
+                    .frame(maxWidth: 140, alignment: .trailing)
+
+                    Image(systemName: "chevron.up")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
                 }
-                .frame(maxWidth: 120)
             }
-            .padding(.horizontal)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(Color.white)
+            )
             
-            // 数字键盘
-            VStack(spacing: 8) {
+            VStack(spacing: 10) {
                 // 第一行
                 HStack(spacing: 8) {
                     ForEach(1...3, id: \.self) { num in
@@ -159,15 +174,37 @@ struct NumberPad: View {
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
-                            .background(Color.blue)
-                            .cornerRadius(8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .fill(Color(red: 0.95, green: 0.43, blue: 0.35))
+                            )
                     }
                 }
             }
-            .padding(.horizontal)
+            .padding(.horizontal, 4)
         }
-        .padding(.vertical)
-        .background(Color(UIColor.systemGroupedBackground))
+        .padding(.top, 10)
+        .padding(.horizontal, 14)
+        .padding(.bottom, 0)
+        .background(
+            Color.white
+                .clipShape(
+                    RoundedRectangle(cornerRadius: 26, style: .continuous)
+                )
+        )
+        .padding(.horizontal, 0)
+        .padding(.bottom, keyboardHeight)
+        .ignoresSafeArea(edges: .bottom)
+        .animation(.easeOut(duration: 0.2), value: keyboardHeight)
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillChangeFrameNotification)) { note in
+            guard let frame = note.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
+            let screenHeight = UIScreen.main.bounds.height
+            let overlap = max(0, screenHeight - frame.origin.y)
+            keyboardHeight = overlap == 0 ? 0 : overlap - 12
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+            keyboardHeight = 0
+        }
         .sheet(isPresented: $showDatePicker) {
             DatePickerView(selectedDate: $selectedDate, onConfirm: {
                 showDatePicker = false
@@ -263,9 +300,10 @@ struct NumberButton: View {
     var body: some View {
         Button(action: action) {
             ZStack {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color(UIColor.systemGray5))
-                    .frame(height: 50)
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color(UIColor.systemBackground).opacity(0.94))
+                    .frame(height: 54)
+                    .shadow(color: .clear, radius: 0, x: 0, y: 0)
                 
                 if let systemImage = systemImage {
                     Image(systemName: systemImage)
@@ -273,13 +311,12 @@ struct NumberButton: View {
                 } else {
                     if value == "." {
                         Text(value)
-                            .font(.largeTitle)
-                            .fontWeight(.medium)
-                            .foregroundStyle(.black)
+                            .font(.title2)
+                            .fontWeight(.semibold)
                     } else {
                         Text(value)
                             .font(.title3)
-                            .fontWeight(.medium)
+                            .fontWeight(.semibold)
                     }
                 }
             }
@@ -296,14 +333,15 @@ struct OperationButton: View {
     var body: some View {
         Button(action: action) {
             ZStack {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(color.opacity(0.2))
-                    .frame(height: 50)
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color(UIColor.systemBackground).opacity(0.94))
+                    .frame(height: 54)
+                    .shadow(color: .clear, radius: 0, x: 0, y: 0)
                 
                 Text(symbol)
                     .font(.title3)
                     .fontWeight(.bold)
-                    .foregroundColor(color)
+                    .foregroundColor(.primary)
             }
         }
         .frame(maxWidth: .infinity)

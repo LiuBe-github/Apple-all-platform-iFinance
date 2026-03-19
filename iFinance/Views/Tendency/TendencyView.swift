@@ -39,8 +39,7 @@ struct TendencyView: View {
     @State private var expenseScrollPosition: Date = Date().startOfDay
     @State private var incomeScrollPosition: Date = Date().startOfDay
 
-    @State private var heatmapDates: [Date] = buildHeatmapDates()
-    @State private var datesWithBill: Set<Date> = []
+    @State private var dailyBillCounts: [Date: Int] = [:]
 
     private let trailingDays = 365
 
@@ -63,6 +62,7 @@ struct TendencyView: View {
                             titleKey: "tendency.expense",
                             accent: .pink,
                             series: expenseSeries,
+                            billType: "expenditure",
                             span: $expenseSpan,
                             selectedDate: $expenseSelection,
                             scrollPosition: $expenseScrollPosition
@@ -72,6 +72,7 @@ struct TendencyView: View {
                             titleKey: "tendency.income",
                             accent: .mint,
                             series: incomeSeries,
+                            billType: "income",
                             span: $incomeSpan,
                             selectedDate: $incomeSelection,
                             scrollPosition: $incomeScrollPosition
@@ -87,26 +88,8 @@ struct TendencyView: View {
             .navigationTitle("tab.tendency")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    NavigationLink {
-                        ProfileView()
-                    } label: {
-                        Group {
-                            if let avatarData = avatarData,
-                               let uiImage = UIImage(data: avatarData) {
-                                Image(uiImage: uiImage)
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                                    .frame(width: 36, height: 36)
-                                    .clipShape(Circle())
-                            } else {
-                                Image(systemName: "person.circle.fill")
-                                    .font(.system(size: 28))
-                            }
-                        }
-                        .foregroundStyle(.blue)
-                        .accessibilityLabel("header.edit_profile")
-                    }
+                ToolbarItem(placement: .principal) {
+                    HeaderView(isTransactionView: false)
                 }
             }
             .onAppear(perform: loadDatesWithBill)
@@ -121,6 +104,7 @@ struct TendencyView: View {
         titleKey: LocalizedStringKey,
         accent: Color,
         series: [DailyAmount],
+        billType: String,
         span: Binding<SpanOption>,
         selectedDate: Binding<Date?>,
         scrollPosition: Binding<Date>
@@ -130,6 +114,9 @@ struct TendencyView: View {
             around: scrollPosition.wrappedValue,
             days: span.wrappedValue.days
         )
+        let dailySeries = span.wrappedValue.days == 1
+            ? buildHourlySeries(for: billType, on: scrollPosition.wrappedValue)
+            : series
 
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -153,9 +140,9 @@ struct TendencyView: View {
                 selectedDate.wrappedValue = nil
             }
 
-            metricsView(series: visibleSeries, accent: accent)
+            metricsView(series: span.wrappedValue.days == 1 ? dailySeries : visibleSeries, accent: accent)
 
-            if let selected = selectedPoint(in: visibleSeries, around: selectedDate.wrappedValue) {
+            if let selected = selectedPoint(in: span.wrappedValue.days == 1 ? dailySeries : visibleSeries, around: selectedDate.wrappedValue) {
                 Text(selectedText(for: selected))
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -171,7 +158,7 @@ struct TendencyView: View {
                     .frame(maxWidth: .infinity, minHeight: 220)
             } else {
                 continuousChart(
-                    series: series,
+                    series: span.wrappedValue.days == 1 ? dailySeries : series,
                     accent: accent,
                     visibleDays: span.wrappedValue.days,
                     selectedDate: selectedDate,
@@ -193,6 +180,8 @@ struct TendencyView: View {
         scrollPosition: Binding<Date>
     ) -> some View {
         let visibleLength = TimeInterval(visibleDays * 86_400)
+        let scrollStart = series.first?.date ?? Date().startOfDay
+        let scrollEnd = series.last?.date ?? Date().startOfDay
 
         Chart {
             ForEach(series) { point in
@@ -250,27 +239,76 @@ struct TendencyView: View {
         .chartScrollableAxes(.horizontal)
         .chartScrollPosition(x: scrollPosition)
         .chartXVisibleDomain(length: visibleLength)
+        .chartXScale(domain: scrollStart...scrollEnd)
         .chartXAxis {
-            if visibleDays <= 31 {
-                AxisMarks(values: .stride(by: .day, count: visibleDays <= 7 ? 1 : 7)) { _ in
+            if visibleDays == 1 {
+                let start = scrollPosition.wrappedValue.startOfDay
+                let cal = Calendar.current
+                let values: [Date] = [0, 6, 12, 18].compactMap { cal.date(byAdding: .hour, value: $0, to: start) }
+                AxisMarks(values: values) { value in
                     AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 3]))
                         .foregroundStyle(.secondary.opacity(0.22))
-                    AxisValueLabel(format: .dateTime.month().day())
-                        .font(.caption2)
+                    AxisValueLabel {
+                        if let date = value.as(Date.self) {
+                            Text(hourLabel(for: date))
+                                .font(.caption2)
+                        }
+                    }
+                }
+            } else if visibleDays <= 7 {
+                AxisMarks(values: .stride(by: .day, count: 1)) { value in
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 3]))
+                        .foregroundStyle(.secondary.opacity(0.22))
+                    AxisValueLabel {
+                        if let date = value.as(Date.self) {
+                            Text(weekdayLabel(for: date))
+                                .font(.caption2)
+                        }
+                    }
+                }
+            } else if visibleDays <= 31 {
+                AxisMarks(values: .stride(by: .day, count: 7)) { value in
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 3]))
+                        .foregroundStyle(.secondary.opacity(0.22))
+                    AxisValueLabel {
+                        if let date = value.as(Date.self) {
+                            Text(dayOfMonthLabel(for: date))
+                                .font(.caption2)
+                        }
+                    }
                 }
             } else if visibleDays <= 180 {
-                AxisMarks(values: .stride(by: .month, count: 1)) { _ in
+                AxisMarks(values: .stride(by: .month, count: 1)) { value in
                     AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 3]))
                         .foregroundStyle(.secondary.opacity(0.22))
-                    AxisValueLabel(format: .dateTime.month().day())
-                        .font(.caption2)
+                    AxisValueLabel {
+                        if let date = value.as(Date.self) {
+                            Text(monthLabel(for: date, withSuffix: true))
+                                .font(.caption2)
+                        }
+                    }
+                }
+            } else if visibleDays < 365 {
+                AxisMarks(values: .stride(by: .month, count: 2)) { value in
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 3]))
+                        .foregroundStyle(.secondary.opacity(0.22))
+                    AxisValueLabel {
+                        if let date = value.as(Date.self) {
+                            Text(monthLabel(for: date, withSuffix: true))
+                                .font(.caption2)
+                        }
+                    }
                 }
             } else {
-                AxisMarks(values: .stride(by: .month, count: 2)) { _ in
+                AxisMarks(values: .stride(by: .month, count: 1)) { value in
                     AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 3]))
                         .foregroundStyle(.secondary.opacity(0.22))
-                    AxisValueLabel(format: .dateTime.year().month())
-                        .font(.caption2)
+                    AxisValueLabel {
+                        if let date = value.as(Date.self) {
+                            Text(monthLabel(for: date, withSuffix: false))
+                                .font(.caption2)
+                        }
+                    }
                 }
             }
         }
@@ -290,16 +328,24 @@ struct TendencyView: View {
                 Rectangle()
                     .fill(.clear)
                     .contentShape(Rectangle())
-                    .gesture(
+                    .simultaneousGesture(
                         DragGesture(minimumDistance: 0)
                             .onChanged { value in
                                 guard let frame = proxy.plotFrame else { return }
-                                let x = value.location.x - geometry[frame].origin.x
-                                guard x >= 0, x <= geometry[frame].width,
-                                      let date: Date = proxy.value(atX: x) else {
+                                let plotOrigin = geometry[frame].origin
+                                let plotSize = geometry[frame].size
+                                let x = value.location.x - plotOrigin.x
+                                let y = value.location.y - plotOrigin.y
+                                guard x >= 0, x <= plotSize.width, y >= 0, y <= plotSize.height,
+                                      let date: Date = proxy.value(atX: x),
+                                      let nearest = selectedPoint(in: series, around: date) else {
                                     return
                                 }
-                                selectedDate.wrappedValue = date
+                                let px = proxy.position(forX: nearest.date) ?? x
+                                let dx = px - x
+                                if dx * dx <= 26 * 26 {
+                                    selectedDate.wrappedValue = nearest.date
+                                }
                             }
                     )
             }
@@ -356,43 +402,63 @@ struct TendencyView: View {
                     .foregroundStyle(.secondary)
             }
 
-            ScrollViewReader { proxy in
-                ScrollView(.horizontal, showsIndicators: false) {
-                    LazyHGrid(
-                        rows: Array(repeating: GridItem(.fixed(20), spacing: 4), count: 7),
-                        alignment: .top,
-                        spacing: 6
-                    ) {
-                        ForEach(heatmapDates, id: \.self) { date in
-                            heatCellView(for: date).id(date.startOfDay)
-                        }
-                    }
-                    .padding(.vertical, 6)
-                }
-                .onAppear {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
-                        proxy.scrollTo(Date().startOfDay, anchor: .trailing)
-                    }
-                }
-            }
-            .frame(height: 170)
+            githubHeatmapView
         }
         .padding(16)
         .appGlassCard(cornerRadius: 24)
     }
 
-    private func heatCellView(for date: Date) -> some View {
-        let has = datesWithBill.contains(date.startOfDay)
-        let day = Calendar.current.component(.day, from: date)
-        return ZStack {
-            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                .fill(has ? Color.blue.opacity(0.82) : Color(UIColor.systemGray5).opacity(0.8))
-            Text("\(day)")
-                .font(.caption2)
-                .fontWeight(has ? .semibold : .regular)
-                .foregroundStyle(has ? .white : .secondary)
+    private var githubHeatmapView: some View {
+        let weeks = buildHeatmapWeeks()
+        let monthLabels = buildHeatmapMonthLabels(from: weeks)
+
+        return GeometryReader { geo in
+            ScrollViewReader { proxy in
+                VStack(alignment: .leading, spacing: 8) {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack(spacing: 0) {
+                                ForEach(monthLabels, id: \.offset) { label in
+                                    Text(label.title)
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
+                                        .frame(width: CGFloat(label.span) * 16, alignment: .leading)
+                                }
+                            }
+
+                            HStack(alignment: .top, spacing: 4) {
+                                ForEach(weeks.indices, id: \.self) { weekIndex in
+                                    VStack(spacing: 4) {
+                                        ForEach(weeks[weekIndex].indices, id: \.self) { dayIndex in
+                                            heatCellView(for: weeks[weekIndex][dayIndex])
+                                        }
+                                    }
+                                    .id(weekIndex)
+                                }
+                            }
+                            .padding(.vertical, 4)
+                        }
+                        .frame(minWidth: geo.size.width, alignment: .leading)
+                    }
+                    .onAppear {
+                        if let lastIndex = weeks.indices.last {
+                            proxy.scrollTo(lastIndex, anchor: .trailing)
+                        }
+                    }
+                }
+                .frame(width: geo.size.width, alignment: .leading)
+                .clipped()
+            }
         }
-        .frame(width: 20, height: 20)
+        .frame(height: 7 * 12 + 28)
+    }
+
+    private func heatCellView(for date: Date) -> some View {
+        let level = heatLevel(for: date)
+        let color = heatColor(level: level, date: date)
+        return RoundedRectangle(cornerRadius: 3, style: .continuous)
+            .fill(color)
+            .frame(width: 12, height: 12)
     }
 
     private func buildDailySeries(for type: String, trailingDays: Int) -> [DailyAmount] {
@@ -434,16 +500,38 @@ struct TendencyView: View {
         return series.filter { $0.date >= start && $0.date <= end }
     }
 
+    private func buildHourlySeries(for billType: String, on date: Date) -> [DailyAmount] {
+        let cal = Calendar.current
+        let start = date.startOfDay
+        return (0..<24).compactMap { hour in
+            guard let hourDate = cal.date(byAdding: .hour, value: hour, to: start) else { return nil }
+            return DailyAmount(date: hourDate, value: hourlyTotal(for: billType, hourStart: hourDate))
+        }
+    }
+
+    private func hourlyTotal(for billType: String, hourStart: Date) -> Double {
+        let cal = Calendar.current
+        guard let hourEnd = cal.date(byAdding: .hour, value: 1, to: hourStart) else { return 0 }
+        return allBills.reduce(0) { total, bill in
+            guard bill.type == billType,
+                  let date = bill.date,
+                  date >= hourStart,
+                  date < hourEnd else { return total }
+            return total + (bill.amount?.doubleValue ?? 0)
+        }
+    }
+
     private func loadDatesWithBill() {
         let cal = Calendar.current
-        let startDate = (heatmapDates.first ?? Date()).startOfDay
-        datesWithBill = Set(
-            allBills.compactMap { bill -> Date? in
-                guard let date = bill.date else { return nil }
-                let day = cal.startOfDay(for: date)
-                return day >= startDate ? day : nil
-            }
-        )
+        let startDate = Calendar.current.date(byAdding: .day, value: -364, to: Date().startOfDay) ?? Date().startOfDay
+        var counts: [Date: Int] = [:]
+        for bill in allBills {
+            guard let date = bill.date else { continue }
+            let day = cal.startOfDay(for: date)
+            guard day >= startDate else { continue }
+            counts[day, default: 0] += 1
+        }
+        dailyBillCounts = counts
     }
 
     private func formatAmount(_ value: Double) -> String {
@@ -455,11 +543,135 @@ struct TendencyView: View {
         return formatter.string(from: NSNumber(value: value)) ?? String(format: "%.1f", value)
     }
 
-    private static func buildHeatmapDates() -> [Date] {
-        let cal = Calendar.current
-        let today = Date().startOfDay
-        let start = cal.date(byAdding: .day, value: -364, to: today)!
-        return (0...364).compactMap { cal.date(byAdding: .day, value: $0, to: start)?.startOfDay }
+    private func buildHeatmapWeeks() -> [[Date]] {
+        var cal = Calendar.current
+        cal.firstWeekday = 2
+        let end = Date().startOfDay
+        let start = cal.date(byAdding: .day, value: -364, to: end) ?? end
+        let startOfWeek = cal.date(from: cal.dateComponents([.yearForWeekOfYear, .weekOfYear], from: start)) ?? start
+        let weeks = 53
+
+        return (0..<weeks).map { weekOffset in
+            let weekStart = cal.date(byAdding: .weekOfYear, value: weekOffset, to: startOfWeek) ?? startOfWeek
+            return (0..<7).compactMap { dayOffset in
+                cal.date(byAdding: .day, value: dayOffset, to: weekStart) ?? weekStart
+            }
+        }
+    }
+
+    private func buildHeatmapMonthLabels(from weeks: [[Date]]) -> [(offset: Int, span: Int, title: String)] {
+        guard !weeks.isEmpty else { return [] }
+        var labels: [(offset: Int, span: Int, title: String)] = []
+        var currentMonth: Int?
+        var currentStart = 0
+
+        for (index, week) in weeks.enumerated() {
+            let month = Calendar.current.component(.month, from: week.first ?? Date())
+            if currentMonth == nil {
+                currentMonth = month
+                currentStart = index
+            } else if month != currentMonth {
+                let span = max(1, index - currentStart)
+                let title = monthName(for: currentMonth ?? month)
+                labels.append((offset: currentStart, span: span, title: title))
+                currentMonth = month
+                currentStart = index
+            }
+        }
+        if let currentMonth {
+            let span = max(1, weeks.count - currentStart)
+            labels.append((offset: currentStart, span: span, title: monthName(for: currentMonth)))
+        }
+        return labels
+    }
+
+    private func monthName(for month: Int) -> String {
+        var comps = DateComponents()
+        comps.month = month
+        let date = Calendar.current.date(from: comps) ?? Date()
+        let formatter = DateFormatter()
+        formatter.locale = .autoupdatingCurrent
+        formatter.dateFormat = "MMM"
+        return formatter.string(from: date)
+    }
+
+    private func heatLevel(for date: Date) -> Int {
+        let day = date.startOfDay
+        let count = dailyBillCounts[day, default: 0]
+        if count == 0 { return 0 }
+        if count <= 1 { return 1 }
+        if count <= 3 { return 2 }
+        if count <= 6 { return 3 }
+        return 4
+    }
+
+    private func heatColor(level: Int, date: Date) -> Color {
+        let base: Color
+        switch level {
+        case 0: base = Color(UIColor.systemGray5)
+        case 1: base = Color(red: 0.79, green: 0.88, blue: 1.0)
+        case 2: base = Color(red: 0.56, green: 0.75, blue: 0.98)
+        case 3: base = Color(red: 0.31, green: 0.56, blue: 0.95)
+        default: base = Color(red: 0.15, green: 0.42, blue: 0.86)
+        }
+        return date.startOfDay > Date().startOfDay ? base.opacity(0.35) : base
+    }
+
+    private func hourLabel(for date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = .autoupdatingCurrent
+        formatter.dateFormat = "H"
+        let hour = formatter.string(from: date)
+        if isChineseLocale {
+            return "\(hour)时"
+        }
+        return "\(hour):00"
+    }
+
+    private func weekdayLabel(for date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = .autoupdatingCurrent
+        formatter.dateFormat = isChineseLocale ? "EEE" : "EEE"
+        return formatter.string(from: date)
+    }
+
+    private func dayOfMonthLabel(for date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = .autoupdatingCurrent
+        formatter.dateFormat = "d"
+        let day = formatter.string(from: date)
+        if isChineseLocale {
+            return "\(day)日"
+        }
+        return day
+    }
+
+    private func monthLabel(for date: Date, withSuffix: Bool) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = .autoupdatingCurrent
+        formatter.dateFormat = "M"
+        let month = formatter.string(from: date)
+        if isChineseLocale, withSuffix {
+            return "\(month)月"
+        }
+        if isChineseLocale {
+            return month
+        }
+        if withSuffix {
+            formatter.dateFormat = "MMM"
+            return formatter.string(from: date)
+        }
+        return month
+    }
+
+    private var isChineseLocale: Bool {
+        if #available(iOS 16, *) {
+            let lang = Locale.autoupdatingCurrent.language.languageCode?.identifier ?? ""
+            return lang.hasPrefix("zh")
+        } else {
+            let lang = Locale.autoupdatingCurrent.languageCode ?? ""
+            return lang.hasPrefix("zh")
+        }
     }
 }
 

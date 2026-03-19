@@ -34,6 +34,8 @@
 "settings.about" = "About";
 "settings.help_feedback" = "Help & Feedback";
 "settings.about_us" = "About Us";
+"settings.about_me" = "About Me";
+"settings.wechat_section" = "My WeChat";
 "settings.version" = "Version";
 "settings.export_success" = "Export Success";
 "settings.export_success_msg" = "CSV is ready. You can save or send it from the share sheet.";
@@ -56,6 +58,8 @@
 "settings.build_number" = "Build";
 "settings.disclaimer" = "Disclaimer";
 "settings.disclaimer_text" = "This app is for personal bookkeeping only and not financial advice.";
+"settings.wechat_section" = "Contact";
+"settings.wechat_desc" = "Scan with WeChat";
 
 "tendency.expense" = "Expense Trend";
 "tendency.income" = "Income Trend";
@@ -115,6 +119,11 @@
 "bill.type_income" = "Income";
 "bill.type_transfer" = "Transfer";
 "bill.transfer_todo" = "This feature is under development.";
+"bill.transfer_hint" = "Enter from and to accounts";
+"bill.transfer_from" = "From";
+"bill.transfer_to" = "To";
+"bill.transfer_swap" = "Swap";
+"bill.transfer_account_required" = "Please enter from and to accounts.";
 "bill.amount_gt_zero" = "Amount must be greater than 0";
 "bill.choose_category" = "Please choose a category";
 "bill.save_failed" = "Failed to save bill";

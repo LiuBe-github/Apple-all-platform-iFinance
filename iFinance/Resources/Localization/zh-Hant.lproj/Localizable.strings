@@ -34,6 +34,8 @@
 "settings.about" = "關於";
 "settings.help_feedback" = "幫助與反饋";
 "settings.about_us" = "關於我們";
+"settings.about_me" = "關於我";
+"settings.wechat_section" = "我的微信";
 "settings.version" = "版本資訊";
 "settings.export_success" = "匯出成功";
 "settings.export_success_msg" = "CSV 檔案已準備好，可在分享面板中保存或傳送。";
@@ -56,6 +58,8 @@
 "settings.build_number" = "構建號";
 "settings.disclaimer" = "聲明";
 "settings.disclaimer_text" = "本應用僅用於個人記帳管理，不構成任何財務建議。";
+"settings.wechat_section" = "聯絡我";
+"settings.wechat_desc" = "微信掃碼新增";
 
 "tendency.expense" = "支出趨勢";
 "tendency.income" = "收入趨勢";
@@ -115,6 +119,11 @@
 "bill.type_income" = "收入";
 "bill.type_transfer" = "轉帳";
 "bill.transfer_todo" = "此功能開發中，敬請期待";
+"bill.transfer_hint" = "填寫轉出與轉入帳戶";
+"bill.transfer_from" = "轉出";
+"bill.transfer_to" = "轉入";
+"bill.transfer_swap" = "交換";
+"bill.transfer_account_required" = "請填寫轉出與轉入帳戶";
 "bill.amount_gt_zero" = "金額必須大於 0";
 "bill.choose_category" = "請選擇分類";
 "bill.save_failed" = "保存失敗";

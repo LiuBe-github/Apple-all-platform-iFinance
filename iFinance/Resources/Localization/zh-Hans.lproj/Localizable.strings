@@ -75,6 +75,8 @@
 "settings.about" = "关于";
 "settings.help_feedback" = "帮助与反馈";
 "settings.about_us" = "关于我们";
+"settings.about_me" = "关于我";
+"settings.wechat_section" = "我的微信";
 "settings.version" = "版本信息";
 "settings.contact" = "联系我们";
 "settings.export_success" = "导出成功";
@@ -98,11 +100,18 @@
 "settings.build_number" = "构建号";
 "settings.disclaimer" = "声明";
 "settings.disclaimer_text" = "本应用仅用于个人记账管理，不构成任何财务建议。";
+"settings.wechat_section" = "联系我";
+"settings.wechat_desc" = "微信扫码添加";
 
 "bill.type_expenditure" = "支出";
 "bill.type_income" = "收入";
 "bill.type_transfer" = "转账";
 "bill.transfer_todo" = "此功能还在开发当中哦！敬请期待！";
+"bill.transfer_hint" = "填写转出与转入账户";
+"bill.transfer_from" = "转出";
+"bill.transfer_to" = "转入";
+"bill.transfer_swap" = "交换";
+"bill.transfer_account_required" = "请填写转出与转入账户";
 "bill.amount_gt_zero" = "金额必须大于 0";
 "bill.choose_category" = "请选择分类";
 "bill.save_failed" = "保存失败，请查看控制台日志";
