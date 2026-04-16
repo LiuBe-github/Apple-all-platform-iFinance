@@ -8,31 +8,86 @@
 import SwiftUI
 internal import CoreData
 
+// MARK: - 时间范围枚举
+enum TimeRange: String, CaseIterable {
+    case today = "本日"
+    case thisWeek = "本周"
+    case thisMonth = "本月"
+    case thisYear = "本年"
+    
+    var dateRange: (start: Date, end: Date) {
+        let calendar = Calendar.current
+        let now = Date()
+        
+        switch self {
+        case .today:
+            let start = calendar.startOfDay(for: now)
+            return (start, now)
+        case .thisWeek:
+            let start = calendar.dateInterval(of: .weekOfYear, for: now)?.start ?? now
+            return (start, now)
+        case .thisMonth:
+            let start = calendar.dateInterval(of: .month, for: now)?.start ?? now
+            return (start, now)
+        case .thisYear:
+            let start = calendar.dateInterval(of: .year, for: now)?.start ?? now
+            return (start, now)
+        }
+    }
+}
+
 struct BillsCardView: View {
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \Bill.date, ascending: false)],
         animation: .default
     ) private var bills: FetchedResults<Bill>
     
+    @State private var selectedTimeRange: TimeRange = .thisMonth
+    
+    // MARK: - 按时间范围过滤
+    private var filteredBills: [Bill] {
+        let range = selectedTimeRange.dateRange
+        return bills.filter { bill in
+            guard let date = bill.date else { return false }
+            return date >= range.start && date <= range.end
+        }
+    }
+    
     // MARK: - 按日分组
     private var groupedBills: [(date: Date, bills: [Bill])] {
-        guard !bills.isEmpty else { return [] }
-        let grouped = Dictionary(grouping: bills) { bill in
+        guard !filteredBills.isEmpty else { return [] }
+        let grouped = Dictionary(grouping: filteredBills) { bill in
             Calendar.current.startOfDay(for: bill.date ?? Date())
         }
         return grouped.sorted { $0.key > $1.key }.map { ($0.key, $0.value) }
     }
     
     var body: some View {
-        if groupedBills.isEmpty {
-            emptyState
-        } else {
-            VStack(spacing: 12) {
+        VStack(spacing: 12) {
+            // 时间范围选择器
+            timeRangePicker
+            
+            // 账单列表
+            if groupedBills.isEmpty {
+                emptyState
+            } else {
                 ForEach(groupedBills, id: \.date) { group in
                     DayGroupCard(date: group.date, bills: group.bills)
                 }
             }
         }
+    }
+    
+    // MARK: - 时间范围选择器
+    private var timeRangePicker: some View {
+        Picker("时间范围", selection: $selectedTimeRange) {
+            ForEach(TimeRange.allCases, id: \.self) { range in
+                Text(range.rawValue).tag(range)
+            }
+        }
+        .pickerStyle(.segmented)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
     }
     
     private var emptyState: some View {
