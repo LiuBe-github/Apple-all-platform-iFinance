@@ -34,10 +34,19 @@ private struct RingProgressView: View {
 struct BudgetCardView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.colorScheme) private var colorScheme
-    
+
     @AppStorage("monthly_budget_amount") private var monthlyBudget: Double = 0.0
-    
+
     @FetchRequest private var currentMonthBills: FetchedResults<Bill>
+
+    // MARK: - 静态 NumberFormatter（避免每次渲染都新建）
+    private static let currencyFormatter: NumberFormatter = {
+        let f = NumberFormatter()
+        f.numberStyle = .currency
+        f.currencySymbol = "¥"
+        f.locale = .autoupdatingCurrent
+        return f
+    }()
     
     init() {
         let calendar = Calendar.current
@@ -234,13 +243,9 @@ struct BudgetCardView: View {
     
     // MARK: 金额格式化（中文，带千分位）
     private func formatted(_ value: Double) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencySymbol = "¥"
-        formatter.locale = .autoupdatingCurrent
-        formatter.maximumFractionDigits = value >= 10_000 ? 0 : 2
-        formatter.minimumFractionDigits = value >= 10_000 ? 0 : 2
-        return formatter.string(from: NSNumber(value: value)) ?? "¥\(value)"
+        Self.currencyFormatter.maximumFractionDigits = value >= 10_000 ? 0 : 2
+        Self.currencyFormatter.minimumFractionDigits = value >= 10_000 ? 0 : 2
+        return Self.currencyFormatter.string(from: NSNumber(value: value)) ?? "¥\(value)"
     }
 }
 

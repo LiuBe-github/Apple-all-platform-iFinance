@@ -16,6 +16,15 @@ struct BudgetView: View {
     @FetchRequest private var currentMonthExpenditures: FetchedResults<Bill>
     @AppStorage("monthly_budget_amount") private var monthlyBudget: Double = 3000.0
     
+    // MARK: - 静态格式化器
+    private static let currencyFormatter: NumberFormatter = {
+        let f = NumberFormatter()
+        f.numberStyle = .currency
+        f.currencySymbol = "¥"
+        f.locale = .autoupdatingCurrent
+        return f
+    }()
+    
     // 修改预算相关状态
     @State private var isEditingBudget = false
     @State private var budgetInput = ""
@@ -295,13 +304,9 @@ struct BudgetView: View {
     
     // MARK: 金额格式化
     private func formatAmount(_ value: Double) -> String {
-        let f = NumberFormatter()
-        f.numberStyle = .currency
-        f.currencySymbol = "¥"
-        f.locale = .autoupdatingCurrent
-        f.maximumFractionDigits = value >= 10_000 ? 0 : 2
-        f.minimumFractionDigits = value >= 10_000 ? 0 : 2
-        return f.string(from: NSNumber(value: value)) ?? "¥\(value)"
+        Self.currencyFormatter.maximumFractionDigits = value >= 10_000 ? 0 : 2
+        Self.currencyFormatter.minimumFractionDigits = value >= 10_000 ? 0 : 2
+        return Self.currencyFormatter.string(from: NSNumber(value: value)) ?? "¥\(value)"
     }
     
     // MARK: - 预算编辑 Sheet
@@ -455,6 +460,15 @@ struct CategoryRowView: View {
     let total:     Double
     let isLast:    Bool
     
+    // MARK: - 静态格式化器
+    private static let currencyFormatter: NumberFormatter = {
+        let f = NumberFormatter()
+        f.numberStyle = .currency
+        f.currencySymbol = "¥"
+        f.locale = .autoupdatingCurrent
+        return f
+    }()
+    
     private var percentage: Double {
         guard total > 0 else { return 0 }
         return amount / total
@@ -478,13 +492,9 @@ struct CategoryRowView: View {
     }
     
     private func formatAmount(_ v: Double) -> String {
-        let f = NumberFormatter()
-        f.numberStyle = .currency
-        f.currencySymbol = "¥"
-        f.locale = .autoupdatingCurrent
-        f.maximumFractionDigits = v >= 10_000 ? 0 : 2
-        f.minimumFractionDigits = v >= 10_000 ? 0 : 2
-        return f.string(from: NSNumber(value: v)) ?? "¥\(v)"
+        Self.currencyFormatter.maximumFractionDigits = v >= 10_000 ? 0 : 2
+        Self.currencyFormatter.minimumFractionDigits = v >= 10_000 ? 0 : 2
+        return Self.currencyFormatter.string(from: NSNumber(value: v)) ?? "¥\(v)"
     }
     
     var body: some View {
