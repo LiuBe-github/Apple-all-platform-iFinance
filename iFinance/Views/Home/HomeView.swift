@@ -263,8 +263,8 @@ struct SentenceCardView: View {
     var displaySize: CGSize = CGSize(width: 375, height: 520)
 
     /// 图片宽高比（高度 = 宽度 / aspectRatio）
-    /// 1.15 → 约 4:5 比例，保证按钮可见
-    private let imageAspectRatio: CGFloat = 1.15
+    /// 0.75 → 约 4:3 竖图比例
+    private let imageAspectRatio: CGFloat = 0.75
 
     private var imageURL: URL? {
         let seed = abs(sentence.content.hashValue) % 1000
@@ -458,7 +458,7 @@ private struct ShareCardView: View {
     let dateText: String        // 日期文字
 
     /// 图片区域宽高比（与首页一致）
-    private let imageAspectRatio: CGFloat = 1.15
+    private let imageAspectRatio: CGFloat = 0.75
 
     private var formattedBalance: String {
         let f = NumberFormatter()
@@ -651,73 +651,72 @@ struct HomeView: View {
             ZStack {
                 AppBackgroundView()
 
-                if isInitialLoading {
-                    ProgressView().scaleEffect(1.3)
-                } else if let s = currentSentence {
-                    // ── 一屏布局（无需滚动）──
+                ScrollView(showsIndicators: false) {
                     VStack(spacing: 0) {
-                        // 顶部安全区域
-                        Color.clear.frame(height: 8)
+                        if isInitialLoading {
+                            Spacer(minLength: 160)
+                            ProgressView().scaleEffect(1.3)
+                            Spacer(minLength: 240)
+                        } else if let s = currentSentence {
+                            Spacer(minLength: 16)
 
-                        // ── 今日结余卡片（紧凑） ──
-                        TodayBalanceCard(
-                            income: todayIncome,
-                            expense: todayExpense,
-                            balance: todayBalance,
-                            billCount: todayBills.count
-                        )
-                        .padding(.horizontal, 20)
-
-                        Spacer(minLength: 12)
-
-                        // ── 名言卡片（自适应填充剩余空间） ──
-                        SentenceCardView(sentence: s, displaySize: cardSize)
-                            .id(s.id)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-                            .shadow(color: .black.opacity(0.16), radius: 18, x: 0, y: 6)
-                            .opacity(cardOpacity)
-                            .scaleEffect(cardScale)
+                            // ── 今日结余卡片 ──
+                            TodayBalanceCard(
+                                income: todayIncome,
+                                expense: todayExpense,
+                                balance: todayBalance,
+                                billCount: todayBills.count
+                            )
                             .padding(.horizontal, 20)
 
-                        Spacer(minLength: 12)
+                            Spacer(minLength: 16)
 
-                        // ── 操作按钮（固定底部） ──
-                        HStack(spacing: 48) {
-                            Button {
-                                guard !isRefreshing else { return }
-                                refresh()
-                            } label: {
-                                Image(systemName: "arrow.clockwise")
-                                    .font(.system(size: 17, weight: .medium))
-                                    .rotationEffect(.degrees(rotationAngle))
-                                    .frame(width: 46, height: 46)
-                                    .background(.ultraThinMaterial, in: Circle())
-                                    .overlay(Circle().stroke(.white.opacity(0.5), lineWidth: 0.7))
-                                    .shadow(color: .black.opacity(0.06), radius: 5, x: 0, y: 2)
-                            }
-                            .foregroundStyle(.primary)
-                            .disabled(isRefreshing)
+                            // ── 名言卡片 ──
+                            SentenceCardView(sentence: s, displaySize: cardSize)
+                                .id(s.id)
+                                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                                .shadow(color: .black.opacity(0.18), radius: 20, x: 0, y: 8)
+                                .opacity(cardOpacity)
+                                .scaleEffect(cardScale)
+                                .padding(.horizontal, 20)
 
-                            Button {
-                                renderAndShare(s)
-                            } label: {
-                                Image(systemName: "square.and.arrow.up")
-                                    .font(.system(size: 17, weight: .medium))
-                                    .frame(width: 46, height: 46)
-                                    .background(.ultraThinMaterial, in: Circle())
-                                    .overlay(Circle().stroke(.white.opacity(0.5), lineWidth: 0.7))
-                                    .shadow(color: .black.opacity(0.06), radius: 5, x: 0, y: 2)
+                            Spacer(minLength: 28)
+
+                            // ── 操作按钮 ──
+                            HStack(spacing: 48) {
+                                Button {
+                                    guard !isRefreshing else { return }
+                                    refresh()
+                                } label: {
+                                    Image(systemName: "arrow.clockwise")
+                                        .font(.system(size: 17, weight: .medium))
+                                        .rotationEffect(.degrees(rotationAngle))
+                                        .frame(width: 50, height: 50)
+                                        .background(.ultraThinMaterial, in: Circle())
+                                        .overlay(Circle().stroke(.white.opacity(0.5), lineWidth: 0.8))
+                                        .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: 2)
+                                }
+                                .foregroundStyle(.primary)
+                                .disabled(isRefreshing)
+
+                                Button {
+                                    renderAndShare(s)
+                                } label: {
+                                    Image(systemName: "square.and.arrow.up")
+                                        .font(.system(size: 17, weight: .medium))
+                                        .frame(width: 50, height: 50)
+                                        .background(.ultraThinMaterial, in: Circle())
+                                        .overlay(Circle().stroke(.white.opacity(0.5), lineWidth: 0.8))
+                                        .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: 2)
+                                }
+                                .foregroundStyle(.primary)
                             }
-                            .foregroundStyle(.primary)
+                            .padding(.bottom, 20)
                         }
-                        .padding(.bottom, safeBottomInset + 12)
                     }
-                    .ignoresSafeArea(edges: .bottom) // 按钮延伸到安全区
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .animation(.spring(response: 0.36, dampingFraction: 0.85), value: currentSentence?.id)
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     HeaderView(isTransactionView: false)
@@ -745,14 +744,6 @@ struct HomeView: View {
                 loadSentences()
             }
         }
-    }
-
-    /// 安全区域内边距（适配刘海/灵动岛）
-    private var safeBottomInset: CGFloat {
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
-            return windowScene.keyWindow?.safeAreaInsets.bottom ?? 34
-        }
-        return 34
     }
 
     /// 卡片宽度（自适应屏幕）
@@ -832,7 +823,7 @@ struct HomeView: View {
     private func renderAndShare(_ sentence: DailySentence) {
         // 先获取当前已加载的图片（用于分享卡片渲染）
         let cardWidth: CGFloat = 375
-        let imageAreaHeight = cardWidth / 1.15 // 图片区域高度（与首页一致）
+        let imageAreaHeight = cardWidth / 0.75 // 图片区域高度（与首页一致）
         let statAreaHeight: CGFloat = 180      // 统计区域估算高度
         let totalHeight = imageAreaHeight + statAreaHeight
 
