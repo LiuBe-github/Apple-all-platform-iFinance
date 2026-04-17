@@ -183,6 +183,12 @@
 "home.share_income" = "Income";
 "home.share_expense" = "Expense";
 "home.share_count" = "Count";
+"home.today_balance" = "Today's Balance";
+"home.surplus" = "Surplus";
+"home.deficit" = "Deficit";
+"home.income_label" = "Income";
+"home.expense_label" = "Expense";
+"home.count_label" = "Bills";
 
 "icloud.network" = "Network";
 "icloud.network_lost" = "Disconnected";

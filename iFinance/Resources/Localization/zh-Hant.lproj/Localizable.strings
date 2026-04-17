@@ -183,6 +183,12 @@
 "home.share_income" = "收入";
 "home.share_expense" = "支出";
 "home.share_count" = "筆數";
+"home.today_balance" = "今日結餘";
+"home.surplus" = "結餘";
+"home.deficit" = "超支";
+"home.income_label" = "收入";
+"home.expense_label" = "支出";
+"home.count_label" = "筆數";
 
 "icloud.network" = "網路";
 "icloud.network_lost" = "網路丟失";

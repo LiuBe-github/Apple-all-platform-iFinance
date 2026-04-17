@@ -362,6 +362,122 @@ struct SentenceCardView: View {
     }
 }
 
+// MARK: - 今日结余卡片（首页顶部）
+private struct TodayBalanceCard: View {
+    let income: Decimal
+    let expense: Decimal
+    let balance: Decimal
+    let billCount: Int
+
+    // 静态格式化器复用
+    private static let currencyFormatter: NumberFormatter = {
+        let f = NumberFormatter()
+        f.numberStyle = .currency
+        f.currencySymbol = "¥"
+        f.locale = .autoupdatingCurrent
+        return f
+    }()
+
+    private func formatted(_ value: Decimal) -> String {
+        Self.currencyFormatter.maximumFractionDigits = value == 0 || abs(value) >= 1000 ? 0 : 2
+        Self.currencyFormatter.minimumFractionDigits = 0
+        return Self.currencyFormatter.string(from: NSDecimalNumber(decimal: value)) ?? "¥0"
+    }
+
+    /// 日期文字（如 "4月17日 · 周五"）
+    private var dateLabel: String {
+        let f = DateFormatter()
+        f.locale = .autoupdatingCurrent
+        f.dateFormat = "M月d日 EEEE"
+        return f.string(from: Date())
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // 顶部：日期 + 标签
+            HStack(alignment: .firstTextBaseline) {
+                Text(dateLabel)
+                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .foregroundStyle(.secondary)
+
+                Spacer()
+
+                Text(String(localized: "home.today_balance"))
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(
+                        Capsule().fill(balance >= 0 ? Color.green.opacity(0.75) : Color.red.opacity(0.75))
+                    )
+            }
+
+            // 中间：大金额
+            VStack(spacing: 4) {
+                Text(formatted(balance))
+                    .font(.system(size: 40, weight: .heavy, design: .rounded))
+                    .foregroundStyle(balance >= 0 ? Color(red: 0.18, green: 0.78, blue: 0.44) : Color(red: 1.0, green: 0.27, blue: 0.23))
+                    .minimumScaleFactor(0.6)
+                    .lineLimit(1)
+
+                Text(balance >= 0 ? String(localized: "home.surplus") : String(localized: "home.deficit"))
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(balance >= 0 ? .green.opacity(0.8) : .red.opacity(0.8))
+            }
+            .frame(maxWidth: .infinity)
+
+            // 底部：三栏统计
+            HStack(spacing: 0) {
+                statItem(
+                    icon: "arrow.down.circle.fill",
+                    color: .green,
+                    value: formatted(income),
+                    label: String(localized: "home.income_label")
+                )
+
+                Divider()
+                    .frame(height: 36)
+
+                statItem(
+                    icon: "arrow.up.circle.fill",
+                    color: .red,
+                    value: formatted(expense),
+                    label: String(localized: "home.expense_label")
+                )
+
+                Divider()
+                    .frame(height: 36)
+
+                statItem(
+                    icon: "list.bullet.clipboard.fill",
+                    color: .blue,
+                    value: "\(billCount)",
+                    label: String(localized: "home.count_label")
+                )
+            }
+        }
+        .padding(20)
+        .appGlassCard(cornerRadius: 22)
+    }
+
+    private func statItem(icon: String, color: Color, value: String, label: String) -> some View {
+        VStack(spacing: 5) {
+            HStack(spacing: 5) {
+                Image(systemName: icon)
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(color)
+                Text(value)
+                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                    .foregroundStyle(color)
+            }
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
 // MARK: - 分享专用卡片视图（包含当日记账统计）
 private struct ShareCardView: View {
     let sentence: DailySentence
@@ -573,6 +689,17 @@ struct HomeView: View {
                             ProgressView().scaleEffect(1.3)
                             Spacer(minLength: 240)
                         } else if let s = currentSentence {
+                            Spacer(minLength: 16)
+
+                            // ── 今日结余卡片 ──
+                            TodayBalanceCard(
+                                income: todayIncome,
+                                expense: todayExpense,
+                                balance: todayBalance,
+                                billCount: todayBills.count
+                            )
+                            .padding(.horizontal, 20)
+
                             Spacer(minLength: 16)
 
                             // ── 名言卡片 ──

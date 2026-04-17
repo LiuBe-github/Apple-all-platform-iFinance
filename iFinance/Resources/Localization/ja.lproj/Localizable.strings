@@ -183,6 +183,12 @@
 "home.share_income" = "収入";
 "home.share_expense" = "支出";
 "home.share_count" = "件数";
+"home.today_balance" = "今日の収支";
+"home.surplus" = "収支";
+"home.deficit" = "予算超過";
+"home.income_label" = "収入";
+"home.expense_label" = "支出";
+"home.count_label" = "件数";
 
 "icloud.network" = "ネットワーク";
 "icloud.network_lost" = "接続なし";
