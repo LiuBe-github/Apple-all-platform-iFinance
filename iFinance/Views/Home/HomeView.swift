@@ -260,7 +260,10 @@ struct SentenceCardView: View {
     @StateObject private var loader = ImageLoader()
 
     /// 卡片的目标显示尺寸（用于图片降采样）
-    var displaySize: CGSize = CGSize(width: 375, height: 500)
+    var displaySize: CGSize = CGSize(width: 375, height: 520)
+
+    /// 图片宽高比（picsum 竖图约 2:3）
+    private let imageAspectRatio: CGFloat = 0.75
 
     private var imageURL: URL? {
         let seed = abs(sentence.content.hashValue) % 1000
@@ -282,65 +285,76 @@ struct SentenceCardView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .bottomLeading) {
+        GeometryReader { geo in
+            let w = geo.size.width
+            let h = w / imageAspectRatio
 
-            // ── 背景：缓存图 / 骨架屏 / 兜底渐变 ──
-            Group {
-                if let img = loader.image {
-                    Image(uiImage: img)
-                        .resizable()
-                        .scaledToFill()
-                        .transition(.opacity.animation(.easeIn(duration: 0.25)))
-                } else if !loader.isLoaded {
-                    // 骨架屏
-                    ZStack {
-                        Color(UIColor.systemGray5)
-                        ProgressView().tint(Color(UIColor.systemGray2))
+            ZStack(alignment: .bottomLeading) {
+
+                // ── 背景：缓存图 / 骨架屏 / 兜底渐变 ──
+                Group {
+                    if let img = loader.image {
+                        Image(uiImage: img)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: w, height: h)
+                            .clipped()
+                            .transition(.opacity.animation(.easeIn(duration: 0.25)))
+                    } else if !loader.isLoaded {
+                        // 骨架屏
+                        ZStack {
+                            Color(UIColor.systemGray5)
+                            ProgressView().tint(Color(UIColor.systemGray2))
+                        }
+                        .frame(width: w, height: h)
+                    } else {
+                        fallbackGradient
+                            .frame(width: w, height: h)
                     }
-                } else {
-                    fallbackGradient
                 }
-            }
 
-            // ── 底部渐变遮罩 ──
-            LinearGradient(
-                stops: [
-                    .init(color: .clear, location: 0.0),
-                    .init(color: .black.opacity(0.12), location: 0.42),
-                    .init(color: .black.opacity(0.70), location: 0.76),
-                    .init(color: .black.opacity(0.86), location: 1.0),
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
+                // ── 底部渐变遮罩 ──
+                LinearGradient(
+                    stops: [
+                        .init(color: .clear, location: 0.0),
+                        .init(color: .black.opacity(0.12), location: 0.42),
+                        .init(color: .black.opacity(0.70), location: 0.76),
+                        .init(color: .black.opacity(0.86), location: 1.0),
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(height: h)
 
-            // ── 文字 ──
-            VStack(alignment: .leading, spacing: 10) {
-                Text("\u{201C}")
-                    .font(.system(size: 52, weight: .bold, design: .serif))
-                    .foregroundStyle(.white.opacity(0.30))
-                    .offset(y: 10)
+                // ── 文字 ──
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("\u{201C}")
+                        .font(.system(size: 52, weight: .bold, design: .serif))
+                        .foregroundStyle(.white.opacity(0.30))
+                        .offset(y: 10)
 
-                Text(sentence.content)
-                    .font(.system(size: 19, weight: .medium, design: .serif))
-                    .foregroundStyle(.white)
-                    .lineSpacing(6)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .shadow(color: .black.opacity(0.45), radius: 4, x: 0, y: 2)
+                    Text(sentence.content)
+                        .font(.system(size: 19, weight: .medium, design: .serif))
+                        .foregroundStyle(.white)
+                        .lineSpacing(6)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .shadow(color: .black.opacity(0.45), radius: 4, x: 0, y: 2)
 
-                HStack {
-                    Spacer()
-                    Text("\(sentence.note)")
-                        .font(.system(size: 14, weight: .regular, design: .serif))
-                        .foregroundStyle(.white.opacity(0.72))
-                        .italic()
-                        .shadow(color: .black.opacity(0.4), radius: 3, x: 0, y: 1)
+                    HStack {
+                        Spacer()
+                        Text("\(sentence.note)")
+                            .font(.system(size: 14, weight: .regular, design: .serif))
+                            .foregroundStyle(.white.opacity(0.72))
+                            .italic()
+                            .shadow(color: .black.opacity(0.4), radius: 3, x: 0, y: 1)
+                    }
                 }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 28)
+                .padding(.top, 160)
             }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 28)
-            .padding(.top, 160)
         }
+        .aspectRatio(imageAspectRatio, contentMode: .fit)
         .onAppear {
             guard let url = imageURL else { return }
             loader.load(url: url, targetSize: displaySize)
@@ -358,6 +372,9 @@ private struct ShareCardView: View {
     let billCount: Int          // 当日笔数
     let dateText: String        // 日期文字
 
+    /// 图片区域宽高比（与首页一致）
+    private let imageAspectRatio: CGFloat = 0.75
+
     private var formattedBalance: String {
         let f = NumberFormatter()
         f.numberStyle = .currency
@@ -368,56 +385,63 @@ private struct ShareCardView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // ── 上半部分：名言图片 ──
-            ZStack(alignment: .bottomLeading) {
-                // 背景
-                Group {
-                    if let img = backgroundImage {
-                        Image(uiImage: img)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(height: 380)
-                    } else {
-                        placeholderGradient
-                            .frame(height: 380)
+            // ── 上半部分：名言图片（自适应高度） ──
+            GeometryReader { geo in
+                let w = geo.size.width
+                let h = w / imageAspectRatio
+
+                ZStack(alignment: .bottomLeading) {
+                    // 背景
+                    Group {
+                        if let img = backgroundImage {
+                            Image(uiImage: img)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: w, height: h)
+                                .clipped()
+                        } else {
+                            placeholderGradient
+                                .frame(width: w, height: h)
+                        }
                     }
-                }
-                .clipped()
 
-                // 底部渐变遮罩
-                LinearGradient(
-                    stops: [
-                        .init(color: .clear, location: 0.3),
-                        .init(color: .black.opacity(0.85), location: 1.0),
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
+                    // 底部渐变遮罩
+                    LinearGradient(
+                        stops: [
+                            .init(color: .clear, location: 0.3),
+                            .init(color: .black.opacity(0.85), location: 1.0),
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .frame(height: h)
 
-                // 名言文字
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("\u{201C}")
-                        .font(.system(size: 36, weight: .bold, design: .serif))
-                        .foregroundStyle(.white.opacity(0.25))
+                    // 名言文字
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("\u{201C}")
+                            .font(.system(size: 36, weight: .bold, design: .serif))
+                            .foregroundStyle(.white.opacity(0.25))
 
-                    Text(sentence.content)
-                        .font(.system(size: 16, weight: .medium, design: .serif))
-                        .foregroundStyle(.white)
-                        .lineSpacing(4)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .shadow(color: .black.opacity(0.4), radius: 3, x: 0, y: 1)
+                        Text(sentence.content)
+                            .font(.system(size: 16, weight: .medium, design: .serif))
+                            .foregroundStyle(.white)
+                            .lineSpacing(4)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .shadow(color: .black.opacity(0.4), radius: 3, x: 0, y: 1)
 
-                    HStack {
-                        Spacer()
-                        Text("—— \(sentence.note)")
-                            .font(.system(size: 12, weight: .regular, design: .serif))
-                            .foregroundStyle(.white.opacity(0.65))
-                            .italic()
+                        HStack {
+                            Spacer()
+                            Text("—— \(sentence.note)")
+                                .font(.system(size: 12, weight: .regular, design: .serif))
+                                .foregroundStyle(.white.opacity(0.65))
+                                .italic()
+                        }
                     }
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 28)
                 }
-                .padding(.horizontal, 24)
-                .padding(.bottom, 28)
             }
+            .aspectRatio(imageAspectRatio, contentMode: .fit)
 
             // ── 下半部分：当日记账统计 ──
             VStack(spacing: 14) {
@@ -433,7 +457,7 @@ private struct ShareCardView: View {
                     .font(.system(size: 38, weight: .heavy, design: .rounded))
                     .foregroundStyle(dailyBalance >= 0 ? Color(red: 0.18, green: 0.78, blue: 0.44) : Color(red: 1.0, green: 0.27, blue: 0.23))
 
-                Text(dailyBalance >= 0 ? "home.share_surplus" : "home.share_deficit")
+                Text(dailyBalance >= 0 ? String(localized: "home.share_surplus") : String(localized: "home.share_deficit"))
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(dailyBalance >= 0 ? .green : .red)
 
@@ -531,10 +555,10 @@ struct HomeView: View {
     }
 
     private var todayDateText: String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "zh_CN")
-        formatter.dateFormat = "M月dd日 EEEE"
-        return formatter.string(from: Date())
+        let f = DateFormatter()
+        f.locale = .autoupdatingCurrent
+        f.dateFormat = "M月d日 EEEE"
+        return f.string(from: Date())
     }
 
     var body: some View {
@@ -554,7 +578,6 @@ struct HomeView: View {
                             // ── 名言卡片 ──
                             SentenceCardView(sentence: s, displaySize: cardSize)
                                 .id(s.id)
-                                .frame(height: 500)
                                 .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
                                 .shadow(color: .black.opacity(0.18), radius: 20, x: 0, y: 8)
                                 .opacity(cardOpacity)
@@ -705,6 +728,11 @@ struct HomeView: View {
     @MainActor
     private func renderAndShare(_ sentence: DailySentence) {
         // 先获取当前已加载的图片（用于分享卡片渲染）
+        let cardWidth: CGFloat = 375
+        let imageAreaHeight = cardWidth / 0.75 // 图片区域高度（4:3 宽高比）
+        let statAreaHeight: CGFloat = 180      // 统计区域估算高度
+        let totalHeight = imageAreaHeight + statAreaHeight
+
         let renderer = ImageRenderer(
             content: ShareCardView(
                 sentence: sentence,
@@ -715,7 +743,7 @@ struct HomeView: View {
                 billCount: todayBills.count,
                 dateText: todayDateText
             )
-            .frame(width: 375, height: 640)
+            .frame(width: cardWidth, height: totalHeight)
             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         )
         renderer.scale = displayScale

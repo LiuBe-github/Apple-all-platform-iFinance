@@ -178,6 +178,11 @@
 "home.share_error_render" = "Failed to generate share image. Please try again.";
 "home.share_error_encode" = "Image encoding failed. Please try again.";
 "home.share_error_write" = "Failed to write image: %@";
+"home.share_surplus" = "Balance";
+"home.share_deficit" = "Over Budget";
+"home.share_income" = "Income";
+"home.share_expense" = "Expense";
+"home.share_count" = "Count";
 
 "icloud.network" = "Network";
 "icloud.network_lost" = "Disconnected";

@@ -178,6 +178,11 @@
 "home.share_error_render" = "共有画像の生成に失敗しました。";
 "home.share_error_encode" = "画像のエンコードに失敗しました。";
 "home.share_error_write" = "画像の保存に失敗しました：%@";
+"home.share_surplus" = "収支";
+"home.share_deficit" = "予算超過";
+"home.share_income" = "収入";
+"home.share_expense" = "支出";
+"home.share_count" = "件数";
 
 "icloud.network" = "ネットワーク";
 "icloud.network_lost" = "接続なし";

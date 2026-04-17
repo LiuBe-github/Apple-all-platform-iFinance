@@ -230,6 +230,11 @@
 "home.share_error_render" = "无法生成分享图片，请重试。";
 "home.share_error_encode" = "图片编码失败，请重试。";
 "home.share_error_write" = "图片写入失败：%@";
+"home.share_surplus" = "结余";
+"home.share_deficit" = "超支";
+"home.share_income" = "收入";
+"home.share_expense" = "支出";
+"home.share_count" = "笔数";
 
 "icloud.network" = "网络";
 "icloud.network_lost" = "网络丢失";

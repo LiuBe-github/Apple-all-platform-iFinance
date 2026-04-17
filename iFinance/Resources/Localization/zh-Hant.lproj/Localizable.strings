@@ -178,6 +178,11 @@
 "home.share_error_render" = "無法生成分享圖片，請重試。";
 "home.share_error_encode" = "圖片編碼失敗，請重試。";
 "home.share_error_write" = "圖片寫入失敗：%@";
+"home.share_surplus" = "結餘";
+"home.share_deficit" = "超支";
+"home.share_income" = "收入";
+"home.share_expense" = "支出";
+"home.share_count" = "筆數";
 
 "icloud.network" = "網路";
 "icloud.network_lost" = "網路丟失";
