@@ -262,8 +262,9 @@ struct SentenceCardView: View {
     /// 卡片的目标显示尺寸（用于图片降采样）
     var displaySize: CGSize = CGSize(width: 375, height: 520)
 
-    /// 图片宽高比（picsum 竖图约 2:3）
-    private let imageAspectRatio: CGFloat = 0.75
+    /// 图片宽高比（高度 = 宽度 / aspectRatio）
+    /// 1.15 → 约 4:5 比例，保证按钮可见
+    private let imageAspectRatio: CGFloat = 1.15
 
     private var imageURL: URL? {
         let seed = abs(sentence.content.hashValue) % 1000
@@ -457,7 +458,7 @@ private struct ShareCardView: View {
     let dateText: String        // 日期文字
 
     /// 图片区域宽高比（与首页一致）
-    private let imageAspectRatio: CGFloat = 0.75
+    private let imageAspectRatio: CGFloat = 1.15
 
     private var formattedBalance: String {
         let f = NumberFormatter()
@@ -831,7 +832,7 @@ struct HomeView: View {
     private func renderAndShare(_ sentence: DailySentence) {
         // 先获取当前已加载的图片（用于分享卡片渲染）
         let cardWidth: CGFloat = 375
-        let imageAreaHeight = cardWidth / 0.75 // 图片区域高度（4:3 宽高比）
+        let imageAreaHeight = cardWidth / 1.15 // 图片区域高度（与首页一致）
         let statAreaHeight: CGFloat = 180      // 统计区域估算高度
         let totalHeight = imageAreaHeight + statAreaHeight
 
