@@ -206,6 +206,17 @@
 "iFinance" = "iFinance";
 "auth.apple_frontend_only" = "Appleログインは現在UIのみで、実認証は未接続です。";
 
+// Biometric lock
+"lock.face_id" = "Face ID";
+"lock.touch_id" = "Touch ID";
+"lock.biometric" = "生体認証";
+"lock.title" = "iFinance はロックされています";
+"lock.subtitle" = "生体認証でロック解除してください";
+"lock.auth_reason" = "iFinance のロックを解除するために認証してください";
+"lock.enable_reason" = "アプリロックを有効にするために認証してください";
+"settings.biometric_lock" = "Face ID ロック";
+"settings.biometric_lock_desc" = " アプリ離脱時にロックし、戻った際に認証";
+
 "cat.exp.food" = "食費";
 "cat.exp.shopping" = "買い物";
 "cat.exp.clothing" = "衣類";

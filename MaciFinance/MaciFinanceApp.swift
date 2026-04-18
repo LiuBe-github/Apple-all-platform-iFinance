@@ -2,8 +2,6 @@
 //  MaciFinanceApp.swift
 //  MaciFinance
 //
-//  Created by 刘不易 on 2026/1/7.
-//
 
 import SwiftUI
 import CoreData
@@ -12,10 +10,18 @@ import CoreData
 struct MaciFinanceApp: App {
     let persistenceController = PersistenceController.shared
 
+    @AppStorage("selectedTheme") private var selectedTheme: ThemeMode = .system
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainContentView()
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
+                .preferredColorScheme(
+                    selectedTheme == .light ? .light :
+                    selectedTheme == .dark  ? .dark : nil
+                )
         }
+        .windowStyle(.titleBar)
+        .defaultSize(width: 1100, height: 720)
     }
 }

@@ -136,6 +136,7 @@ struct EditBillView: View {
     
     private func saveBill() {
         guard let amountDouble = Double(amountString), amountDouble > 0 else {
+            HapticManager.shared.error()
             showingAlert = true
             return
         }
@@ -150,6 +151,7 @@ struct EditBillView: View {
         // 保存上下文
         do {
             try viewContext.save()
+            HapticManager.shared.success()
             dismiss()
         } catch {
             print("❌ 保存账单失败: \(error)")
@@ -158,6 +160,7 @@ struct EditBillView: View {
     
     // 删除账单的函数
     private func deleteBill() {
+        HapticManager.shared.heavy() // 重要操作
         // 从 Core Data 上下文中删除对象
         viewContext.delete(bill)
         

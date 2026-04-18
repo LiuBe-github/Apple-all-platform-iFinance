@@ -46,6 +46,9 @@ struct ContentView: View {
                 }
                 .tag(Tab.setting)
         }
+        .onChange(of: selection) { _, _ in
+            HapticManager.shared.selectionChanged()
+        }
     }
 }
 

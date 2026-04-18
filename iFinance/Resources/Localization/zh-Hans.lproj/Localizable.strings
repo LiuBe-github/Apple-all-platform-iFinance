@@ -252,3 +252,14 @@
 
 "transaction.empty" = "当前还没有账单哦，记一笔吧！😄";
 "auth.apple_frontend_only" = "Apple 登录暂仅保留界面展示，未接入真实鉴权。";
+
+// 生物识别锁
+"lock.face_id" = "Face ID";
+"lock.touch_id" = "Touch ID";
+"lock.biometric" = "生物识别";
+"lock.title" = "iFinance 已锁定";
+"lock.subtitle" = "使用生物识别解锁以继续查看";
+"lock.auth_reason" = "验证以解锁 iFinance";
+"lock.enable_reason" = "验证以启用应用锁";
+"settings.biometric_lock" = "Face ID 锁定";
+"settings.biometric_lock_desc" = " 锁定后，切出 App 再返回时需验证";

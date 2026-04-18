@@ -80,6 +80,7 @@ struct SettingsRow: View {
 
     var body: some View {
         Button {
+            HapticManager.shared.light()
             action?()
         } label: {
             HStack(spacing: 12) {
@@ -244,6 +245,12 @@ struct SettingView: View {
     @State private var navigateToAbout = false
     @State private var navigateToLanguage = false
 
+    // 生物识别锁相关状态
+    @StateObject private var biometricLock = BiometricLockManager.shared
+    @State private var isTogglingLock = false
+    /// 本地 Toggle 状态（与 AppStorage 解耦，避免竞态）
+    @State private var lockToggleValue: Bool = false
+
     private let feedbackEmail = "liubeol@outlook.com"
 
     private var appVersion: String {
@@ -297,6 +304,39 @@ struct SettingView: View {
 
                         // 通用
                         SettingsGroup(title: String(localized: "settings.general"), icon: "gearshape.fill", iconColor: .gray) {
+                            // 生物识别锁
+                            if biometricLock.isBiometricAvailable {
+                                HStack(spacing: 12) {
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                            .fill(.indigo.opacity(0.15))
+                                            .frame(width: 32, height: 32)
+                                        Image(systemName: biometricLock.biometricIconName)
+                                            .font(.system(size: 14, weight: .medium))
+                                            .foregroundStyle(.indigo)
+                                    }
+
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(String(localized: "settings.biometric_lock"))
+                                            .font(.body).foregroundStyle(.primary)
+                                        Text(biometricLock.biometricDisplayName + String(localized: "settings.biometric_lock_desc"))
+                                            .font(.caption).foregroundStyle(.secondary)
+                                    }
+
+                                    Spacer()
+
+                                    Toggle("", isOn: $lockToggleValue)
+                                        .labelsHidden()
+                                        .tint(.indigo)
+                                        .disabled(isTogglingLock)
+                                        .onChange(of: lockToggleValue) { _, newValue in
+                                            handleLockToggle(newValue)
+                                        }
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 12)
+                            }
+
                             SettingsRow(icon: "globe", iconColor: .indigo, title: String(localized: "settings.language")) {
                                 navigateToLanguage = true
                             }
@@ -353,6 +393,10 @@ struct SettingView: View {
             } message: {
                 Text(resultMessage)
             }
+            .onAppear {
+                biometricLock.evaluateBiometricCapability()
+                lockToggleValue = biometricLock.isLockEnabled
+            }
         }
     }
 
@@ -381,6 +425,7 @@ struct SettingView: View {
         HStack(spacing: 0) {
             ForEach(ThemeMode.allCases, id: \.self) { theme in
                 Button {
+                    HapticManager.shared.selectionChanged()
                     withAnimation(.spring(response: 0.36, dampingFraction: 0.80)) { selectedTheme = theme }
                 } label: {
                     VStack(spacing: 6) {
@@ -406,10 +451,35 @@ struct SettingView: View {
         switch t { case .light: return String(localized: "settings.theme_light"); case .dark: return String(localized: "settings.theme_dark"); case .system: return String(localized: "settings.theme_system") }
     }
 
+    // MARK: - 生物识别锁辅助
+
+    /// 处理生物识别锁开关切换
+    private func handleLockToggle(_ newValue: Bool) {
+        HapticManager.shared.medium()
+        isTogglingLock = true
+        Task { [weak biometricLock] in
+            guard let lock = biometricLock else { return }
+            var success = false
+            if newValue {
+                success = await lock.enableLock()
+            } else {
+                lock.disableLock()
+                success = true
+            }
+            await MainActor.run {
+                isTogglingLock = false
+                if !success && newValue {
+                    // 验证失败，回滚 Toggle
+                    lockToggleValue = false
+                }
+            }
+        }
+    }
+
     // MARK: - 登出按钮
 
     private var logoutButton: some View {
-        Button { authManager.logout() } label: {
+        Button { HapticManager.shared.medium(); authManager.logout() } label: {
             Text(String(localized: "profile.logout")).font(.body.weight(.medium)).foregroundStyle(.red)
                 .frame(maxWidth: .infinity).padding(.vertical, 14)
                 .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color(UIColor.secondarySystemGroupedBackground)))

@@ -25,6 +25,7 @@ private struct SpanOption: Identifiable, Hashable {
 struct TendencyView: View {
     @Environment(\.colorScheme) private var colorScheme
     @AppStorage("UserProfileAvatarData") private var avatarData: Data?
+    @State private var showProfile = false
 
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \Bill.date, ascending: true)],
@@ -102,9 +103,31 @@ struct TendencyView: View {
             .navigationTitle("tab.tendency")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
-                ToolbarItem(placement: .principal) {
-                    HeaderView(isTransactionView: false)
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showProfile = true
+                    } label: {
+                        Group {
+                            if let data = avatarData, let img = UIImage(data: data) {
+                                Image(uiImage: img)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 35, height: 35)
+                                    .clipShape(Circle())
+                            } else {
+                                Image(systemName: "person.circle.fill")
+                                    .font(.system(size: 26))
+                            }
+                        }
+                        .foregroundColor(.blue)
+                        .contentShape(Circle())
+                    }
+                    .buttonStyle(.borderless)
+                    .accessibilityLabel("header.edit_profile")
                 }
+            }
+            .navigationDestination(isPresented: $showProfile) {
+                ProfileView()
             }
             .onAppear(perform: loadDatesWithBill)
             .onChange(of: allBills.count) { _, _ in

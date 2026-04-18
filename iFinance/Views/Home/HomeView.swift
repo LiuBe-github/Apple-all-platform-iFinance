@@ -601,6 +601,8 @@ private struct ShareCardView: View {
 struct HomeView: View {
     @Environment(\.displayScale) private var displayScale
     @Environment(\.managedObjectContext) private var viewContext
+    @AppStorage("UserProfileAvatarData") private var avatarData: Data?
+    @State private var showProfile = false
 
     // MARK: - 今日账单数据
     @FetchRequest(
@@ -686,6 +688,7 @@ struct HomeView: View {
                             HStack(spacing: 48) {
                                 Button {
                                     guard !isRefreshing else { return }
+                                    HapticManager.shared.medium()
                                     refresh()
                                 } label: {
                                     Image(systemName: "arrow.clockwise")
@@ -700,6 +703,7 @@ struct HomeView: View {
                                 .disabled(isRefreshing)
 
                                 Button {
+                                    HapticManager.shared.light()
                                     renderAndShare(s)
                                 } label: {
                                     Image(systemName: "square.and.arrow.up")
@@ -718,9 +722,31 @@ struct HomeView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .toolbar {
-                ToolbarItem(placement: .principal) {
-                    HeaderView(isTransactionView: false)
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showProfile = true
+                    } label: {
+                        Group {
+                            if let data = avatarData, let img = UIImage(data: data) {
+                                Image(uiImage: img)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 35, height: 35)
+                                    .clipShape(Circle())
+                            } else {
+                                Image(systemName: "person.circle.fill")
+                                    .font(.system(size: 26))
+                            }
+                        }
+                        .foregroundColor(.blue)
+                        .contentShape(Circle())
+                    }
+                    .buttonStyle(.borderless)
+                    .accessibilityLabel("header.edit_profile")
                 }
+            }
+            .navigationDestination(isPresented: $showProfile) {
+                ProfileView()
             }
             .sheet(item: $sharePayload, onDismiss: {
                 if let url = sharedTempURL {

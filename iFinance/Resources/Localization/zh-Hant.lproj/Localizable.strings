@@ -206,6 +206,17 @@
 "iFinance" = "iFinance";
 "auth.apple_frontend_only" = "Apple 登入目前僅保留介面展示，尚未接入真實鑑權。";
 
+// 生物識別鎖
+"lock.face_id" = "Face ID";
+"lock.touch_id" = "Touch ID";
+"lock.biometric" = "生物識別";
+"lock.title" = "iFinance 已鎖定";
+"lock.subtitle" = "使用生物識別解鎖以繼續查看";
+"lock.auth_reason" = "驗證以解鎖 iFinance";
+"lock.enable_reason" = "驗證以啟用應用鎖";
+"settings.biometric_lock" = "Face ID 鎖定";
+"settings.biometric_lock_desc" = " 鎖定後，切出 App 再返回時需驗證";
+
 "cat.exp.food" = "餐飲";
 "cat.exp.shopping" = "購物";
 "cat.exp.clothing" = "服飾";

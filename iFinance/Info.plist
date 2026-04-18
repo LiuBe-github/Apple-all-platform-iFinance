@@ -2,16 +2,18 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>zh-Hans</string>
+		<string>zh-Hant</string>
+		<string>en</string>
+		<string>ja</string>
+	</array>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
 	</array>
-    <key>CFBundleLocalizations</key>
-    <array>
-        <string>zh-Hans</string>
-        <string>zh-Hant</string>
-        <string>en</string>
-        <string>ja</string>
-    </array>
+	<key>NSFaceIDUsageDescription</key>
+	<string>iFinance 使用 Face ID 来保护您的账单数据，确保只有您才能打开此应用。</string>
 </dict>
 </plist>
