@@ -178,6 +178,17 @@
 "home.share_error_render" = "Failed to generate share image. Please try again.";
 "home.share_error_encode" = "Image encoding failed. Please try again.";
 "home.share_error_write" = "Failed to write image: %@";
+"home.share_surplus" = "Balance";
+"home.share_deficit" = "Over Budget";
+"home.share_income" = "Income";
+"home.share_expense" = "Expense";
+"home.share_count" = "Count";
+"home.today_balance" = "Today's Balance";
+"home.surplus" = "Surplus";
+"home.deficit" = "Deficit";
+"home.income_label" = "Income";
+"home.expense_label" = "Expense";
+"home.count_label" = "Bills";
 
 "icloud.network" = "Network";
 "icloud.network_lost" = "Disconnected";
@@ -194,6 +205,17 @@
 
 "iFinance" = "iFinance";
 "auth.apple_frontend_only" = "Apple Sign In is currently UI-only and not connected to real authentication.";
+
+// Biometric lock
+"lock.face_id" = "Face ID";
+"lock.touch_id" = "Touch ID";
+"lock.biometric" = "Biometric";
+"lock.title" = "iFinance Locked";
+"lock.subtitle" = "Use biometric authentication to unlock";
+"lock.auth_reason" = "Authenticate to unlock iFinance";
+"lock.enable_reason" = "Authenticate to enable app lock";
+"settings.biometric_lock" = "Face ID Lock";
+"settings.biometric_lock_desc" = " Lock when leaving and verify on return";
 
 "cat.exp.food" = "Food";
 "cat.exp.shopping" = "Shopping";

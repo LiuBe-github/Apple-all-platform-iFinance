@@ -10,15 +10,15 @@ import UniformTypeIdentifiers
 import UIKit
 internal import CoreData
 
+// MARK: - CSV 文档
+
 private struct BillCSVDocument: FileDocument {
     static var readableContentTypes: [UTType] { [.commaSeparatedText, .plainText] }
     static var writableContentTypes: [UTType] { [.commaSeparatedText] }
 
     var text: String
 
-    init(text: String = "") {
-        self.text = text
-    }
+    init(text: String = "") { self.text = text }
 
     init(configuration: ReadConfiguration) throws {
         guard let data = configuration.file.regularFileContents,
@@ -33,300 +33,101 @@ private struct BillCSVDocument: FileDocument {
     }
 }
 
-struct SettingView: View {
-    @EnvironmentObject private var authManager: AuthManager
-    @Environment(\.managedObjectContext) private var viewContext
-    @Environment(\.openURL) private var openURL
+// MARK: - 设置分组
 
-    @AppStorage("selectedTheme") private var selectedTheme: ThemeMode = .system
-
-    @State private var exportDocument = BillCSVDocument()
-    @State private var isExporting = false
-    @State private var isImporting = false
-
-    @State private var resultTitle = ""
-    @State private var resultMessage = ""
-    @State private var showResultAlert = false
-
-    private let feedbackEmail = "liubeol@outlook.com"
-
-    private var appVersion: String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? String(localized: "common.unknown")
-    }
-
-    private var buildNumber: String {
-        Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? String(localized: "common.unknown")
-    }
+struct SettingsGroup<Content: View>: View {
+    let title: String
+    let icon: String
+    let iconColor: Color
+    @ViewBuilder let content: () -> Content
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                AppBackgroundView()
-
-                Form {
-                    Section("settings.about_you") {
-                        NavigationLink(destination: ProfileView()) {
-                            Label("settings.profile", systemImage: "person.circle")
-                        }
-                    }
-
-                    Section("settings.icloud_section") {
-                        NavigationLink(destination: iCloudSyncView()) {
-                            Label("settings.icloud", systemImage: "icloud")
-                        }
-                    }
-
-                    Section("settings.import_export") {
-                        Button {
-                            prepareExportDocument()
-                        } label: {
-                            Label("settings.export_csv", systemImage: "square.and.arrow.up")
-                        }
-
-                        Button {
-                            isImporting = true
-                        } label: {
-                            Label("settings.import_csv", systemImage: "square.and.arrow.down")
-                        }
-                    }
-
-                    Section("settings.appearance") {
-                        Picker("settings.theme_mode", selection: $selectedTheme) {
-                            Text("settings.theme_light").tag(ThemeMode.light)
-                            Text("settings.theme_dark").tag(ThemeMode.dark)
-                            Text("settings.theme_system").tag(ThemeMode.system)
-                        }
-                        .pickerStyle(.menu)
-                    }
-
-                    Section("settings.general") {
-                        NavigationLink("settings.language") {
-                            LanguageSettingView()
-                        }
-                    }
-
-                    Section("settings.about") {
-                        NavigationLink {
-                            HelpFeedbackView(feedbackEmail: feedbackEmail, openURL: openURL)
-                        } label: {
-                            Label("settings.help_feedback", systemImage: "questionmark.bubble")
-                        }
-
-                        NavigationLink {
-                            AboutAppView(version: appVersion, build: buildNumber)
-                        } label: {
-                            Label("settings.about_me", systemImage: "info.circle")
-                        }
-
-                        HStack {
-                            Text("settings.version")
-                            Spacer()
-                            Text("v\(appVersion) (\(buildNumber))")
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-
-                    Section {
-                        Button(role: .destructive) {
-                            authManager.logout()
-                        } label: {
-                            Text("profile.logout")
-                        }
-                    }
-                }
-                .scrollContentBackground(.hidden)
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(iconColor)
+                    .frame(width: 20)
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
             }
-            .navigationTitle("settings.title")
-            .scrollIndicators(.automatic)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    HeaderView(isTransactionView: false)
-                }
+            .padding(.horizontal, 20)
+            .padding(.top, 24)
+            .padding(.bottom, 10)
+
+            VStack(spacing: 0) {
+                content()
             }
-            .navigationBarBackButtonHidden(true)
-            .fileExporter(
-                isPresented: $isExporting,
-                document: exportDocument,
-                contentType: .commaSeparatedText,
-                defaultFilename: "iFinance-bills-\(Date().formatted(.dateTime.year().month().day()))"
-            ) { result in
-                switch result {
-                case .success:
-                    showResult(title: String(localized: "settings.export_success"), message: String(localized: "settings.export_success_msg"))
-                case .failure(let error):
-                    showResult(title: String(localized: "settings.export_failed"), message: error.localizedDescription)
-                }
-            }
-            .fileImporter(
-                isPresented: $isImporting,
-                allowedContentTypes: [.commaSeparatedText, .plainText],
-                allowsMultipleSelection: false
-            ) { result in
-                switch result {
-                case .success(let urls):
-                    guard let url = urls.first else { return }
-                    importCSV(from: url)
-                case .failure(let error):
-                    showResult(title: String(localized: "settings.import_failed"), message: error.localizedDescription)
-                }
-            }
-            .alert(resultTitle, isPresented: $showResultAlert) {
-                Button("common.ok", role: .cancel) { }
-            } message: {
-                Text(resultMessage)
-            }
-        }
-    }
-
-    private func prepareExportDocument() {
-        do {
-            let request: NSFetchRequest<Bill> = Bill.fetchRequest()
-            request.sortDescriptors = [NSSortDescriptor(keyPath: \Bill.date, ascending: true)]
-            let bills = try viewContext.fetch(request)
-
-            let iso = ISO8601DateFormatter()
-            var lines = ["date,type,category,amount,note"]
-
-            for bill in bills {
-                let date = iso.string(from: bill.date ?? Date())
-                let type = csvEscape(bill.type ?? "")
-                let category = csvEscape(bill.category ?? "")
-                let amount = (bill.amount?.stringValue ?? "0")
-                let note = csvEscape(bill.note ?? "")
-                lines.append("\(date),\(type),\(category),\(amount),\(note)")
-            }
-
-            exportDocument = BillCSVDocument(text: lines.joined(separator: "\n"))
-            isExporting = true
-        } catch {
-            showResult(title: String(localized: "settings.export_failed"), message: error.localizedDescription)
-        }
-    }
-
-    private func importCSV(from url: URL) {
-        do {
-            let content = try String(contentsOf: url, encoding: .utf8)
-            let rows = parseCSVRows(content)
-            guard rows.count > 1 else {
-                showResult(title: String(localized: "settings.import_failed"), message: String(localized: "settings.import_invalid"))
-                return
-            }
-
-            let iso = ISO8601DateFormatter()
-            let fallbackFormatter = DateFormatter()
-            fallbackFormatter.locale = Locale(identifier: "en_US_POSIX")
-            fallbackFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-
-            var inserted = 0
-            var skipped = 0
-
-            for row in rows.dropFirst() {
-                guard row.count >= 5 else {
-                    skipped += 1
-                    continue
-                }
-
-                let dateString = row[0].trimmingCharacters(in: .whitespacesAndNewlines)
-                let type = row[1].trimmingCharacters(in: .whitespacesAndNewlines)
-                let category = row[2].trimmingCharacters(in: .whitespacesAndNewlines)
-                let amountString = row[3].trimmingCharacters(in: .whitespacesAndNewlines)
-                let note = row[4].trimmingCharacters(in: .whitespacesAndNewlines)
-
-                guard ["income", "expenditure", "transfer"].contains(type) else {
-                    skipped += 1
-                    continue
-                }
-
-                let date = iso.date(from: dateString) ?? fallbackFormatter.date(from: dateString)
-                guard let amountDecimal = Decimal(string: amountString, locale: Locale(identifier: "en_US_POSIX")) else {
-                    skipped += 1
-                    continue
-                }
-
-                let newBill = Bill(context: viewContext)
-                newBill.date = date ?? Date()
-                newBill.type = type
-                newBill.category = category.isEmpty ? nil : category
-                newBill.note = note.isEmpty ? nil : note
-                newBill.amount = NSDecimalNumber(decimal: amountDecimal)
-                inserted += 1
-            }
-
-            if viewContext.hasChanges {
-                try viewContext.save()
-            }
-
-            showResult(
-                title: String(localized: "settings.import_done"),
-                message: String(
-                    format: NSLocalizedString("settings.import_done_msg", comment: ""),
-                    inserted,
-                    skipped
-                )
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(Color(UIColor.secondarySystemGroupedBackground))
             )
-        } catch {
-            showResult(title: String(localized: "settings.import_failed"), message: error.localizedDescription)
+            .padding(.horizontal, 20)
         }
-    }
-
-    private func csvEscape(_ value: String) -> String {
-        let escaped = value.replacingOccurrences(of: "\"", with: "\"\"")
-        return "\"\(escaped)\""
-    }
-
-    private func parseCSVRows(_ input: String) -> [[String]] {
-        var rows: [[String]] = []
-        var currentRow: [String] = []
-        var currentField = ""
-        var insideQuotes = false
-        let chars = Array(input)
-        var i = 0
-
-        while i < chars.count {
-            let ch = chars[i]
-
-            if ch == "\"" {
-                if insideQuotes && i + 1 < chars.count && chars[i + 1] == "\"" {
-                    currentField.append("\"")
-                    i += 1
-                } else {
-                    insideQuotes.toggle()
-                }
-            } else if ch == "," && !insideQuotes {
-                currentRow.append(currentField)
-                currentField = ""
-            } else if ch == "\n" && !insideQuotes {
-                currentRow.append(currentField)
-                if !currentRow.allSatisfy({ $0.isEmpty }) {
-                    rows.append(currentRow)
-                }
-                currentRow = []
-                currentField = ""
-            } else if ch == "\r" {
-                // ignore CR
-            } else {
-                currentField.append(ch)
-            }
-
-            i += 1
-        }
-
-        if !currentField.isEmpty || !currentRow.isEmpty {
-            currentRow.append(currentField)
-            if !currentRow.allSatisfy({ $0.isEmpty }) {
-                rows.append(currentRow)
-            }
-        }
-
-        return rows
-    }
-
-    private func showResult(title: String, message: String) {
-        resultTitle = title
-        resultMessage = message
-        showResultAlert = true
     }
 }
+
+// MARK: - 设置行
+
+struct SettingsRow: View {
+    let icon: String
+    let iconColor: Color
+    let title: String
+    var subtitle: String? = nil
+    var showChevron: Bool = true
+    var action: (() -> Void)? = nil
+
+    var body: some View {
+        Button {
+            HapticManager.shared.light()
+            action?()
+        } label: {
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(iconColor.opacity(0.15))
+                        .frame(width: 32, height: 32)
+                    Image(systemName: icon)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(iconColor)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title).font(.body).foregroundStyle(.primary)
+                    if let subtitle = subtitle {
+                        Text(subtitle).font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+
+                Spacer()
+
+                if showChevron {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - 分隔线
+
+private struct SettingsDivider: View {
+    var body: some View {
+        Rectangle()
+            .fill(Color(UIColor.separator).opacity(0.5))
+            .frame(height: 0.5)
+            .padding(.leading, 56)
+    }
+}
+
+// MARK: - 帮助与反馈视图
 
 private struct HelpFeedbackView: View {
     let feedbackEmail: String
@@ -336,20 +137,21 @@ private struct HelpFeedbackView: View {
 
     var body: some View {
         List {
-            Section("settings.contact") {
+            Section(String(localized: "settings.contact")) {
                 HStack {
-                    Text("settings.feedback_email")
+                    Text(String(localized: "settings.feedback_email"))
                     Spacer()
-                    Text(feedbackEmail)
-                        .foregroundStyle(.secondary)
-                        .font(.footnote)
+                    Text(feedbackEmail).foregroundStyle(.secondary).font(.footnote)
                 }
 
                 Button {
                     UIPasteboard.general.string = feedbackEmail
                     copied = true
                 } label: {
-                    Label(String(localized: copied ? "settings.copied_email" : "settings.copy_email"), systemImage: copied ? "checkmark.circle" : "doc.on.doc")
+                    Label(
+                        String(localized: copied ? "settings.copied_email" : "settings.copy_email"),
+                        systemImage: copied ? "checkmark.circle" : "doc.on.doc"
+                    )
                 }
 
                 Button {
@@ -357,20 +159,22 @@ private struct HelpFeedbackView: View {
                         openURL(url)
                     }
                 } label: {
-                    Label("settings.send_email", systemImage: "envelope")
+                    Label(String(localized: "settings.send_email"), systemImage: "envelope")
                 }
             }
 
-            Section("settings.faq") {
-                Text("settings.faq_1")
-                Text("settings.faq_2")
-                Text("settings.faq_3")
+            Section(String(localized: "settings.faq")) {
+                Text(String(localized: "settings.faq_1"))
+                Text(String(localized: "settings.faq_2"))
+                Text(String(localized: "settings.faq_3"))
             }
         }
-        .navigationTitle("settings.help_feedback")
+        .navigationTitle(String(localized: "settings.help_feedback"))
         .navigationBarTitleDisplayMode(.inline)
     }
 }
+
+// MARK: - 关于应用视图
 
 private struct AboutAppView: View {
     let version: String
@@ -383,10 +187,8 @@ private struct AboutAppView: View {
                     Image(systemName: "chart.line.uptrend.xyaxis")
                         .font(.system(size: 46, weight: .semibold))
                         .foregroundStyle(.blue)
-                    Text("iFinance")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                    Text("settings.about_desc")
+                    Text("iFinance").font(.title2).fontWeight(.bold)
+                    Text(String(localized: "settings.about_desc"))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -395,45 +197,363 @@ private struct AboutAppView: View {
                 .padding(.vertical, 12)
             }
 
-            Section("settings.version_section") {
+            Section(String(localized: "settings.version_section")) {
                 HStack {
-                    Text("settings.version_number")
-                    Spacer()
-                    Text(version)
-                        .foregroundStyle(.secondary)
+                    Text(String(localized: "settings.version_number")); Spacer(); Text(version).foregroundStyle(.secondary)
                 }
                 HStack {
-                    Text("settings.build_number")
-                    Spacer()
-                    Text(build)
-                        .foregroundStyle(.secondary)
+                    Text(String(localized: "settings.build_number")); Spacer(); Text(build).foregroundStyle(.secondary)
                 }
             }
 
-            Section("settings.disclaimer") {
-                Text("settings.disclaimer_text")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+            Section(String(localized: "settings.disclaimer")) {
+                Text(String(localized: "settings.disclaimer_text")).font(.footnote).foregroundStyle(.secondary)
             }
 
-            Section("settings.wechat_section") {
+            Section(String(localized: "settings.wechat_section")) {
                 VStack(spacing: 8) {
-                    Image("MyWeChat")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 180, height: 180)
+                    Image("MyWeChat").resizable().scaledToFit().frame(width: 180, height: 180)
                         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    Text("settings.wechat_desc")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 6)
+                    Text(String(localized: "settings.wechat_desc")).font(.footnote).foregroundStyle(.secondary)
+                }.frame(maxWidth: .infinity).padding(.vertical, 6)
             }
         }
-        .navigationTitle("settings.about_me")
+        .navigationTitle(String(localized: "settings.about_me"))
         .navigationBarTitleDisplayMode(.inline)
     }
+}
+
+// MARK: - 主视图
+
+struct SettingView: View {
+    @EnvironmentObject private var authManager: AuthManager
+    @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.openURL) private var openURL
+
+    @AppStorage("selectedTheme") private var selectedTheme: ThemeMode = .system
+
+    @State private var exportDocument = BillCSVDocument()
+    @State private var isExporting = false
+    @State private var isImporting = false
+    @State private var resultTitle = ""
+    @State private var resultMessage = ""
+    @State private var showResultAlert = false
+
+    @State private var navigateToProfile = false
+    @State private var navigateToICloud = false
+    @State private var navigateToHelp = false
+    @State private var navigateToAbout = false
+    @State private var navigateToLanguage = false
+
+    // 生物识别锁相关状态
+    @StateObject private var biometricLock = BiometricLockManager.shared
+    @State private var isTogglingLock = false
+    /// 本地 Toggle 状态（与 AppStorage 解耦，避免竞态）
+    @State private var lockToggleValue: Bool = false
+
+    private let feedbackEmail = "liubeol@outlook.com"
+
+    private var appVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? String(localized: "common.unknown")
+    }
+
+    private var buildNumber: String {
+        Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? String(localized: "common.unknown")
+    }
+
+    // MARK: - Body
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                AppBackgroundView()
+
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(spacing: 0) {
+                        profileHeader
+
+                        // 个人信息
+                        SettingsGroup(title: String(localized: "settings.about_you"), icon: "person.fill", iconColor: .blue) {
+                            SettingsRow(icon: "person.circle.fill", iconColor: .blue, title: String(localized: "settings.profile")) {
+                                navigateToProfile = true
+                            }
+                        }
+
+                        // 数据同步
+                        SettingsGroup(title: String(localized: "settings.icloud_section"), icon: "icloud.fill", iconColor: .cyan) {
+                            SettingsRow(icon: "icloud", iconColor: .cyan, title: String(localized: "settings.icloud")) {
+                                navigateToICloud = true
+                            }
+                        }
+
+                        // 导入导出
+                        SettingsGroup(title: String(localized: "settings.import_export"), icon: "doc.fill", iconColor: .green) {
+                            SettingsRow(icon: "square.and.arrow.up", iconColor: .green, title: String(localized: "settings.export_csv")) {
+                                prepareExportDocument()
+                            }
+                            SettingsDivider()
+                            SettingsRow(icon: "square.and.arrow.down", iconColor: .orange, title: String(localized: "settings.import_csv")) {
+                                isImporting = true
+                            }
+                        }
+
+                        // 外观
+                        SettingsGroup(title: String(localized: "settings.appearance"), icon: "paintbrush.fill", iconColor: .purple) {
+                            themeSelector
+                        }
+
+                        // 通用
+                        SettingsGroup(title: String(localized: "settings.general"), icon: "gearshape.fill", iconColor: .gray) {
+                            // 生物识别锁
+                            if biometricLock.isBiometricAvailable {
+                                HStack(spacing: 12) {
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                            .fill(.indigo.opacity(0.15))
+                                            .frame(width: 32, height: 32)
+                                        Image(systemName: biometricLock.biometricIconName)
+                                            .font(.system(size: 14, weight: .medium))
+                                            .foregroundStyle(.indigo)
+                                    }
+
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(String(localized: "settings.biometric_lock"))
+                                            .font(.body).foregroundStyle(.primary)
+                                        Text(biometricLock.biometricDisplayName + String(localized: "settings.biometric_lock_desc"))
+                                            .font(.caption).foregroundStyle(.secondary)
+                                    }
+
+                                    Spacer()
+
+                                    Toggle("", isOn: $lockToggleValue)
+                                        .labelsHidden()
+                                        .tint(.indigo)
+                                        .disabled(isTogglingLock)
+                                        .onChange(of: lockToggleValue) { _, newValue in
+                                            handleLockToggle(newValue)
+                                        }
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 12)
+                            }
+
+                            SettingsRow(icon: "globe", iconColor: .indigo, title: String(localized: "settings.language")) {
+                                navigateToLanguage = true
+                            }
+                        }
+
+                        // 关于
+                        SettingsGroup(title: String(localized: "settings.about"), icon: "info.circle.fill", iconColor: .blue) {
+                            SettingsRow(icon: "questionmark.bubble", iconColor: .blue, title: String(localized: "settings.help_feedback"), subtitle: feedbackEmail) {
+                                navigateToHelp = true
+                            }
+                            SettingsDivider()
+                            SettingsRow(icon: "info.circle", iconColor: .blue, title: String(localized: "settings.about_me"), subtitle: "v\(appVersion) (\(buildNumber))") {
+                                navigateToAbout = true
+                            }
+                        }
+
+                        // 登出
+                        logoutButton.padding(.top, 24).padding(.bottom, 120)
+                    }
+                }
+            }
+            .navigationTitle("settings.title")
+            .navigationBarTitleDisplayMode(.large)
+            .navigationBarBackButtonHidden(true)
+            .navigationDestination(isPresented: $navigateToProfile) {
+                ProfileView().toolbar(.hidden, for: .tabBar).navigationTitle(String(localized: "settings.profile"))
+            }
+            .navigationDestination(isPresented: $navigateToICloud) {
+                iCloudSyncView().toolbar(.hidden, for: .tabBar).navigationTitle(String(localized: "settings.icloud"))
+            }
+            .navigationDestination(isPresented: $navigateToHelp) {
+                HelpFeedbackView(feedbackEmail: feedbackEmail, openURL: openURL).toolbar(.hidden, for: .tabBar)
+            }
+            .navigationDestination(isPresented: $navigateToAbout) {
+                AboutAppView(version: appVersion, build: buildNumber).toolbar(.hidden, for: .tabBar)
+            }
+            .navigationDestination(isPresented: $navigateToLanguage) {
+                LanguageSettingView().toolbar(.hidden, for: .tabBar).navigationTitle(String(localized: "settings.language"))
+            }
+            .fileExporter(isPresented: $isExporting, document: exportDocument, contentType: .commaSeparatedText, defaultFilename: "iFinance-bills-\(Date().formatted(.dateTime.year().month().day()))") { result in
+                switch result {
+                case .success: showResult(title: String(localized: "settings.export_success"), message: String(localized: "settings.export_success_msg"))
+                case .failure(let e): showResult(title: String(localized: "settings.export_failed"), message: e.localizedDescription)
+                }
+            }
+            .fileImporter(isPresented: $isImporting, allowedContentTypes: [.commaSeparatedText, .plainText], allowsMultipleSelection: false) { result in
+                switch result {
+                case .success(let urls): guard let u = urls.first else { return }; importCSV(from: u)
+                case .failure(let e): showResult(title: String(localized: "settings.import_failed"), message: e.localizedDescription)
+                }
+            }
+            .alert(resultTitle, isPresented: $showResultAlert) {
+                Button("common.ok", role: .cancel) {}
+            } message: {
+                Text(resultMessage)
+            }
+            .onAppear {
+                biometricLock.evaluateBiometricCapability()
+                lockToggleValue = biometricLock.isLockEnabled
+            }
+        }
+    }
+
+    // MARK: - 头像区域
+
+    private var profileHeader: some View {
+        HStack(spacing: 16) {
+            if let avatarData = UserDefaults.standard.data(forKey: "UserProfileAvatarData"),
+               let uiImage = UIImage(data: avatarData) {
+                Image(uiImage: uiImage).resizable().aspectRatio(contentMode: .fill)
+                    .frame(width: 64, height: 64).clipShape(Circle())
+            } else {
+                Image(systemName: "person.circle.fill").font(.system(size: 64)).foregroundStyle(.secondary)
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                Text("iFinance").font(.title2.weight(.bold))
+                Text(String(localized: "settings.about_desc")).font(.subheadline).foregroundStyle(.secondary)
+            }
+            Spacer()
+        }.padding(24).padding(.top, 8)
+    }
+
+    // MARK: - 主题选择器
+
+    private var themeSelector: some View {
+        HStack(spacing: 0) {
+            ForEach(ThemeMode.allCases, id: \.self) { theme in
+                Button {
+                    HapticManager.shared.selectionChanged()
+                    withAnimation(.spring(response: 0.36, dampingFraction: 0.80)) { selectedTheme = theme }
+                } label: {
+                    VStack(spacing: 6) {
+                        ZStack {
+                            Circle().fill(themeColor(theme).opacity(0.15)).frame(width: 44, height: 44)
+                            Image(systemName: themeIcon(theme)).font(.system(size: 18, weight: .medium)).foregroundStyle(themeColor(theme))
+                        }
+                        Text(themeTitle(theme)).font(.caption2.weight(.medium))
+                            .foregroundStyle(selectedTheme == theme ? themeColor(theme) : .secondary)
+                    }
+                }.buttonStyle(.plain).frame(maxWidth: .infinity)
+            }
+        }.padding(.horizontal, 16).padding(.vertical, 14)
+    }
+
+    private func themeColor(_ t: ThemeMode) -> Color {
+        switch t { case .light: return .orange; case .dark: return .indigo; case .system: return .blue }
+    }
+    private func themeIcon(_ t: ThemeMode) -> String {
+        switch t { case .light: return "sun.max.fill"; case .dark: return "moon.fill"; case .system: return "circle.lefthalf.filled" }
+    }
+    private func themeTitle(_ t: ThemeMode) -> String {
+        switch t { case .light: return String(localized: "settings.theme_light"); case .dark: return String(localized: "settings.theme_dark"); case .system: return String(localized: "settings.theme_system") }
+    }
+
+    // MARK: - 生物识别锁辅助
+
+    /// 处理生物识别锁开关切换
+    private func handleLockToggle(_ newValue: Bool) {
+        HapticManager.shared.medium()
+        isTogglingLock = true
+        Task { [weak biometricLock] in
+            guard let lock = biometricLock else { return }
+            var success = false
+            if newValue {
+                success = await lock.enableLock()
+            } else {
+                lock.disableLock()
+                success = true
+            }
+            await MainActor.run {
+                isTogglingLock = false
+                if !success && newValue {
+                    // 验证失败，回滚 Toggle
+                    lockToggleValue = false
+                }
+            }
+        }
+    }
+
+    // MARK: - 登出按钮
+
+    private var logoutButton: some View {
+        Button { HapticManager.shared.medium(); authManager.logout() } label: {
+            Text(String(localized: "profile.logout")).font(.body.weight(.medium)).foregroundStyle(.red)
+                .frame(maxWidth: .infinity).padding(.vertical, 14)
+                .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color(UIColor.secondarySystemGroupedBackground)))
+        }.padding(.horizontal, 20)
+    }
+
+    // MARK: - 导出/导入逻辑
+
+    private func prepareExportDocument() {
+        do {
+            let req: NSFetchRequest<Bill> = Bill.fetchRequest()
+            req.sortDescriptors = [NSSortDescriptor(keyPath: \Bill.date, ascending: true)]
+            let bills = try viewContext.fetch(req)
+            let iso = ISO8601DateFormatter()
+            var lines = ["date,type,category,amount,note"]
+            for b in bills {
+                let d = iso.string(from: b.date ?? Date())
+                lines.append("\(d),\(csvEscape(b.type ?? "")),\(csvEscape(b.category ?? "")),\(b.amount?.stringValue ?? "0"),\(csvEscape(b.note ?? ""))")
+            }
+            exportDocument = BillCSVDocument(text: lines.joined(separator: "\n"))
+            isExporting = true
+        } catch {
+            showResult(title: String(localized: "settings.export_failed"), message: error.localizedDescription)
+        }
+    }
+
+    private func importCSV(from url: URL) {
+        do {
+            let content = try String(contentsOf: url, encoding: .utf8)
+            let rows = parseCSVRows(content)
+            guard rows.count > 1 else { showResult(title: String(localized: "settings.import_failed"), message: String(localized: "settings.import_invalid")); return }
+            let iso = ISO8601DateFormatter()
+            let fallback = DateFormatter()
+            fallback.locale = Locale(identifier: "en_US_POSIX")
+            fallback.dateFormat = "yyyy-MM-dd HH:mm:ss"
+            var inserted = 0, skipped = 0
+            for row in rows.dropFirst() {
+                guard row.count >= 5 else { skipped += 1; continue }
+                let type = row[1].trimmingCharacters(in: .whitespacesAndNewlines)
+                guard ["income","expenditure","transfer"].contains(type) else { skipped += 1; continue }
+                let date = iso.date(from: row[0].trimmingCharacters(in: .whitespacesAndNewlines)) ?? fallback.date(from: row[0])
+                guard let amt = Decimal(string: row[3], locale: Locale(identifier: "en_US_POSX")) else { skipped += 1; continue }
+                let bill = Bill(context: viewContext)
+                bill.date = date ?? Date(); bill.type = type
+                bill.category = row[2].isEmpty ? nil : row[2]
+                bill.note = row[4].isEmpty ? nil : row[4]
+                bill.amount = NSDecimalNumber(decimal: amt); inserted += 1
+            }
+            if viewContext.hasChanges { try viewContext.save() }
+            showResult(title: String(localized: "settings.import_done"), message: String(format: NSLocalizedString("settings.import_done_msg", comment: ""), inserted, skipped))
+        } catch {
+            showResult(title: String(localized: "settings.import_failed"), message: error.localizedDescription)
+        }
+    }
+
+    private func csvEscape(_ v: String) -> String { v.replacingOccurrences(of: "\"", with: "\"\"") }
+
+    private func parseCSVRows(_ input: String) -> [[String]] {
+        var rows: [[String]] = [], curRow: [String] = [], curField = "", inQ = false
+        let chars = Array(input)
+        var i = 0
+        while i < chars.count {
+            let ch = chars[i]
+            if ch == "\"" { if inQ && i + 1 < chars.count && chars[i + 1] == "\"" { curField.append("\""); i += 1 } else { inQ.toggle() } }
+            else if ch == "," && !inQ { curRow.append(curField); curField = "" }
+            else if ch == "\n" && !inQ { curRow.append(curField); if !curRow.allSatisfy({ $0.isEmpty }) { rows.append(curRow) }; curRow = []; curField = "" }
+            else if ch != "\r" { curField.append(ch) }
+            i += 1
+        }
+        if !curField.isEmpty || !curRow.isEmpty { curRow.append(curField); if !curRow.allSatisfy({ $0.isEmpty }) { rows.append(curRow) } }
+        return rows
+    }
+
+    private func showResult(title: String, message: String) { resultTitle = title; resultMessage = message; showResultAlert = true }
 }
 
 #Preview {

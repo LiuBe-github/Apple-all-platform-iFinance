@@ -10,13 +10,16 @@ internal import CoreData
 
 struct TransactionView: View {
     @State private var isHeaderVisible = true
-    
+    @State private var showingAddBillView = false
+    @State private var showProfile = false
+    @AppStorage("UserProfileAvatarData") private var avatarData: Data?
+
     // 添加一个 fetch request 来检查是否有账单
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \Bill.date, ascending: false)],
         animation: .default
     ) private var bills: FetchedResults<Bill>
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -52,13 +55,49 @@ struct TransactionView: View {
             }
             .navigationTitle("transaction.title")
             .scrollIndicators(.automatic)
+            .navigationBarBackButtonHidden(true)
             .toolbar {
-                ToolbarItem(placement: .principal) {
-                    HeaderView(isTransactionView: true)
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        showingAddBillView = true
+                    } label: {
+                        Text("header.add_bill")
+                            .font(.title.bold())
+                            .foregroundStyle(.blue)
+                            .buttonStyle(.plain)
+                    }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showProfile = true
+                    } label: {
+                        Group {
+                            if let data = avatarData, let img = UIImage(data: data) {
+                                Image(uiImage: img)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 35, height: 35)
+                                    .clipShape(Circle())
+                            } else {
+                                Image(systemName: "person.circle.fill")
+                                    .font(.system(size: 26))
+                            }
+                        }
+                        .foregroundColor(.blue)
+                        .contentShape(Circle())
+                    }
+                    .buttonStyle(.borderless)
+                    .accessibilityLabel("header.edit_profile")
                 }
             }
-            .navigationBarBackButtonHidden(true)
-        } 
+            .navigationDestination(isPresented: $showProfile) {
+                ProfileView()
+            }
+            .sheet(isPresented: $showingAddBillView) {
+                AddBillView()
+                    .presentationDragIndicator(.visible)
+            }
+        }
     }
 }
 

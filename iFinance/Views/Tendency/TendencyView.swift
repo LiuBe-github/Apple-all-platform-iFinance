@@ -25,6 +25,7 @@ private struct SpanOption: Identifiable, Hashable {
 struct TendencyView: View {
     @Environment(\.colorScheme) private var colorScheme
     @AppStorage("UserProfileAvatarData") private var avatarData: Data?
+    @State private var showProfile = false
 
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \Bill.date, ascending: true)],
@@ -42,6 +43,20 @@ struct TendencyView: View {
     @State private var dailyBillCounts: [Date: Int] = [:]
 
     private let trailingDays = 365
+
+    // MARK: - 静态 NumberFormatter 缓存（避免每次渲染都重建）
+    private static let amountFormatter: NumberFormatter = {
+        let f = NumberFormatter()
+        f.numberStyle = .decimal
+        f.locale = .autoupdatingCurrent
+        return f
+    }()
+
+    private func formatAmount(_ value: Double) -> String {
+        Self.amountFormatter.maximumFractionDigits = value >= 1_000 ? 0 : 1
+        Self.amountFormatter.minimumFractionDigits = 0
+        return Self.amountFormatter.string(from: NSNumber(value: value)) ?? String(format: "%.1f", value)
+    }
 
     private var expenseSeries: [DailyAmount] {
         buildDailySeries(for: "expenditure", trailingDays: trailingDays)
@@ -88,9 +103,31 @@ struct TendencyView: View {
             .navigationTitle("tab.tendency")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
-                ToolbarItem(placement: .principal) {
-                    HeaderView(isTransactionView: false)
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showProfile = true
+                    } label: {
+                        Group {
+                            if let data = avatarData, let img = UIImage(data: data) {
+                                Image(uiImage: img)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 35, height: 35)
+                                    .clipShape(Circle())
+                            } else {
+                                Image(systemName: "person.circle.fill")
+                                    .font(.system(size: 26))
+                            }
+                        }
+                        .foregroundColor(.blue)
+                        .contentShape(Circle())
+                    }
+                    .buttonStyle(.borderless)
+                    .accessibilityLabel("header.edit_profile")
                 }
+            }
+            .navigationDestination(isPresented: $showProfile) {
+                ProfileView()
             }
             .onAppear(perform: loadDatesWithBill)
             .onChange(of: allBills.count) { _, _ in
@@ -534,13 +571,46 @@ struct TendencyView: View {
         dailyBillCounts = counts
     }
 
-    private func formatAmount(_ value: Double) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.locale = .autoupdatingCurrent
-        formatter.maximumFractionDigits = value >= 1_000 ? 0 : 1
-        formatter.minimumFractionDigits = 0
-        return formatter.string(from: NSNumber(value: value)) ?? String(format: "%.1f", value)
+    // MARK: - 日期格式化器（静态缓存，避免每次渲染都重建）
+
+    private static var dateFormatters: [String: DateFormatter] = [:]
+
+    private static func dateFormatter(for pattern: String) -> DateFormatter {
+        if let cached = dateFormatters[pattern] { return cached }
+        let f = DateFormatter()
+        f.locale = .autoupdatingCurrent
+        f.dateFormat = pattern
+        dateFormatters[pattern] = f
+        return f
+    }
+
+    private func hourLabel(for date: Date) -> String {
+        let hour = Self.dateFormatter(for: "H").string(from: date)
+        return isChineseLocale ? "\(hour)时" : "\(hour):00"
+    }
+
+    private func weekdayLabel(for date: Date) -> String {
+        Self.dateFormatter(for: "EEE").string(from: date)
+    }
+
+    private func dayOfMonthLabel(for date: Date) -> String {
+        let day = Self.dateFormatter(for: "d").string(from: date)
+        return isChineseLocale ? "\(day)日" : day
+    }
+
+    private func monthLabel(for date: Date, withSuffix: Bool) -> String {
+        let month = Self.dateFormatter(for: "M").string(from: date)
+        if isChineseLocale, withSuffix { return "\(month)月" }
+        if isChineseLocale { return month }
+        if withSuffix { return Self.dateFormatter(for: "MMM").string(from: date) }
+        return month
+    }
+
+    private func monthName(for month: Int) -> String {
+        var comps = DateComponents()
+        comps.month = month
+        let date = Calendar.current.date(from: comps) ?? Date()
+        return Self.dateFormatter(for: "MMM").string(from: date)
     }
 
     private func buildHeatmapWeeks() -> [[Date]] {
@@ -585,16 +655,6 @@ struct TendencyView: View {
         return labels
     }
 
-    private func monthName(for month: Int) -> String {
-        var comps = DateComponents()
-        comps.month = month
-        let date = Calendar.current.date(from: comps) ?? Date()
-        let formatter = DateFormatter()
-        formatter.locale = .autoupdatingCurrent
-        formatter.dateFormat = "MMM"
-        return formatter.string(from: date)
-    }
-
     private func heatLevel(for date: Date) -> Int {
         let day = date.startOfDay
         let count = dailyBillCounts[day, default: 0]
@@ -615,53 +675,6 @@ struct TendencyView: View {
         default: base = Color(red: 0.15, green: 0.42, blue: 0.86)
         }
         return date.startOfDay > Date().startOfDay ? base.opacity(0.35) : base
-    }
-
-    private func hourLabel(for date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = .autoupdatingCurrent
-        formatter.dateFormat = "H"
-        let hour = formatter.string(from: date)
-        if isChineseLocale {
-            return "\(hour)时"
-        }
-        return "\(hour):00"
-    }
-
-    private func weekdayLabel(for date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = .autoupdatingCurrent
-        formatter.dateFormat = isChineseLocale ? "EEE" : "EEE"
-        return formatter.string(from: date)
-    }
-
-    private func dayOfMonthLabel(for date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = .autoupdatingCurrent
-        formatter.dateFormat = "d"
-        let day = formatter.string(from: date)
-        if isChineseLocale {
-            return "\(day)日"
-        }
-        return day
-    }
-
-    private func monthLabel(for date: Date, withSuffix: Bool) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = .autoupdatingCurrent
-        formatter.dateFormat = "M"
-        let month = formatter.string(from: date)
-        if isChineseLocale, withSuffix {
-            return "\(month)月"
-        }
-        if isChineseLocale {
-            return month
-        }
-        if withSuffix {
-            formatter.dateFormat = "MMM"
-            return formatter.string(from: date)
-        }
-        return month
     }
 
     private var isChineseLocale: Bool {

@@ -92,7 +92,7 @@ struct NumberPad: View {
             .padding(.vertical, 12)
             .background(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(Color.white)
+                    .fill(Color(UIColor.secondarySystemGroupedBackground))
             )
             
             VStack(spacing: 10) {
@@ -166,6 +166,7 @@ struct NumberPad: View {
                     
                     // 完成按钮
                     Button(action: {
+                        HapticManager.shared.heavy() // 重要操作
                         onSave?()
                     }) {
                         Text("common.done")
@@ -187,7 +188,7 @@ struct NumberPad: View {
         .padding(.horizontal, 14)
         .padding(.bottom, 0)
         .background(
-            Color.white
+            Color(UIColor.systemGroupedBackground)
                 .clipShape(
                     RoundedRectangle(cornerRadius: 26, style: .continuous)
                 )
@@ -213,8 +214,12 @@ struct NumberPad: View {
     }
     
     private func handleNumberTap(_ number: String) {
+        // 触感反馈：数字按键 — 轻量高频
+        HapticManager.shared.light()
+
         // 1. 防止重复输入小数点
         if number == "." && displayText.contains(".") {
+            HapticManager.shared.error() // 无效输入
             return
         }
         
@@ -241,6 +246,9 @@ struct NumberPad: View {
     }
     
     private func handleDeleteTap() {
+        // 触感反馈：删除操作
+        HapticManager.shared.rigid()
+
         // 如果当前是0.00，不允许退格
         if displayText == "0.00" {
             return
@@ -255,6 +263,9 @@ struct NumberPad: View {
     }
     
     private func handleOperationTap(_ primaryOp: String, altOp: String) {
+        // 触感反馈：运算符
+        HapticManager.shared.medium()
+
         // 确定当前操作符
         let newOp = (currentOperator == primaryOp) ? altOp : primaryOp
         
@@ -271,6 +282,9 @@ struct NumberPad: View {
     }
     
     private func handlePercentage() {
+        // 触感反馈：百分比转换
+        HapticManager.shared.medium()
+
         // 百分比操作 - 将当前金额除以100
         if let value = Double(displayText), value != 0 {
             let newValue = value / 100
@@ -301,9 +315,8 @@ struct NumberButton: View {
         Button(action: action) {
             ZStack {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color(UIColor.systemBackground).opacity(0.94))
+                    .fill(Color(UIColor.secondarySystemFill))
                     .frame(height: 54)
-                    .shadow(color: .clear, radius: 0, x: 0, y: 0)
                 
                 if let systemImage = systemImage {
                     Image(systemName: systemImage)
@@ -334,9 +347,8 @@ struct OperationButton: View {
         Button(action: action) {
             ZStack {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color(UIColor.systemBackground).opacity(0.94))
+                    .fill(Color(UIColor.secondarySystemFill))
                     .frame(height: 54)
-                    .shadow(color: .clear, radius: 0, x: 0, y: 0)
                 
                 Text(symbol)
                     .font(.title3)

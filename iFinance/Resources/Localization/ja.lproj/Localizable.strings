@@ -178,6 +178,17 @@
 "home.share_error_render" = "共有画像の生成に失敗しました。";
 "home.share_error_encode" = "画像のエンコードに失敗しました。";
 "home.share_error_write" = "画像の保存に失敗しました：%@";
+"home.share_surplus" = "収支";
+"home.share_deficit" = "予算超過";
+"home.share_income" = "収入";
+"home.share_expense" = "支出";
+"home.share_count" = "件数";
+"home.today_balance" = "今日の収支";
+"home.surplus" = "収支";
+"home.deficit" = "予算超過";
+"home.income_label" = "収入";
+"home.expense_label" = "支出";
+"home.count_label" = "件数";
 
 "icloud.network" = "ネットワーク";
 "icloud.network_lost" = "接続なし";
@@ -194,6 +205,17 @@
 
 "iFinance" = "iFinance";
 "auth.apple_frontend_only" = "Appleログインは現在UIのみで、実認証は未接続です。";
+
+// Biometric lock
+"lock.face_id" = "Face ID";
+"lock.touch_id" = "Touch ID";
+"lock.biometric" = "生体認証";
+"lock.title" = "iFinance はロックされています";
+"lock.subtitle" = "生体認証でロック解除してください";
+"lock.auth_reason" = "iFinance のロックを解除するために認証してください";
+"lock.enable_reason" = "アプリロックを有効にするために認証してください";
+"settings.biometric_lock" = "Face ID ロック";
+"settings.biometric_lock_desc" = " アプリ離脱時にロックし、戻った際に認証";
 
 "cat.exp.food" = "食費";
 "cat.exp.shopping" = "買い物";

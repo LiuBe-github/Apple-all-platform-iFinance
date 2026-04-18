@@ -15,6 +15,7 @@ struct iFinanceApp: App {
     @AppStorage("selectedTheme") private var selectedTheme: ThemeMode = .system
     @AppStorage("app_language") private var appLanguage: String = AppLanguage.system.rawValue
     @StateObject private var authManager = AuthManager.shared
+    @StateObject private var biometricLock = BiometricLockManager.shared
 
     let persistenceController = PersistenceController.shared
 
@@ -39,6 +40,14 @@ struct iFinanceApp: App {
             Group {
                 if authManager.isAuthenticated {
                     ContentView()
+                        .overlay {
+                            // 生物识别锁屏遮罩（仅当已启用 + 已锁定时显示）
+                            if biometricLock.isLocked && biometricLock.isLockEnabled {
+                                AppLockOverlayView(lockManager: biometricLock)
+                                    .transition(.opacity.combined(with: .scale(scale: 1.02)))
+                                    .zIndex(100)
+                            }
+                        }
                 } else {
                     LoginView()
                 }
@@ -52,12 +61,27 @@ struct iFinanceApp: App {
             )
             .onAppear {
                 authManager.bootstrap()
+                biometricLock.evaluateBiometricCapability()
+                // 启动时尝试锁定（requestLock 是幂等的：未启用/已锁定/冷却期 = 空操作）
+                biometricLock.requestLock()
             }
-            .onChange(of: scenePhase) { _, phase in
-                switch phase {
+            .onChange(of: scenePhase) { _, newPhase in
+                switch newPhase {
                 case .active:
                     authManager.handleAppDidBecomeActive()
-                case .inactive, .background:
+
+                    // 切回前台：如果有待锁定标记，执行锁定（延迟让 UI 先渲染）
+                    if biometricLock.shouldLockNow {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            biometricLock.requestLock()
+                        }
+                    }
+
+                case .background:
+                    // 进入后台：标记待锁定，下次前台会消费此标记
+                    biometricLock.markNeedsRelock()
+                    fallthrough
+                case .inactive:
                     authManager.handleAppWillResignActive()
                 @unknown default:
                     break

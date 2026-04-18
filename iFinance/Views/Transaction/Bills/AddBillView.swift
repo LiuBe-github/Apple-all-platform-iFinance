@@ -53,6 +53,7 @@ struct AddBillView: View {
                                 ForEach(ExpenditureCategory.allCases, id: \.self) { category in
                                     ExpenditureCategoryItemView(category: category, selectedCategory:  $selectedExpenditureCategory)
                                         .onTapGesture {
+                                            HapticManager.shared.light()
                                             print("Selected category: \(category.rawValue)")
                                         }
                                 }
@@ -64,6 +65,7 @@ struct AddBillView: View {
                                 ForEach(IncomeCategory.allCases, id: \.self) { category in
                                     IncomeCategoryItemView(category: category, selectedCategory:  $selectedIncomeCategory)
                                         .onTapGesture {
+                                            HapticManager.shared.light()
                                             print("Selected category: \(category.rawValue)")
                                         }
                                 }
@@ -128,6 +130,7 @@ struct AddBillView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
+                        HapticManager.shared.light()
                         dismiss()
                     } label: {
                         Image(systemName: "xmark")
@@ -212,10 +215,12 @@ struct AddBillView: View {
         print(newBill.category ?? "nil")
         do {
             try viewContext.save()
+            HapticManager.shared.success()
             print("✅ 账单保存成功！")
             dismiss()
         } catch {
             let nsError = error as NSError
+            HapticManager.shared.error()
             print("❌ 保存失败: \(error.localizedDescription)")
             print("Domain: \(nsError.domain), Code: \(nsError.code)")
             showAlert(message: String(localized: "bill.save_failed"))
@@ -223,6 +228,7 @@ struct AddBillView: View {
     }
     
     private func showAlert(message: String) {
+        HapticManager.shared.warning()
         alertMessage = message
         showingAlert = true
     }

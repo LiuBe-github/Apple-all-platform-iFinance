@@ -178,6 +178,17 @@
 "home.share_error_render" = "無法生成分享圖片，請重試。";
 "home.share_error_encode" = "圖片編碼失敗，請重試。";
 "home.share_error_write" = "圖片寫入失敗：%@";
+"home.share_surplus" = "結餘";
+"home.share_deficit" = "超支";
+"home.share_income" = "收入";
+"home.share_expense" = "支出";
+"home.share_count" = "筆數";
+"home.today_balance" = "今日結餘";
+"home.surplus" = "結餘";
+"home.deficit" = "超支";
+"home.income_label" = "收入";
+"home.expense_label" = "支出";
+"home.count_label" = "筆數";
 
 "icloud.network" = "網路";
 "icloud.network_lost" = "網路丟失";
@@ -194,6 +205,17 @@
 
 "iFinance" = "iFinance";
 "auth.apple_frontend_only" = "Apple 登入目前僅保留介面展示，尚未接入真實鑑權。";
+
+// 生物識別鎖
+"lock.face_id" = "Face ID";
+"lock.touch_id" = "Touch ID";
+"lock.biometric" = "生物識別";
+"lock.title" = "iFinance 已鎖定";
+"lock.subtitle" = "使用生物識別解鎖以繼續查看";
+"lock.auth_reason" = "驗證以解鎖 iFinance";
+"lock.enable_reason" = "驗證以啟用應用鎖";
+"settings.biometric_lock" = "Face ID 鎖定";
+"settings.biometric_lock_desc" = " 鎖定後，切出 App 再返回時需驗證";
 
 "cat.exp.food" = "餐飲";
 "cat.exp.shopping" = "購物";

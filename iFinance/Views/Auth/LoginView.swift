@@ -115,6 +115,7 @@ struct LoginView: View {
             }
 
             Button {
+                HapticManager.shared.medium()
                 submit()
             } label: {
                 Text(authMode == .login ? "auth.login" : "auth.register_now")
@@ -128,6 +129,7 @@ struct LoginView: View {
 
             if authMode == .login {
                 Button("auth.forgot_password") {
+                    HapticManager.shared.light()
                     showResetSheet = true
                 }
                 .font(.footnote)
@@ -150,10 +152,12 @@ struct LoginView: View {
 
             HStack(spacing: 12) {
                 socialButton(title: String(localized: "auth.provider_wechat"), systemImage: "message.fill", color: Color.green) {
+                    HapticManager.shared.light()
                     errorMessage = authManager.loginWithProvider(.wechat, identifier: "wx_\(UUID().uuidString)")
                 }
 
                 socialButton(title: String(localized: "auth.provider_qq"), systemImage: "bubble.left.and.bubble.right.fill", color: Color.blue) {
+                    HapticManager.shared.light()
                     errorMessage = authManager.loginWithProvider(.qq, identifier: "qq_\(UUID().uuidString)")
                 }
             }
