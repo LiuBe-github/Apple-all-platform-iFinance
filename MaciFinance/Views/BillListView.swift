@@ -11,7 +11,6 @@ struct BillListView: View {
 
     @State private var searchText = ""
     @State private var selectedType: FilterType = .all
-    @State private var showAddBillSheet = false
 
     enum FilterType: String, CaseIterable, Identifiable {
         case all, expense, income, transfer
@@ -94,7 +93,7 @@ struct BillListView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Toolbar area
+            // Toolbar area (只读，无新增按钮)
             HStack(spacing: 12) {
                 TextField("搜索账单...", text: $searchText, prompt: Text("搜索分类或备注"))
                     .textFieldStyle(.roundedBorder)
@@ -109,14 +108,6 @@ struct BillListView: View {
                 .frame(width: 280)
 
                 Spacer()
-
-                Button(action: { showAddBillSheet = true }) {
-                    Label("新增", systemImage: "plus.circle.fill")
-                        .labelStyle(.titleAndIcon)
-                        .font(.system(size: 13, weight: .semibold))
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.regular)
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
@@ -137,7 +128,7 @@ struct BillListView: View {
 
             Divider()
 
-            // List content
+            // List content (纯只读展示)
             if groupedBills.isEmpty {
                 Spacer()
                 VStack(spacing: 10) {
@@ -147,8 +138,9 @@ struct BillListView: View {
                     Text("暂无账单数据")
                         .font(.system(size: 15))
                         .foregroundStyle(.secondary)
-                    Button("记一笔") { showAddBillSheet = true }
-                        .buttonStyle(.link)
+                    Text("请在 iPhone 或 Apple Watch 上记账")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
                 }
                 Spacer()
             } else {
@@ -174,10 +166,6 @@ struct BillListView: View {
                     .padding(.bottom, 24)
                 }
             }
-        }
-        .sheet(isPresented: $showAddBillSheet) {
-            AddBillSheet()
-                .frame(width: 520, height: 480)
         }
     }
 }
@@ -218,7 +206,6 @@ private struct SectionHeader: View {
 
 private struct BillDetailRow: View {
     let bill: Bill
-    @Environment(\.managedObjectContext) private var viewContext
 
     private var isExpense: Bool {
         bill.type == "expenditure" || bill.type == "transfer"
@@ -269,14 +256,6 @@ private struct BillDetailRow: View {
         .padding(.vertical, 10)
         .background(Color(nsColor: .controlBackgroundColor))
         .cornerRadius(10)
-        .contextMenu {
-            Button(role: .destructive) {
-                viewContext.delete(bill)
-                try? viewContext.save()
-            } label: {
-                Label("删除", systemImage: "trash")
-            }
-        }
     }
 
     private var categoryIcon: String {
