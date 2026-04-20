@@ -120,7 +120,7 @@ struct AddBillView: View {
                     ) {
                         saveBill()
                         // 解析显示文本获取最终数值
-//                        let result = parseExpression(displayText)
+                        // let result = parseExpression(displayText)
                     }
                     .transition(.move(edge: .bottom))
                     .background(Color(UIColor.systemBackground))

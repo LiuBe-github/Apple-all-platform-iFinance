@@ -76,11 +76,11 @@ struct TransactionView: View {
                                 Image(uiImage: img)
                                     .resizable()
                                     .aspectRatio(contentMode: .fill)
-                                    .frame(width: 35, height: 35)
+                                    .frame(width: 36, height: 36)
                                     .clipShape(Circle())
                             } else {
                                 Image(systemName: "person.circle.fill")
-                                    .font(.system(size: 26))
+                                    .font(.title.bold())
                             }
                         }
                         .foregroundColor(.blue)

@@ -34,7 +34,6 @@ enum NavigationItem: String, CaseIterable, Identifiable {
 
 struct MainContentView: View {
     @State private var selectedItem: NavigationItem = .dashboard
-    @State private var showAddBillSheet = false
 
     var body: some View {
         NavigationSplitView {
@@ -55,7 +54,7 @@ struct MainContentView: View {
 
                 Divider()
 
-                // Navigation Items
+                // Navigation Items (仅数据展示，不含增删改)
                 List(NavigationItem.allCases, selection: $selectedItem) { item in
                     Label(item.titleKey, systemImage: item.icon)
                         .font(.system(size: 13, weight: .medium))
@@ -65,25 +64,6 @@ struct MainContentView: View {
                 .scrollDisabled(true)
 
                 Spacer()
-
-                // Quick Add Button at bottom
-                Button(action: { showAddBillSheet = true }) {
-                    HStack {
-                        Image(systemName: "plus.circle.fill")
-                        Text("记一笔")
-                    }
-                    .font(.system(size: 13, weight: .medium))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
-                    .background(Color.blue.opacity(0.1))
-                    .cornerRadius(8)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .strokeBorder(Color.blue.opacity(0.3), lineWidth: 1)
-                    )
-                }
-                .buttonStyle(.plain)
-                .padding(12)
             }
         } detail: {
             Group {
@@ -102,21 +82,6 @@ struct MainContentView: View {
                         .navigationTitle("设置")
                 }
             }
-            .toolbar {
-                if selectedItem == .bills {
-                    ToolbarItem(placement: .primaryAction) {
-                        Button(action: { showAddBillSheet = true }) {
-                            Label("记一笔", systemImage: "plus.circle.fill")
-                                .labelStyle(.titleAndIcon)
-                        }
-                        .help("新增账单")
-                    }
-                }
-            }
-        }
-        .sheet(isPresented: $showAddBillSheet) {
-            AddBillSheet()
-                .frame(width: 520, height: 480)
         }
     }
 }
