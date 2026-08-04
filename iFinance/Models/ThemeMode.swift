@@ -2,14 +2,13 @@
 //  ThemeMode.swift
 //  iFinance
 //
-//  Created by 刘不易 on 2026/2/8.
+//  主题模式设置 - 支持 iOS 和 macOS
 //
 
 import Foundation
-import UIKit
 import SwiftUI
 
-// 定义主题枚举
+/// 主题模式枚举
 enum ThemeMode: String, CaseIterable, Identifiable {
     case light
     case dark
@@ -19,9 +18,9 @@ enum ThemeMode: String, CaseIterable, Identifiable {
     
     var displayName: String {
         switch self {
-        case .light: return "浅色"
-        case .dark: return "深色"
-        case .system: return "跟随系统"
+        case .light: return String(localized: "settings.theme_light", defaultValue: "浅色")
+        case .dark: return String(localized: "settings.theme_dark", defaultValue: "深色")
+        case .system: return String(localized: "settings.theme_system", defaultValue: "跟随系统")
         }
     }
 }

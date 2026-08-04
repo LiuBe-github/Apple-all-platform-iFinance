@@ -20,7 +20,7 @@ struct AddBillSheet: View {
     enum TransactionType: String, CaseIterable {
         case expenditure, income
         var title: String {
-            self == .expenditure ? "支出" : "收入"
+            self == .expenditure ? L10n.string("mac.bill.filter_expense") : L10n.string("mac.bill.filter_income")
         }
     }
 
@@ -28,13 +28,13 @@ struct AddBillSheet: View {
         VStack(spacing: 0) {
             // Header
             HStack {
-                Button("取消") { dismiss() }
+                Button(L10n.string("mac.add.cancel")) { dismiss() }
                     .keyboardShortcut(.cancelAction)
                 Spacer()
-                Text("记一笔")
+                Text(L10n.string("mac.add.add_bill"))
                     .font(.system(size: 16, weight: .semibold))
                 Spacer()
-                Button("保存", action: saveBill)
+                Button(L10n.string("mac.add.save"), action: saveBill)
                     .buttonStyle(.borderedProminent)
                     .disabled(!canSave)
                     .keyboardShortcut(.return, modifiers: .command)
@@ -51,16 +51,16 @@ struct AddBillSheet: View {
                     // Type toggle + Amount
                     HStack(spacing: 16) {
                         // Type picker
-                        Picker("类型", selection: $selectedType) {
-                            Text("支出").tag(TransactionType.expenditure)
-                            Text("收入").tag(TransactionType.income)
+                        Picker(L10n.string("mac.add.transaction_type"), selection: $selectedType) {
+                            Text(L10n.string("mac.bill.filter_expense")).tag(TransactionType.expenditure)
+                            Text(L10n.string("mac.bill.filter_income")).tag(TransactionType.income)
                         }
                         .pickerStyle(.segmented)
 
                         Spacer()
 
                         // Amount input
-                        TextField("金额", text: $amountText)
+                        TextField(L10n.string("mac.add.amount"), text: $amountText)
                             .font(.system(size: 24, weight: .bold, design: .monospaced))
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 160)
@@ -81,10 +81,10 @@ struct AddBillSheet: View {
 
                     // Note
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("备注")
+                        Text(L10n.string("mac.add.note"))
                             .font(.system(size: 13, weight: .medium))
                             .foregroundStyle(.secondary)
-                        TextField("添加备注（可选）...", text: $note)
+                        TextField(L10n.string("mac.add.note_placeholder"), text: $note)
                             .textFieldStyle(.roundedBorder)
                     }
                 }
@@ -99,7 +99,7 @@ struct AddBillSheet: View {
     @ViewBuilder
     private var categoryGrid: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("分类")
+            Text(L10n.string("mac.add.category"))
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(.secondary)
 
@@ -145,7 +145,7 @@ struct AddBillSheet: View {
         newBill.category = selectedType == .expenditure
             ? selectedExpenditureCategory?.rawValue
             : selectedIncomeCategory?.rawValue
-        newBill.note = note.isEmpty ? "无备注" : note
+        newBill.note = note.isEmpty ? L10n.string("mac.add.no_note") : note
         newBill.createdAt = Date()
         newBill.createdBy = "user"
         newBill.updatedAt = Date()

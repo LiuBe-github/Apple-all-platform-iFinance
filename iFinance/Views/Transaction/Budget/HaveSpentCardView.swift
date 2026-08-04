@@ -22,6 +22,7 @@ struct HaveSpentCardView: View {
     
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \Bill.date, ascending: false)],
+        predicate: PersistenceController.billUserPredicate,
         animation: .default
     ) private var bills: FetchedResults<Bill>
     
@@ -35,24 +36,35 @@ struct HaveSpentCardView: View {
               let endOfMonth = calendar.date(byAdding: .month, value: 1, to: startOfMonth) else {
             // fallback 初始化（也必须有 sortDescriptors！）
             let request: NSFetchRequest<Bill> = Bill.fetchRequest()
+            request.predicate = PersistenceController.billUserPredicate
             request.sortDescriptors = [NSSortDescriptor(keyPath: \Bill.date, ascending: false)]
             _currentMonthBills = FetchRequest(fetchRequest: request)
             return
         }
         
         let request: NSFetchRequest<Bill> = Bill.fetchRequest()
+        /* 等价于SQL语句：
+         select *
+         from Bill
+         where type = "expenditure"
+         and date >= startOfMonth as NSDate
+         and date < ndOfMonth as NSDate
+         and createBy == PersistenceController.currentUserIdentifier;
+         */
         request.predicate = NSPredicate(format: """
             type == %@ AND 
             date >= %@ AND 
             date < %@ AND 
-            amount != nil
+            amount != nil AND
+            createdBy == %@
             """,
                                         "expenditure",
                                         startOfMonth as NSDate,
-                                        endOfMonth as NSDate
+                                        endOfMonth as NSDate,
+                                        PersistenceController.currentUserIdentifier
         )
         
-        // 🔥 关键修复：添加排序描述符
+        // 关键修复：添加排序描述符
         request.sortDescriptors = [NSSortDescriptor(keyPath: \Bill.date, ascending: false)]
         _currentMonthBills = FetchRequest(fetchRequest: request)
     }

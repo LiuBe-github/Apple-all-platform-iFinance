@@ -18,6 +18,11 @@
 "settings.title" = "設定";
 "settings.about_you" = "あなた";
 "settings.profile" = "プロフィール";
+"settings.delete_account" = "アカウントを削除";
+"settings.delete_account_confirm_title" = "アカウントを削除しますか？";
+"settings.delete_account_confirm_message" = "すべてのアカウント情報、アバター、账单データが完全に削除され、元に戻せません。";
+"settings.delete_account_cancel" = "キャンセル";
+"settings.delete_account_confirm" = "削除する";
 "settings.icloud" = "iCloud 同期";
 "settings.import_export" = "インポート・エクスポート";
 "settings.export_csv" = "CSVで書き出し";
@@ -69,7 +74,7 @@
 "tendency.span_90" = "90日";
 "tendency.span_180" = "180日";
 "tendency.drag_hint" = "チャートをドラッグして任意日の値を確認";
-"tendency.no_data" = "データなし";
+"tendency.no_data" = "描画するデータがありません";
 "tendency.avg" = "平均";
 "tendency.total" = "合計";
 "tendency.heatmap" = "記録ヒートマップ（1年）";
@@ -205,6 +210,7 @@
 
 "iFinance" = "iFinance";
 "auth.apple_frontend_only" = "Appleログインは現在UIのみで、実認証は未接続です。";
+"auth.apple_failed" = "Appleログインに失敗しました。再試行してください。";
 
 // Biometric lock
 "lock.face_id" = "Face ID";
@@ -214,6 +220,9 @@
 "lock.subtitle" = "生体認証でロック解除してください";
 "lock.auth_reason" = "iFinance のロックを解除するために認証してください";
 "lock.enable_reason" = "アプリロックを有効にするために認証してください";
+"lock.disable_reason" = "アプリロックを無効にするために認証してください";
+"lock.disable_reason_retry" = "アプリロックを無効にするために認証してください（2/2回目）";
+"lock.disable_reason_passcode" = "デバイスパスコードを入力してアプリロックを無効にしてください";
 "settings.biometric_lock" = "Face ID ロック";
 "settings.biometric_lock_desc" = " アプリ離脱時にロックし、戻った際に認証";
 
@@ -254,3 +263,173 @@
 "cat.inc.tax" = "税金還付";
 "cat.inc.unexpected" = "臨時収入";
 "cat.inc.other" = "その他";
+
+/* Search */
+"search.title" = "検索";
+"search.placeholder" = "カテゴリまたはメモを検索…";
+"search.clear_filter" = "フィルターをクリア";
+"search.no_result" = "結果なし";
+"search.no_result.desc" = "別のキーワードをお試しください";
+"search.bill_matches" = "一致する明細";
+"search.history" = "検索履歴";
+"search.clear_history" = "すべてクリア";
+"search.cancel_filter" = "検索をキャンセル";
+"settings.language.restart_title" = "言語切り替えには再起動が必要です";
+"settings.language.restart_message" = "言語の変更は再起動後に反映されます。再起動しますか？";
+
+/* CloudKit Sync Status */
+"icloud.status_unknown" = "ステータス不明";
+"icloud.status_syncing" = "同期中…";
+"icloud.status_idle" = "同期済み";
+"icloud.status_conflict" = "競合あり";
+"icloud.status_no_account" = "iCloud 未ログイン";
+"icloud.status_network" = "ネットワーク利用不可";
+"icloud.status_disabled" = "同期オフ";
+"icloud.status_error" = "同期エラー";
+"icloud.enable_sync" = "iCloud 同期を有効にする";
+"icloud.last_sync" = "最終同期";
+"icloud.never_synced" = "未同期";
+"icloud.account_status" = "iCloud アカウント";
+"icloud.account_available" = "利用可能";
+"icloud.account_unavailable" = "利用不可";
+"icloud.account_restricted" = "制限中";
+"icloud.account_unknown" = "不明";
+"icloud.sync_now" = "今すぐ同期";
+"icloud.learn_more" = "詳細";
+
+/* Notifications */
+"notification.budget_exceeded.title" = "予算アラート 💰";
+"notification.budget_exceeded.body" = "今月は %@ 使い、予算の %@ を超えました！";
+"notification.reminder.title" = "记账リマインダー ✏️";
+"notification.reminder.body" = "今日はまだ记账がありません。記録しましょう！";
+"notification.daily_summary.title" = "今日の记账サマリー 📊";
+"notification.daily_summary.body" = "今日の収入：%@、支出：%@";
+"notification.action_view" = "表示";
+"notification.action_dismiss" = "閉じる";
+"notification.action_add_bill" = "记账する";
+"notification.action_skip" = "スキップ";
+"notification.permission_denied" = "通知の権限が拒否されました。設定で有効にしてください。";
+"notification.permission_title" = "通知を有効にする";
+"notification.permission_message" = "通知を有効にすると、记账リマインダーや予算アラートを受け取れます。";
+"icloud.status_section" = "同期状態";
+"icloud.sync_description" = "有効にすると、同じ iCloud アカウントでログインしたすべてのデバイス間で账单データが自動的に同期されます。";
+
+/* Bill Time Range */
+"bill.time_range" = "期間";
+"bill.time_range.today" = "今日";
+"bill.time_range.week" = "今週";
+"bill.time_range.month" = "今月";
+"bill.time_range.year" = "今年";
+
+/* Chart Display Types */
+"chart.type_line" = "折れ線グラフ";
+"chart.type_bar" = "棒グラフ";
+"chart.type_pie" = "円グラフ";
+
+"mac.dashboard.total_income_cumulative" = "累計収入";
+"mac.dashboard.total_expense_cumulative" = "累計支出";
+
+/* Budget Chart */
+"bill.amount_legend" = "金額";
+"bill.category_legend" = "カテゴリ";
+"budget.chart_type" = "グラフタイプ";
+
+/* Settings */
+"settings.appearance" = "外観";
+
+/* macOS Dashboard */
+"mac.dashboard.today_expense" = "今日の支出";
+"mac.dashboard.today_income" = "今日の収入";
+"mac.dashboard.total_balance" = "残高";
+"mac.dashboard.bill_count" = "明細数";
+"mac.dashboard.total_income" = "総収入";
+"mac.dashboard.total_expense" = "総支出";
+"mac.dashboard.recent_bills" = "最近の明細";
+"mac.dashboard.30day_trend" = "過去30日の推移";
+
+/* macOS Statistics */
+"mac.stat.period_week" = "今週";
+"mac.stat.period_month" = "今月";
+"mac.stat.period_year" = "今年";
+"mac.stat.chart_line" = "折れ線グラフ";
+"mac.stat.chart_bar" = "棒グラフ";
+"mac.stat.total_income" = "総収入";
+"mac.stat.total_expense" = "総支出";
+"mac.stat.balance" = "収支";
+"mac.stat.income_trend" = "収入・支出トレンド";
+"mac.stat.no_data" = "データなし";
+"mac.stat.date" = "日付";
+"mac.stat.expense" = "支出";
+"mac.stat.income" = "収入";
+"mac.stat.expense_category" = "支出カテゴリ";
+"mac.stat.no_expense_data" = "支出データなし";
+"mac.stat.count_bills" = "%d 件";
+"mac.stat.expense_breakdown" = "支出内訳";
+
+/* macOS Bill List */
+"mac.bill.filter_all" = "すべて";
+"mac.bill.filter_expense" = "支出";
+"mac.bill.filter_income" = "収入";
+"mac.bill.filter_transfer" = "振替";
+"mac.bill.today" = "今日";
+"mac.bill.yesterday" = "昨日";
+"mac.bill.recent" = "最近";
+"mac.bill.search_placeholder" = "カテゴリまたはメモを検索...";
+"mac.bill.filter_type" = "種類";
+"mac.bill.total_count" = "合計 %d 件";
+"mac.bill.no_data" = "明細データなし";
+"mac.bill.no_data_hint" = "iPhone または Apple Watch で明細を追加してください";
+"mac.bill.uncategorized" = "未分類";
+"mac.bill.no_note" = "メモなし";
+"mac.bill.count_bills" = "%d 件";
+
+/* macOS Add Bill */
+"mac.add.cancel" = "キャンセル";
+"mac.add.add_bill" = "記録する";
+"mac.add.save" = "保存";
+"mac.add.transaction_type" = "種類";
+"mac.add.amount" = "金額";
+"mac.add.note" = "メモ";
+"mac.add.note_placeholder" = "メモを追加（任意）...";
+"mac.add.category" = "カテゴリ";
+"mac.add.no_note" = "メモなし";
+
+/* macOS Main Nav */
+"mac.nav.home" = "ホーム";
+"mac.nav.bills" = "明細";
+"mac.nav.statistics" = "統計";
+"mac.nav.settings" = "設定";
+"mac.nav.dashboard_title" = "ホーム";
+"mac.nav.bills_title" = "明細一覧";
+"mac.nav.statistics_title" = "統計分析";
+"mac.nav.settings_title" = "設定";
+
+/* macOS Settings */
+"mac.settings.appearance" = "外観";
+"mac.settings.theme_mode" = "テーマ";
+"mac.settings.theme_light" = "ライト";
+"mac.settings.theme_dark" = "ダーク";
+"mac.settings.theme_system" = "システムに合わせる";
+"mac.settings.appearance_desc" = "お好みのインターフェーススタイルを選んでください。";
+"mac.settings.data_management" = "データ管理";
+"mac.settings.data_file_location" = "データファイルの場所";
+"mac.settings.bill_total_count" = "明細総数";
+"mac.settings.export_data" = "データを出力";
+"mac.settings.clear_all_data" = "すべてのデータを消去";
+"mac.settings.generate_test_data" = "テストデータ1000件を生成";
+"mac.settings.about" = "情報";
+"mac.settings.version" = "バージョン";
+"mac.settings.platform" = "プラットフォーム";
+"mac.settings.app_description" = "シンプルで优雅な個人家計簿";
+"mac.settings.confirm_delete" = "削除の確認";
+"mac.settings.confirm_delete_message" = "すべての明細データが完全に削除され、元に戻せません。続行しますか？";
+"mac.settings.generate_test_title" = "テストデータ生成";
+"mac.settings.generate_test_message" = "過去1年に分布する1000件のランダム明細を生成します。続行しますか？";
+"mac.settings.generate_success" = "%d 件のテストデータを生成しました！";
+"mac.settings.generate_progress" = "%d 件生成済み";
+"mac.settings.generate_error" = "保存失敗: %@";
+"mac.settings.generate_final_error" = "最終保存失敗: %@";
+"mac.settings.generate_done" = "完了";
+"mac.settings.cancel" = "キャンセル";
+"mac.settings.confirm" = "削除する";
+"mac.settings.generate" = "生成";

@@ -54,9 +54,9 @@ final class BiometricLockManager: ObservableObject {
     /// 当前生物识别类型的本地化名称
     var biometricDisplayName: String {
         switch biometricType {
-        case .faceID: return String(localized: "lock.face_id")
-        case .touchID: return String(localized: "lock.touch_id")
-        default: return String(localized: "lock.biometric")
+        case .faceID: return L10n.string("lock.face_id")
+        case .touchID: return L10n.string("lock.touch_id")
+        default: return L10n.string("lock.biometric")
         }
     }
 
@@ -140,7 +140,7 @@ final class BiometricLockManager: ObservableObject {
         do {
             let success = try await context.evaluatePolicy(
                 .deviceOwnerAuthenticationWithBiometrics,
-                localizedReason: String(localized: "lock.auth_reason")
+                localizedReason: L10n.string("lock.auth_reason")
             )
             if success {
                 state = .unlocked
@@ -163,7 +163,7 @@ final class BiometricLockManager: ObservableObject {
         do {
             let success = try await context.evaluatePolicy(
                 .deviceOwnerAuthenticationWithBiometrics,
-                localizedReason: String(localized: "lock.enable_reason")
+                localizedReason: L10n.string("lock.enable_reason")
             )
             if success { isLockEnabled = true }
             return success
@@ -173,8 +173,59 @@ final class BiometricLockManager: ObservableObject {
         }
     }
 
-    /// 禁用应用锁（无需验证）
-    func disableLock() {
+    /// 禁用应用锁（需先验证身份，失败 2 次后降级为设备密码验证）
+    /// - Returns: true 表示验证成功且已禁用，false 表示验证失败未禁用
+    @discardableResult
+    func disableLock() async -> Bool {
+        guard isBiometricAvailable else {
+            // 不支持生物识别，直接禁用
+            performDisableLock()
+            return true
+        }
+
+        let context = LAContext()
+        context.localizedFallbackTitle = ""
+
+        // 第 1 次尝试：生物识别
+        do {
+            let success = try await context.evaluatePolicy(
+                .deviceOwnerAuthenticationWithBiometrics,
+                localizedReason: L10n.string("lock.disable_reason")
+            )
+            if success { performDisableLock() }
+            return success
+        } catch {
+            // 生物识别失败，尝试第 2 次
+            let context2 = LAContext()
+            context2.localizedFallbackTitle = ""
+            do {
+                let success = try await context2.evaluatePolicy(
+                    .deviceOwnerAuthenticationWithBiometrics,
+                    localizedReason: L10n.string("lock.disable_reason_retry")
+                )
+                if success { performDisableLock() }
+                return success
+            } catch {
+                // 连续失败 2 次，降级为设备密码（包含 FaceID/TouchID/Passcode）
+                let context3 = LAContext()
+                context3.localizedFallbackTitle = ""
+                do {
+                    let success = try await context3.evaluatePolicy(
+                        .deviceOwnerAuthentication,
+                        localizedReason: L10n.string("lock.disable_reason_passcode")
+                    )
+                    if success { performDisableLock() }
+                    return success
+                } catch {
+                    print("[BiometricLock] Disable verification failed: \(error.localizedDescription)")
+                    return false
+                }
+            }
+        }
+    }
+
+    /// 执行实际的禁用操作（内部方法，不做验证）
+    private func performDisableLock() {
         isLockEnabled = false
         state = .unlocked
         isLocked = false
@@ -210,11 +261,11 @@ struct AppLockOverlayView: View {
                     .font(.system(size: 56, weight: .light))
                     .foregroundStyle(.white)
 
-                Text(String(localized: "lock.title"))
+                Text(L10n.string("lock.title"))
                     .font(.title2.weight(.semibold))
                     .foregroundStyle(.white)
 
-                Text(String(localized: "lock.subtitle"))
+                Text(L10n.string("lock.subtitle"))
                     .font(.subheadline)
                     .foregroundStyle(.white.opacity(0.72))
 

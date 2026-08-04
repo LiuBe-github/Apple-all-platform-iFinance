@@ -131,8 +131,8 @@ private struct SettingsDivider: View {
 
 private struct HelpFeedbackView: View {
     let feedbackEmail: String
-    let openURL: OpenURLAction
 
+    @Environment(\.openURL) private var openURL
     @State private var copied = false
 
     var body: some View {
@@ -228,7 +228,6 @@ private struct AboutAppView: View {
 struct SettingView: View {
     @EnvironmentObject private var authManager: AuthManager
     @Environment(\.managedObjectContext) private var viewContext
-    @Environment(\.openURL) private var openURL
 
     @AppStorage("selectedTheme") private var selectedTheme: ThemeMode = .system
 
@@ -240,10 +239,12 @@ struct SettingView: View {
     @State private var showResultAlert = false
 
     @State private var navigateToProfile = false
-    @State private var navigateToICloud = false
+    // iCloud 同步已暂时禁用
+    // @State private var navigateToICloud = false
     @State private var navigateToHelp = false
     @State private var navigateToAbout = false
     @State private var navigateToLanguage = false
+    @State private var showDeleteAccountConfirmation = false
 
     // 生物识别锁相关状态
     @StateObject private var biometricLock = BiometricLockManager.shared
@@ -277,14 +278,37 @@ struct SettingView: View {
                             SettingsRow(icon: "person.circle.fill", iconColor: .blue, title: String(localized: "settings.profile")) {
                                 navigateToProfile = true
                             }
+                            SettingsDivider()
+                            Button {
+                                HapticManager.shared.medium()
+                                showDeleteAccountConfirmation = true
+                            } label: {
+                                HStack(spacing: 12) {
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                            .fill(Color.red.opacity(0.12))
+                                            .frame(width: 32, height: 32)
+                                        Image(systemName: "person.crop.circle.badge.minus")
+                                            .font(.system(size: 14, weight: .medium))
+                                            .foregroundStyle(.red)
+                                    }
+                                    Text(String(localized: "settings.delete_account"))
+                                        .font(.body).foregroundStyle(.red)
+                                    Spacer()
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 12)
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
                         }
 
-                        // 数据同步
-                        SettingsGroup(title: String(localized: "settings.icloud_section"), icon: "icloud.fill", iconColor: .cyan) {
-                            SettingsRow(icon: "icloud", iconColor: .cyan, title: String(localized: "settings.icloud")) {
-                                navigateToICloud = true
-                            }
-                        }
+                        // 数据同步（iCloud 同步已暂时禁用，需付费开发者账号）
+                        // SettingsGroup(title: String(localized: "settings.icloud_section"), icon: "icloud.fill", iconColor: .cyan) {
+                        //     SettingsRow(icon: "icloud", iconColor: .cyan, title: String(localized: "settings.icloud")) {
+                        //         navigateToICloud = true
+                        //     }
+                        // }
 
                         // 导入导出
                         SettingsGroup(title: String(localized: "settings.import_export"), icon: "doc.fill", iconColor: .green) {
@@ -364,11 +388,12 @@ struct SettingView: View {
             .navigationDestination(isPresented: $navigateToProfile) {
                 ProfileView().toolbar(.hidden, for: .tabBar).navigationTitle(String(localized: "settings.profile"))
             }
-            .navigationDestination(isPresented: $navigateToICloud) {
-                iCloudSyncView().toolbar(.hidden, for: .tabBar).navigationTitle(String(localized: "settings.icloud"))
-            }
+            // iCloud 同步已暂时禁用
+            // .navigationDestination(isPresented: $navigateToICloud) {
+            //     iCloudSyncView().toolbar(.hidden, for: .tabBar).navigationTitle(String(localized: "settings.icloud"))
+            // }
             .navigationDestination(isPresented: $navigateToHelp) {
-                HelpFeedbackView(feedbackEmail: feedbackEmail, openURL: openURL).toolbar(.hidden, for: .tabBar)
+                HelpFeedbackView(feedbackEmail: feedbackEmail).toolbar(.hidden, for: .tabBar)
             }
             .navigationDestination(isPresented: $navigateToAbout) {
                 AboutAppView(version: appVersion, build: buildNumber).toolbar(.hidden, for: .tabBar)
@@ -393,6 +418,15 @@ struct SettingView: View {
             } message: {
                 Text(resultMessage)
             }
+            .alert(String(localized: "settings.delete_account_confirm_title"), isPresented: $showDeleteAccountConfirmation) {
+                Button(String(localized: "settings.delete_account_cancel"), role: .cancel) {}
+                Button(String(localized: "settings.delete_account_confirm"), role: .destructive) {
+                    HapticManager.shared.heavy()
+                    authManager.deleteAccount()
+                }
+            } message: {
+                Text(String(localized: "settings.delete_account_confirm_message"))
+            }
             .onAppear {
                 biometricLock.evaluateBiometricCapability()
                 lockToggleValue = biometricLock.isLockEnabled
@@ -404,8 +438,8 @@ struct SettingView: View {
 
     private var profileHeader: some View {
         HStack(spacing: 16) {
-            if let avatarData = UserDefaults.standard.data(forKey: "UserProfileAvatarData"),
-               let uiImage = UIImage(data: avatarData) {
+            if let data = authManager.avatarData,
+               let uiImage = UIImage(data: data) {
                 Image(uiImage: uiImage).resizable().aspectRatio(contentMode: .fill)
                     .frame(width: 64, height: 64).clipShape(Circle())
             } else {
@@ -461,16 +495,17 @@ struct SettingView: View {
             guard let lock = biometricLock else { return }
             var success = false
             if newValue {
+                // 开启：启用时需要生物识别验证
                 success = await lock.enableLock()
             } else {
-                lock.disableLock()
-                success = true
+                // 关闭：禁用时也需要生物识别验证（失败 2 次后降级为密码）
+                success = await lock.disableLock()
             }
             await MainActor.run {
                 isTogglingLock = false
-                if !success && newValue {
-                    // 验证失败，回滚 Toggle
-                    lockToggleValue = false
+                // 无论开启还是关闭，只要验证失败就回滚 Toggle
+                if !success {
+                    lockToggleValue.toggle()
                 }
             }
         }
@@ -510,32 +545,50 @@ struct SettingView: View {
         do {
             let content = try String(contentsOf: url, encoding: .utf8)
             let rows = parseCSVRows(content)
-            guard rows.count > 1 else { showResult(title: String(localized: "settings.import_failed"), message: String(localized: "settings.import_invalid")); return }
+            guard rows.count > 1 else {
+                showResult(title: String(localized: "settings.import_failed"), message: String(localized: "settings.import_invalid"))
+                return
+            }
             let iso = ISO8601DateFormatter()
             let fallback = DateFormatter()
             fallback.locale = Locale(identifier: "en_US_POSIX")
             fallback.dateFormat = "yyyy-MM-dd HH:mm:ss"
             var inserted = 0, skipped = 0
             for row in rows.dropFirst() {
-                guard row.count >= 5 else { skipped += 1; continue }
+                guard row.count >= 5 else {
+                    skipped += 1
+                    continue
+                }
                 let type = row[1].trimmingCharacters(in: .whitespacesAndNewlines)
-                guard ["income","expenditure","transfer"].contains(type) else { skipped += 1; continue }
+                guard ["income","expenditure","transfer"].contains(type) else {
+                    skipped += 1
+                    continue
+                }
                 let date = iso.date(from: row[0].trimmingCharacters(in: .whitespacesAndNewlines)) ?? fallback.date(from: row[0])
-                guard let amt = Decimal(string: row[3], locale: Locale(identifier: "en_US_POSX")) else { skipped += 1; continue }
+                guard let amt = Decimal(string: row[3], locale: Locale(identifier: "en_US_POSX")) else {
+                    skipped += 1
+                    continue
+                }
                 let bill = Bill(context: viewContext)
-                bill.date = date ?? Date(); bill.type = type
+                bill.date = date ?? Date()
+                bill.type = type
                 bill.category = row[2].isEmpty ? nil : row[2]
                 bill.note = row[4].isEmpty ? nil : row[4]
-                bill.amount = NSDecimalNumber(decimal: amt); inserted += 1
+                bill.amount = NSDecimalNumber(decimal: amt)
+                inserted += 1
             }
-            if viewContext.hasChanges { try viewContext.save() }
+            if viewContext.hasChanges {
+                try viewContext.save()
+            }
             showResult(title: String(localized: "settings.import_done"), message: String(format: NSLocalizedString("settings.import_done_msg", comment: ""), inserted, skipped))
         } catch {
             showResult(title: String(localized: "settings.import_failed"), message: error.localizedDescription)
         }
     }
 
-    private func csvEscape(_ v: String) -> String { v.replacingOccurrences(of: "\"", with: "\"\"") }
+    private func csvEscape(_ v: String) -> String {
+        v.replacingOccurrences(of: "\"", with: "\"\"")
+    }
 
     private func parseCSVRows(_ input: String) -> [[String]] {
         var rows: [[String]] = [], curRow: [String] = [], curField = "", inQ = false
@@ -543,17 +596,40 @@ struct SettingView: View {
         var i = 0
         while i < chars.count {
             let ch = chars[i]
-            if ch == "\"" { if inQ && i + 1 < chars.count && chars[i + 1] == "\"" { curField.append("\""); i += 1 } else { inQ.toggle() } }
-            else if ch == "," && !inQ { curRow.append(curField); curField = "" }
-            else if ch == "\n" && !inQ { curRow.append(curField); if !curRow.allSatisfy({ $0.isEmpty }) { rows.append(curRow) }; curRow = []; curField = "" }
-            else if ch != "\r" { curField.append(ch) }
+            if ch == "\"" {
+                if inQ && i + 1 < chars.count && chars[i + 1] == "\"" {
+                    curField.append("\"")
+                    i += 1
+                } else {
+                    inQ.toggle()
+                }
+            } else if ch == "," && !inQ {
+                curRow.append(curField); curField = ""
+            } else if ch == "\n" && !inQ {
+                curRow.append(curField)
+                if !curRow.allSatisfy({ $0.isEmpty }) {
+                    rows.append(curRow)
+                }
+                curRow = []
+                curField = ""
+            }
+            else if ch != "\r" {
+                curField.append(ch)
+            }
             i += 1
         }
-        if !curField.isEmpty || !curRow.isEmpty { curRow.append(curField); if !curRow.allSatisfy({ $0.isEmpty }) { rows.append(curRow) } }
+        if !curField.isEmpty || !curRow.isEmpty {
+            curRow.append(curField)
+            if !curRow.allSatisfy({ $0.isEmpty }) {
+                rows.append(curRow)
+            }
+        }
         return rows
     }
 
-    private func showResult(title: String, message: String) { resultTitle = title; resultMessage = message; showResultAlert = true }
+    private func showResult(title: String, message: String) {
+        resultTitle = title; resultMessage = message; showResultAlert = true
+    }
 }
 
 #Preview {

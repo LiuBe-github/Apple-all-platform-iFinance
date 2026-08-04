@@ -1,0 +1,45 @@
+/* Tab titles */
+"tab.summary" = "概覽";
+"tab.add" = "記帳";
+"tab.history" = "記錄";
+
+/* Summary view */
+"summary.today_expense" = "今日支出";
+"summary.today_income" = "今日收入";
+"summary.today_balance" = "今日結餘";
+"summary.today_count" = "筆數";
+"summary.no_data" = "暫無數據";
+
+/* Add bill view */
+"add.expense" = "支出";
+"add.income" = "收入";
+"add.amount" = "金額";
+"add.category" = "分類";
+"add.save" = "保存";
+"add.cancel" = "取消";
+"add.success" = "已保存！";
+"add.fail" = "保存失敗";
+"add.no_phone" = "iPhone 未連接";
+"add.sync_success" = "已同步到 iPhone";
+"add.sync_cached" = "已緩存，稍後同步";
+
+/* History view */
+"history.title" = "歷史記錄";
+"history.today" = "今天";
+"history.empty" = "暫無記錄";
+"history.hint" = "點擊記帳開始記錄";
+
+/* Categories */
+"category.food" = "餐飲";
+"category.shopping" = "購物";
+"category.transport" = "交通";
+"category.entertainment" = "娛樂";
+"category.daily" = "日用";
+"category.salary" = "工資";
+"category.bonus" = "獎金";
+"category.redpacket" = "紅包";
+"category.other" = "其他";
+
+/* Status */
+"status.connected" = "已連接 iPhone";
+"status.disconnected" = "未連接";

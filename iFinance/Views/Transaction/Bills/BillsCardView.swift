@@ -14,11 +14,11 @@ enum TimeRange: String, CaseIterable {
     case thisWeek = "本周"
     case thisMonth = "本月"
     case thisYear = "本年"
-    
+
     var dateRange: (start: Date, end: Date) {
         let calendar = Calendar.current
         let now = Date()
-        
+
         switch self {
         case .today:
             let start = calendar.startOfDay(for: now)
@@ -34,22 +34,49 @@ enum TimeRange: String, CaseIterable {
             return (start, now)
         }
     }
+
+    var displayName: String {
+        switch self {
+        case .today: return String(localized: "bill.time_range.today", defaultValue: "本日")
+        case .thisWeek: return String(localized: "bill.time_range.week", defaultValue: "本周")
+        case .thisMonth: return String(localized: "bill.time_range.month", defaultValue: "本月")
+        case .thisYear: return String(localized: "bill.time_range.year", defaultValue: "本年")
+        }
+    }
 }
 
 struct BillsCardView: View {
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \Bill.date, ascending: false)],
+        predicate: PersistenceController.billUserPredicate,
         animation: .default
     ) private var bills: FetchedResults<Bill>
-    
+
     @State private var selectedTimeRange: TimeRange = .thisMonth
-    
-    // MARK: - 按时间范围过滤
+    var selectedCategory: Binding<String?>?
+    var selectedNote: Binding<String?>?
+
+    // MARK: - 按时间范围、类别、备注过滤
     private var filteredBills: [Bill] {
         let range = selectedTimeRange.dateRange
+        let catValue = selectedCategory?.wrappedValue
+        let noteValue = selectedNote?.wrappedValue
         return bills.filter { bill in
             guard let date = bill.date else { return false }
-            return date >= range.start && date <= range.end
+            let inTimeRange = date >= range.start && date <= range.end
+            let inCategory: Bool
+            if let cat = catValue {
+                inCategory = bill.category == cat
+            } else {
+                inCategory = true
+            }
+            let inNote: Bool
+            if let note = noteValue {
+                inNote = bill.note == note
+            } else {
+                inNote = true
+            }
+            return inTimeRange && inCategory && inNote
         }
     }
     
@@ -80,9 +107,9 @@ struct BillsCardView: View {
     
     // MARK: - 时间范围选择器
     private var timeRangePicker: some View {
-        Picker("时间范围", selection: $selectedTimeRange) {
+        Picker("bill.time_range", selection: $selectedTimeRange) {
             ForEach(TimeRange.allCases, id: \.self) { range in
-                Text(range.rawValue).tag(range)
+                Text(range.displayName).tag(range)
             }
         }
         .pickerStyle(.segmented)
@@ -105,9 +132,18 @@ struct BillsCardView: View {
 }
 
 // MARK: - 单日分组卡片
-private struct DayGroupCard: View {
+private struct DayGroupCard: View, Equatable {
     let date:  Date
     let bills: [Bill]
+
+    // 基于账单数据内容判断是否需要重新计算 dayNet
+    // 比较方式：日期 + 账单数量 + 每笔账单的金额和类型
+    static func == (lhs: DayGroupCard, rhs: DayGroupCard) -> Bool {
+        lhs.date == rhs.date && lhs.bills.count == rhs.bills.count &&
+        zip(lhs.sortedBills, rhs.sortedBills).allSatisfy { bill1, bill2 in
+            bill1.amount == bill2.amount && bill1.type == bill2.type
+        }
+    }
     
     private var sortedBills: [Bill] {
         bills.sorted { ($0.date ?? Date()) > ($1.date ?? Date()) }

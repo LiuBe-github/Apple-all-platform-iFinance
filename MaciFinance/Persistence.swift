@@ -22,9 +22,9 @@ struct PersistenceController {
         bill1.category = "餐饮"
         bill1.note = "午餐"
         bill1.createdAt = Date()
-        bill1.createdBy = "user"
+        bill1.createdBy = PersistenceController.currentUserIdentifier
         bill1.updatedAt = Date()
-        bill1.updatedBy = "user"
+        bill1.updatedBy = PersistenceController.currentUserIdentifier
 
         let bill2 = Bill(context: viewContext)
         bill2.id = UUID()
@@ -34,21 +34,34 @@ struct PersistenceController {
         bill2.category = "工资"
         bill2.note = "月薪"
         bill2.createdAt = Date()
-        bill2.createdBy = "user"
+        bill2.createdBy = PersistenceController.currentUserIdentifier
         bill2.updatedAt = Date()
-        bill2.updatedBy = "user"
+        bill2.updatedBy = PersistenceController.currentUserIdentifier
 
         try? viewContext.save()
         return result
     }()
 
-    let container: NSPersistentCloudKitContainer
+    /// 当前登录用户标识符（与 iOS 共享）
+    static var currentUserIdentifier: String {
+        UserDefaults.standard.string(forKey: "AuthUserIdentifier") ?? "anonymous"
+    }
+
+    // iCloud 同步已暂时禁用（需付费开发者账号才能使用）
+    // 使用普通 NSPersistentContainer 替代 NSPersistentCloudKitContainer
+    let container: NSPersistentContainer
 
     init(inMemory: Bool = false) {
-        container = NSPersistentCloudKitContainer(name: "MaciFinance")
+        container = NSPersistentContainer(name: "MaciFinance")
 
         if inMemory {
             container.persistentStoreDescriptions.first?.url = URL(fileURLWithPath: "/dev/null")
+        }
+
+        // 开启自动轻量迁移：当模型新增字段/实体时，Core Data 自动推断映射
+        if let description = container.persistentStoreDescriptions.first {
+            description.shouldMigrateStoreAutomatically = true
+            description.shouldInferMappingModelAutomatically = true
         }
 
         container.loadPersistentStores { _, error in

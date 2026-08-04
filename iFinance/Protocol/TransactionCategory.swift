@@ -7,4 +7,5 @@
 
 protocol TransactionCategory: Equatable, Hashable, RawRepresentable where RawValue == String {
     var icon: String { get }
+    var localizedDisplayName: String { get }
 }

@@ -4,11 +4,8 @@ import PhotosUI
 struct ProfileView: View {
     @EnvironmentObject private var authManager: AuthManager
 
-    @State private var nickname: String = UserDefaults.standard.string(forKey: "UserProfileNickname") ?? "用户123"
     @State private var avatarImage: Image? = nil
     @State private var selectedAvatar: PhotosPickerItem? = nil
-
-    private let avatarImageDataKey = "UserProfileAvatarData"
 
     var body: some View {
         NavigationStack {
@@ -38,7 +35,7 @@ struct ProfileView: View {
                             }
                             .buttonStyle(PlainButtonStyle())
 
-                            Text(nickname)
+                            Text(authManager.nickname)
                                 .font(.title2)
                                 .fontWeight(.semibold)
 
@@ -61,8 +58,8 @@ struct ProfileView: View {
 
                     Section("profile.account") {
                         NavigationLink("profile.change_nickname") {
-                            ChangeNicknameView(initialNickname: nickname) { newName in
-                                nickname = newName
+                            ChangeNicknameView(initialNickname: authManager.nickname) { _ in
+                                // 昵称已通过 authManager.nickname 绑定，无需额外操作
                             }
                         }
                         NavigationLink("profile.bind_phone") {
@@ -92,11 +89,10 @@ struct ProfileView: View {
             .navigationTitle("profile.title")
             .navigationBarTitleDisplayMode(.large)
             .onAppear {
-                nickname = authManager.nickname
-                loadPersistedAvatar()
+                loadAvatar()
             }
-            .onChange(of: authManager.nickname) { _, newValue in
-                nickname = newValue
+            .onChange(of: authManager.avatarData) { _, _ in
+                loadAvatar()
             }
             .onChange(of: selectedAvatar) { _, newItem in
                 Task {
@@ -109,8 +105,8 @@ struct ProfileView: View {
         .toolbar(.hidden, for: .tabBar)
     }
 
-    private func loadPersistedAvatar() {
-        if let imageData = UserDefaults.standard.data(forKey: avatarImageDataKey),
+    private func loadAvatar() {
+        if let imageData = authManager.avatarData,
            let uiImage = UIImage(data: imageData) {
             avatarImage = Image(uiImage: uiImage)
         } else {
@@ -127,7 +123,8 @@ struct ProfileView: View {
         let resizedImage = resizeImage(uiImage, targetSize: CGSize(width: 300, height: 300))
 
         if let imageData = resizedImage.jpegData(compressionQuality: 0.8) {
-            UserDefaults.standard.set(imageData, forKey: avatarImageDataKey)
+            // 保存到 Core Data User 模型
+            authManager.updateAvatar(imageData)
             await MainActor.run {
                 avatarImage = Image(uiImage: resizedImage)
             }

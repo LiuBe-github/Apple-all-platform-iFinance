@@ -17,10 +17,10 @@ struct BillListView: View {
         var id: String { rawValue }
         var title: String {
             switch self {
-            case .all: return "全部"
-            case .expense: return "支出"
-            case .income: return "收入"
-            case .transfer: return "转账"
+            case .all: return L10n.string("mac.bill.filter_all")
+            case .expense: return L10n.string("mac.bill.filter_expense")
+            case .income: return L10n.string("mac.bill.filter_income")
+            case .transfer: return L10n.string("mac.bill.filter_transfer")
             }
         }
     }
@@ -65,15 +65,13 @@ struct BillListView: View {
         let grouped = Dictionary(grouping: filteredBills) { bill -> String in
             guard let date = bill.date else { return "" }
             let today = Date()
-            if cal.isDateInToday(date) { return "今天" }
-            if cal.isDateInYesterday(date) { return "昨天" }
+            if cal.isDateInToday(date) { return L10n.string("mac.bill.today") }
+            if cal.isDateInYesterday(date) { return L10n.string("mac.bill.yesterday") }
 
             let daysAgo = cal.dateComponents([.day], from: startOfDay(date), to: startOfDay(today)).day ?? 0
-            if daysAgo < 7 { return "最近" }
+            if daysAgo < 7 { return L10n.string("mac.bill.recent") }
 
-            let fmt = DateFormatter()
-            fmt.dateFormat = "yyyy年M月"
-            return fmt.string(from: date)
+            return date.formatted(Date.FormatStyle().year().month(.wide))
         }
         return grouped.sorted { $0.key > $1.key } // newest first
     }
@@ -95,11 +93,11 @@ struct BillListView: View {
         VStack(spacing: 0) {
             // Toolbar area (只读，无新增按钮)
             HStack(spacing: 12) {
-                TextField("搜索账单...", text: $searchText, prompt: Text("搜索分类或备注"))
+                TextField(L10n.string("mac.bill.search_placeholder"), text: $searchText, prompt: Text(L10n.string("mac.bill.search_placeholder")))
                     .textFieldStyle(.roundedBorder)
                     .frame(width: 240)
 
-                Picker("类型", selection: $selectedType) {
+                Picker(L10n.string("mac.bill.filter_type"), selection: $selectedType) {
                     ForEach(FilterType.allCases) { type in
                         Text(type.title).tag(type)
                     }
@@ -116,10 +114,10 @@ struct BillListView: View {
 
             // Summary bar
             HStack(spacing: 32) {
-                StatLabel(title: "收入", value: totalIncome, color: .green)
-                StatLabel(title: "支出", value: totalExpense, color: .red)
+                StatLabel(title: L10n.string("mac.stat.income"), value: totalIncome, color: .green)
+                StatLabel(title: L10n.string("mac.stat.expense"), value: totalExpense, color: .red)
                 Divider().frame(height: 24)
-                Text("共 \(filteredBills.count) 笔")
+                Text(String(format: L10n.string("mac.bill.total_count"), filteredBills.count))
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
             }
@@ -135,10 +133,10 @@ struct BillListView: View {
                     Image(systemName: "list.bullet.clipboard")
                         .font(.system(size: 40))
                         .foregroundStyle(.quaternary)
-                    Text("暂无账单数据")
+                    Text(L10n.string("mac.bill.no_data"))
                         .font(.system(size: 15))
                         .foregroundStyle(.secondary)
-                    Text("请在 iPhone 或 Apple Watch 上记账")
+                    Text(L10n.string("mac.bill.no_data_hint"))
                         .font(.caption)
                         .foregroundStyle(.tertiary)
                 }
@@ -198,7 +196,7 @@ private struct SectionHeader: View {
         HStack {
             Text(title).font(.system(size: 13, weight: .bold))
             Spacer()
-            Text("\(bills.count) 笔").font(.caption2).foregroundStyle(.secondary)
+            Text(String(format: L10n.string("mac.bill.count_bills"), bills.count)).font(.caption2).foregroundStyle(.secondary)
         }
         .padding(.vertical, 6)
     }
@@ -229,10 +227,10 @@ private struct BillDetailRow: View {
             }
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(bill.category ?? "未分类")
+                Text(bill.category ?? L10n.string("mac.bill.uncategorized"))
                     .font(.system(size: 14, weight: .medium))
 
-                if let note = bill.note, !note.isEmpty, note != "无备注" {
+                if let note = bill.note, !note.isEmpty, note != L10n.string("mac.bill.no_note") {
                     Text(note)
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)

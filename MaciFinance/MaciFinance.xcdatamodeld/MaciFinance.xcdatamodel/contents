@@ -12,4 +12,19 @@
         <attribute name="updatedAt" attributeType="Date" defaultDateTimeInterval="790680300" usesScalarValueType="NO"/>
         <attribute name="updatedBy" attributeType="String" defaultValueString="user"/>
     </entity>
+    <entity name="UserProfile" representedClassName="UserProfile" syncable="YES" codeGenerationType="class">
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="userIdentifier" attributeType="String" defaultValueString="anonymous"/>
+        <attribute name="nickname" optional="YES" attributeType="String" defaultValueString="用户123"/>
+        <attribute name="avatarData" optional="YES" attributeType="Binary" allowsExternalBinaryDataStorage="YES"/>
+        <attribute name="monthlyBudget" attributeType="Double" defaultValueString="3000" usesScalarValueType="YES"/>
+        <attribute name="email" optional="YES" attributeType="String"/>
+        <attribute name="phone" optional="YES" attributeType="String"/>
+        <attribute name="provider" optional="YES" attributeType="String"/>
+        <attribute name="providerID" optional="YES" attributeType="String"/>
+        <attribute name="passwordHash" optional="YES" attributeType="String"/>
+        <attribute name="passwordSalt" optional="YES" attributeType="String"/>
+        <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+    </entity>
 </model>

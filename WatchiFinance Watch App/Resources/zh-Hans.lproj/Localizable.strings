@@ -1,0 +1,45 @@
+/* Tab titles */
+"tab.summary" = "概览";
+"tab.add" = "记账";
+"tab.history" = "记录";
+
+/* Summary view */
+"summary.today_expense" = "今日支出";
+"summary.today_income" = "今日收入";
+"summary.today_balance" = "今日结余";
+"summary.today_count" = "笔数";
+"summary.no_data" = "暂无数据";
+
+/* Add bill view */
+"add.expense" = "支出";
+"add.income" = "收入";
+"add.amount" = "金额";
+"add.category" = "分类";
+"add.save" = "保存";
+"add.cancel" = "取消";
+"add.success" = "已保存！";
+"add.fail" = "保存失败";
+"add.no_phone" = "iPhone 未连接";
+"add.sync_success" = "已同步到 iPhone";
+"add.sync_cached" = "已缓存，稍后同步";
+
+/* History view */
+"history.title" = "历史记录";
+"history.today" = "今天";
+"history.empty" = "暂无记录";
+"history.hint" = "点击记账开始记录";
+
+/* Categories */
+"category.food" = "餐饮";
+"category.shopping" = "购物";
+"category.transport" = "交通";
+"category.entertainment" = "娱乐";
+"category.daily" = "日用";
+"category.salary" = "工资";
+"category.bonus" = "奖金";
+"category.redpacket" = "红包";
+"category.other" = "其他";
+
+/* Status */
+"status.connected" = "已连接 iPhone";
+"status.disconnected" = "未连接";

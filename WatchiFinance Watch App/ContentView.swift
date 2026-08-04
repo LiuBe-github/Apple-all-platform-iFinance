@@ -16,9 +16,15 @@ struct ContentView: View {
     @State private var sendResultMessage: String? = nil
 
     enum WatchTab: String, CaseIterable {
-        case summary = "概览"
-        case addBill = "记账"
-        case history = "记录"
+        case summary, addBill, history
+
+        var title: String {
+            switch self {
+            case .summary: return L10n.string("tab.summary")
+            case .addBill: return L10n.string("tab.add")
+            case .history: return L10n.string("tab.history")
+            }
+        }
 
         var icon: String {
             switch self {
@@ -33,25 +39,25 @@ struct ContentView: View {
         case expenditure, income
 
         var title: String {
-            self == .expenditure ? "支出" : "收入"
+            self == .expenditure ? L10n.string("add.expense") : L10n.string("add.income")
         }
     }
 
     // 常用分类（精简版，适合手表小屏幕）
     private static let quickExpenditureCategories: [(String, String)] = [
-        ("餐饮", "fork.knife"),
-        ("购物", "cart"),
-        ("交通", "car"),
-        ("娱乐", "gamecontroller"),
-        ("日用", "bag"),
-        ("其他", "ellipsis"),
+        (L10n.string("category.food"), "fork.knife"),
+        (L10n.string("category.shopping"), "cart"),
+        (L10n.string("category.transport"), "car"),
+        (L10n.string("category.entertainment"), "gamecontroller"),
+        (L10n.string("category.daily"), "bag"),
+        (L10n.string("category.other"), "ellipsis"),
     ]
 
     private static let quickIncomeCategories: [(String, String)] = [
-        ("工资", "wallet.bifold"),
-        ("奖金", "dollarsign.circle"),
-        ("红包", "dollarsign.square"),
-        ("其他", "ellipsis"),
+        (L10n.string("category.salary"), "wallet.bifold"),
+        (L10n.string("category.bonus"), "dollarsign.circle"),
+        (L10n.string("category.redpacket"), "dollarsign.square"),
+        (L10n.string("category.other"), "ellipsis"),
     ]
 
     private var currentCategories: [(String, String)] {
@@ -93,7 +99,7 @@ struct ContentView: View {
             VStack(spacing: 16) {
                 // 今日结余大字展示
                 VStack(spacing: 4) {
-                    Text("今日结余")
+                    Text(L10n.string("summary.today_balance"))
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                     Text(formatAmount(dataModel.todayBalance))
@@ -112,7 +118,7 @@ struct ContentView: View {
                         Image(systemName: "arrow.down.circle.fill")
                             .foregroundStyle(.red)
                             .font(.title3)
-                        Text("支出")
+                        Text(L10n.string("add.expense"))
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                         Text(formatAmount(dataModel.todayExpense))
@@ -126,7 +132,7 @@ struct ContentView: View {
                         Image(systemName: "arrow.up.circle.fill")
                             .foregroundStyle(.green)
                             .font(.title3)
-                        Text("收入")
+                        Text(L10n.string("add.income"))
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                         Text(formatAmount(dataModel.todayIncome))
@@ -140,7 +146,7 @@ struct ContentView: View {
                         Image(systemName: "list.bullet")
                             .foregroundStyle(.blue)
                             .font(.title3)
-                        Text("笔数")
+                        Text(L10n.string("summary.today_count"))
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                         Text("\(dataModel.todayCount)")
@@ -154,9 +160,9 @@ struct ContentView: View {
                 if let msg = sendResultMessage {
                     Text(msg)
                         .font(.caption2)
-                        .foregroundStyle(msg.contains("成功") ? .green : .orange)
+                        .foregroundStyle(.green)
                         .padding(8)
-                        .background(msg.contains("成功") ? Color.green.opacity(0.1) : Color.orange.opacity(0.1))
+                        .background(Color.green.opacity(0.1))
                         .cornerRadius(8)
                 }
 
@@ -165,7 +171,7 @@ struct ContentView: View {
                     Circle()
                         .fill(dataModel.isReachable ? Color.green : Color.orange)
                         .frame(width: 6, height: 6)
-                    Text(dataModel.isReachable ? "已连接 iPhone" : "未连接")
+                    Text(dataModel.isReachable ? L10n.string("status.connected") : L10n.string("status.disconnected"))
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
@@ -213,7 +219,7 @@ struct ContentView: View {
                                 .controlSize(.mini)
                         } else {
                             Image(systemName: "checkmark.circle.fill")
-                            Text("保存")
+                            Text(L10n.string("add.save"))
                         }
                     }
                     .font(.body.weight(.semibold))
@@ -238,10 +244,10 @@ struct ContentView: View {
                     Image(systemName: "list.bullet.clipboard")
                         .font(.largeTitle)
                         .foregroundStyle(.tertiary)
-                    Text("今天还没有记录")
+                    Text(L10n.string("history.empty"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    Text("点击「记账」开始记录")
+                    Text(L10n.string("history.hint"))
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
                     Spacer()
@@ -376,9 +382,9 @@ struct ContentView: View {
             await MainActor.run {
                 isSaving = false
                 if success {
-                    sendResultMessage = "✅ 已同步到 iPhone"
+                    sendResultMessage = L10n.string("add.sync_success")
                 } else {
-                    sendResultMessage = "⚠️ 已缓存，稍后自动同步"
+                    sendResultMessage = L10n.string("add.sync_cached")
                 }
 
                 // 重置表单

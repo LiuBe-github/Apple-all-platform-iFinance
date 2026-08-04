@@ -17,10 +17,10 @@ private let logger = Logger(subsystem: "com.liube.ifinance.watch", category: "Wa
 struct WatchBill: Identifiable, Codable {
     var id: String
     let amount: Double
-    let type: String       // "expenditure" / "income"
+    let type: String
     let category: String
     let note: String?
-    let date: Date         // ISO8601
+    let date: Date
 
     init(id: String = UUID().uuidString, amount: Double, type: String, category: String, note: String? = nil, date: Date = Date()) {
         self.id = id
@@ -38,7 +38,9 @@ struct WatchBill: Identifiable, Codable {
             "amount": amount,
             "type": type,
             "category": category,
-            "date": ISO8601DateFormatter().string(from: date)
+            "date": ISO8601DateFormatter().string(from: date),
+            // 附带用户标识，确保 iPhone 写入 Core Data 时账单归属正确
+            "userIdentifier": UserDefaults.standard.string(forKey: "AuthUserIdentifier") ?? "anonymous"
         ]
         if let note { dict["note"] = note }
         return dict
@@ -103,10 +105,10 @@ final class WatchDataModel: NSObject, ObservableObject, WCSessionDelegate {
 
     // MARK: - Public API
 
-    /// 发送新账单到 iPhone
+    // 发送新账单到 iPhone（使用 transferUserInfo 确保可靠传输）
     func sendBill(_ bill: WatchBill) async -> Bool {
         guard WCSession.default.isReachable else {
-            logger.warning("iPhone 未连接，尝试缓存")
+            logger.warning("iPhone未连接，尝试缓存")
             cacheBill(bill)
             addLocalBill(bill)
             return false
@@ -114,7 +116,9 @@ final class WatchDataModel: NSObject, ObservableObject, WCSessionDelegate {
 
         let payload = bill.toPayload()
         do {
-            try WCSession.default.updateApplicationContext(["action": "addBill", "bill": payload])
+            // 使用 transferUserInfo 替代 updateApplicationContext
+            // transferUserInfo 会可靠地排队发送，不会覆盖消息
+            try WCSession.default.transferUserInfo(["action": "addBill", "bill": payload])
             logger.info("账单已发送到 iPhone: \(bill.category) ¥\(bill.amount)")
             addLocalBill(bill)
             return true
@@ -126,14 +130,15 @@ final class WatchDataModel: NSObject, ObservableObject, WCSessionDelegate {
         }
     }
 
-    /// 刷新今日数据（请求 iPhone 同步）
+    /// 刷新今日数据（请求 iPhone 同步，使用 transferUserInfo 确保可靠）
     func requestSync() {
         guard WCSession.default.isReachable else {
             logger.info("iPhone 未连接，使用本地缓存")
             return
         }
         do {
-            try WCSession.default.updateApplicationContext(["action": "requestTodayBills"])
+            // 使用 transferUserInfo 替代 updateApplicationContext
+            try WCSession.default.transferUserInfo(["action": "requestTodayBills"])
             logger.info("已请求同步今日数据")
         } catch {
             logger.error("同步请求失败: \(error)")

@@ -54,7 +54,6 @@ struct AddBillView: View {
                                     ExpenditureCategoryItemView(category: category, selectedCategory:  $selectedExpenditureCategory)
                                         .onTapGesture {
                                             HapticManager.shared.light()
-                                            print("Selected category: \(category.rawValue)")
                                         }
                                 }
                             }
@@ -66,7 +65,6 @@ struct AddBillView: View {
                                     IncomeCategoryItemView(category: category, selectedCategory:  $selectedIncomeCategory)
                                         .onTapGesture {
                                             HapticManager.shared.light()
-                                            print("Selected category: \(category.rawValue)")
                                         }
                                 }
                             }
@@ -189,13 +187,13 @@ struct AddBillView: View {
         // 创建对象
         let newBill = Bill(context: viewContext)
         
-        // 所有非可选字段必须赋非 nil 值
-        newBill.id = UUID()                     // 👈 直接赋 UUID()，不是字符串！
+        // 所有非可选字段必须赋非nil值
+        newBill.id = UUID()
         newBill.amount = NSDecimalNumber(value: result)
         newBill.date = selectedDate
         newBill.type = transactionType == .expenditure ? "expenditure" :
         transactionType == .income ? "income" : "transfer"
-        newBill.category = categoryString       // 可为 nil
+        newBill.category = categoryString
         if transactionType == .transfer {
             let route = "\(transferFrom) → \(transferTo)"
             if note.isEmpty {
@@ -207,22 +205,16 @@ struct AddBillView: View {
             newBill.note = note.isEmpty ? nil : note
         }
         newBill.createdAt = Date()
-        newBill.createdBy = "user"
+        newBill.createdBy = AuthManager.shared.userIdentifier
         newBill.updatedAt = Date()
-        newBill.updatedBy = "user"
+        newBill.updatedBy = AuthManager.shared.userIdentifier
         // 尝试保存
-        print(newBill.type ?? "nil")
-        print(newBill.category ?? "nil")
         do {
             try viewContext.save()
             HapticManager.shared.success()
-            print("✅ 账单保存成功！")
             dismiss()
         } catch {
-            let nsError = error as NSError
             HapticManager.shared.error()
-            print("❌ 保存失败: \(error.localizedDescription)")
-            print("Domain: \(nsError.domain), Code: \(nsError.code)")
             showAlert(message: String(localized: "bill.save_failed"))
         }
     }

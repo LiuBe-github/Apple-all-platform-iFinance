@@ -24,10 +24,10 @@ enum NavigationItem: String, CaseIterable, Identifiable {
 
     var titleKey: String {
         switch self {
-        case .dashboard: return "首页"
-        case .bills: return "账单"
-        case .statistics: return "统计"
-        case .settings: return "设置"
+        case .dashboard: return L10n.string("mac.nav.home")
+        case .bills: return L10n.string("mac.nav.bills")
+        case .statistics: return L10n.string("mac.nav.statistics")
+        case .settings: return L10n.string("mac.nav.settings")
         }
     }
 }
@@ -70,16 +70,16 @@ struct MainContentView: View {
                 switch selectedItem {
                 case .dashboard:
                     DashboardView()
-                        .navigationTitle("首页")
+                        .navigationTitle(L10n.string("mac.nav.dashboard_title"))
                 case .bills:
                     BillListView()
-                        .navigationTitle("账单明细")
+                        .navigationTitle(L10n.string("mac.nav.bills_title"))
                 case .statistics:
                     StatisticsView()
-                        .navigationTitle("统计分析")
+                        .navigationTitle(L10n.string("mac.nav.statistics_title"))
                 case .settings:
                     SettingsView()
-                        .navigationTitle("设置")
+                        .navigationTitle(L10n.string("mac.nav.settings_title"))
                 }
             }
         }

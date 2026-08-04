@@ -59,6 +59,11 @@
 "settings.title" = "设置";
 "settings.about_you" = "关于你";
 "settings.profile" = "个人设置";
+"settings.delete_account" = "注销当前账号";
+"settings.delete_account_confirm_title" = "确定要注销账号吗？";
+"settings.delete_account_confirm_message" = "此操作将永久删除你的所有账号信息、头像及账单数据，且无法恢复。";
+"settings.delete_account_cancel" = "取消";
+"settings.delete_account_confirm" = "注销账号";
 "settings.icloud" = "iCloud 云同步设置";
 "settings.import_export" = "账单导入导出";
 "settings.export_csv" = "账单导出（CSV）";
@@ -143,7 +148,7 @@
 "tendency.span_6month" = "6个月";
 "tendency.span_year" = "年";
 "tendency.drag_hint" = "在图表上拖动可查看任意日期数据";
-"tendency.no_data" = "暂无数据";
+"tendency.no_data" = "当前无数据可渲染";
 "tendency.avg" = "均值";
 "tendency.total" = "总额";
 "tendency.heatmap" = "记账热力图（近一年）";
@@ -252,6 +257,7 @@
 
 "transaction.empty" = "当前还没有账单哦，记一笔吧！😄";
 "auth.apple_frontend_only" = "Apple 登录暂仅保留界面展示，未接入真实鉴权。";
+"auth.apple_failed" = "Apple 登录失败，请重试。";
 
 // 生物识别锁
 "lock.face_id" = "Face ID";
@@ -261,5 +267,178 @@
 "lock.subtitle" = "使用生物识别解锁以继续查看";
 "lock.auth_reason" = "验证以解锁 iFinance";
 "lock.enable_reason" = "验证以启用应用锁";
+"lock.disable_reason" = "验证以禁用应用锁";
+"lock.disable_reason_retry" = "验证以禁用应用锁（尝试 2/2）";
+"lock.disable_reason_passcode" = "输入设备密码以禁用应用锁";
 "settings.biometric_lock" = "Face ID 锁定";
 "settings.biometric_lock_desc" = " 锁定后，切出 App 再返回时需验证";
+
+/* Search */
+"search.title" = "搜索账单";
+"search.placeholder" = "搜索类别或备注…";
+"search.clear_filter" = "清除筛选";
+"search.no_result" = "无结果";
+"search.no_result.desc" = "换个关键词试试";
+"search.bill_matches" = "匹配备注的账单";
+"search.history" = "搜索历史";
+"search.clear_history" = "清空";
+"search.cancel_filter" = "取消搜索";
+"settings.language.restart_title" = "切换语言需要重启 APP";
+"settings.language.restart_message" = "语言切换将在重启后生效。确定要重启吗？";
+
+/* CloudKit Sync Status */
+"icloud.status_unknown" = "状态未知";
+"icloud.status_syncing" = "正在同步…";
+"icloud.status_idle" = "已同步";
+"icloud.status_conflict" = "存在冲突";
+"icloud.status_no_account" = "未登录 iCloud";
+"icloud.status_network" = "网络不可用";
+"icloud.status_disabled" = "同步已关闭";
+"icloud.status_error" = "同步出错";
+"icloud.enable_sync" = "启用 iCloud 同步";
+"icloud.last_sync" = "上次同步";
+"icloud.never_synced" = "从未同步";
+"icloud.account_status" = "iCloud 账户状态";
+"icloud.account_available" = "正常";
+"icloud.account_unavailable" = "不可用";
+"icloud.account_restricted" = "受限制";
+"icloud.account_unknown" = "未知";
+"icloud.sync_now" = "立即同步";
+"icloud.learn_more" = "了解更多";
+
+/* Notifications */
+"notification.budget_exceeded.title" = "预算提醒 💰";
+"notification.budget_exceeded.body" = "本月已花费 %@，超过了 %@ 的预算！";
+"notification.reminder.title" = "记账提醒 ✏️";
+"notification.reminder.body" = "今天还没记账呢，来记一笔吧！";
+"notification.daily_summary.title" = "今日账单汇总 📊";
+"notification.daily_summary.body" = "今日收入 %@，支出 %@";
+"notification.action_view" = "查看";
+"notification.action_dismiss" = "忽略";
+"notification.action_add_bill" = "去记账";
+"notification.action_skip" = "跳过";
+"notification.permission_denied" = "通知权限被拒绝，请在设置中开启";
+"notification.permission_title" = "开启通知";
+"notification.permission_message" = "开启通知后，我们可以提醒你记账和预算超支";
+"icloud.status_section" = "同步状态";
+"icloud.sync_description" = "开启后，你的账单数据将在所有登录同一 iCloud 账户的设备间自动同步。";
+
+/* Bill Time Range */
+"bill.time_range" = "时间范围";
+"bill.time_range.today" = "本日";
+"bill.time_range.week" = "本周";
+"bill.time_range.month" = "本月";
+"bill.time_range.year" = "本年";
+
+/* Chart Display Types */
+"chart.type_line" = "折线图";
+"chart.type_bar" = "柱状图";
+"chart.type_pie" = "饼图";
+
+"mac.dashboard.total_income_cumulative" = "累计收入";
+"mac.dashboard.total_expense_cumulative" = "累计支出";
+
+/* Budget Chart */
+"bill.amount_legend" = "金额";
+"bill.category_legend" = "分类";
+"budget.chart_type" = "图表类型";
+
+/* Settings */
+"settings.appearance" = "外观";
+
+/* macOS Dashboard */
+"mac.dashboard.today_expense" = "今日支出";
+"mac.dashboard.today_income" = "今日收入";
+"mac.dashboard.total_balance" = "总余额";
+"mac.dashboard.bill_count" = "账单数";
+"mac.dashboard.total_income" = "总收入";
+"mac.dashboard.total_expense" = "总支出";
+"mac.dashboard.recent_bills" = "最近账单";
+"mac.dashboard.30day_trend" = "近 30 天趋势";
+
+/* macOS Statistics */
+"mac.stat.period_week" = "本周";
+"mac.stat.period_month" = "本月";
+"mac.stat.period_year" = "本年";
+"mac.stat.chart_line" = "折线图";
+"mac.stat.chart_bar" = "柱状图";
+"mac.stat.total_income" = "总收入";
+"mac.stat.total_expense" = "总支出";
+"mac.stat.balance" = "结余";
+"mac.stat.income_trend" = "收支趋势";
+"mac.stat.no_data" = "暂无数据";
+"mac.stat.date" = "日期";
+"mac.stat.expense" = "支出";
+"mac.stat.income" = "收入";
+"mac.stat.expense_category" = "支出分类";
+"mac.stat.no_expense_data" = "暂无支出数据";
+"mac.stat.count_bills" = "%d 笔";
+"mac.stat.expense_breakdown" = "支出构成";
+
+/* macOS Bill List */
+"mac.bill.filter_all" = "全部";
+"mac.bill.filter_expense" = "支出";
+"mac.bill.filter_income" = "收入";
+"mac.bill.filter_transfer" = "转账";
+"mac.bill.today" = "今天";
+"mac.bill.yesterday" = "昨天";
+"mac.bill.recent" = "最近";
+"mac.bill.search_placeholder" = "搜索分类或备注...";
+"mac.bill.filter_type" = "类型";
+"mac.bill.total_count" = "共 %d 笔";
+"mac.bill.no_data" = "暂无账单数据";
+"mac.bill.no_data_hint" = "请在 iPhone 或 Apple Watch 上记账";
+"mac.bill.uncategorized" = "未分类";
+"mac.bill.no_note" = "无备注";
+"mac.bill.count_bills" = "%d 笔";
+
+/* macOS Add Bill */
+"mac.add.cancel" = "取消";
+"mac.add.add_bill" = "记一笔";
+"mac.add.save" = "保存";
+"mac.add.transaction_type" = "类型";
+"mac.add.amount" = "金额";
+"mac.add.note" = "备注";
+"mac.add.note_placeholder" = "添加备注（可选）...";
+"mac.add.category" = "分类";
+"mac.add.no_note" = "无备注";
+
+/* macOS Main Nav */
+"mac.nav.home" = "首页";
+"mac.nav.bills" = "账单";
+"mac.nav.statistics" = "统计";
+"mac.nav.settings" = "设置";
+"mac.nav.dashboard_title" = "首页";
+"mac.nav.bills_title" = "账单明细";
+"mac.nav.statistics_title" = "统计分析";
+"mac.nav.settings_title" = "设置";
+
+/* macOS Settings */
+"mac.settings.appearance" = "外观";
+"mac.settings.theme_mode" = "主题模式";
+"mac.settings.theme_light" = "浅色";
+"mac.settings.theme_dark" = "深色";
+"mac.settings.theme_system" = "跟随系统";
+"mac.settings.appearance_desc" = "选择你喜欢的界面风格。";
+"mac.settings.data_management" = "数据管理";
+"mac.settings.data_file_location" = "数据文件位置";
+"mac.settings.bill_total_count" = "账单总数";
+"mac.settings.export_data" = "导出数据";
+"mac.settings.clear_all_data" = "清除所有数据";
+"mac.settings.generate_test_data" = "生成 1000 条测试数据";
+"mac.settings.about" = "关于";
+"mac.settings.version" = "版本";
+"mac.settings.platform" = "平台";
+"mac.settings.app_description" = "简洁优雅的个人记账工具";
+"mac.settings.confirm_delete" = "确认删除";
+"mac.settings.confirm_delete_message" = "此操作将永久删除所有账单数据，且无法恢复。确定要继续吗？";
+"mac.settings.generate_test_title" = "生成测试数据";
+"mac.settings.generate_test_message" = "将生成 1000 条随机账单数据（分布在过去一年内）。是否继续？";
+"mac.settings.generate_success" = "已成功生成 %d 条测试数据！";
+"mac.settings.generate_progress" = "已生成 %d 条测试数据";
+"mac.settings.generate_error" = "保存失败: %@";
+"mac.settings.generate_final_error" = "最终保存失败: %@";
+"mac.settings.generate_done" = "完成";
+"mac.settings.cancel" = "取消";
+"mac.settings.confirm" = "确认删除";
+"mac.settings.generate" = "生成";

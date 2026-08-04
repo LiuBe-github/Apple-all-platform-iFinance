@@ -18,6 +18,11 @@
 "settings.title" = "Settings";
 "settings.about_you" = "You";
 "settings.profile" = "Profile";
+"settings.delete_account" = "Delete Account";
+"settings.delete_account_confirm_title" = "Delete Account?";
+"settings.delete_account_confirm_message" = "This will permanently delete all your account info, avatar, and bill data, and cannot be undone.";
+"settings.delete_account_cancel" = "Cancel";
+"settings.delete_account_confirm" = "Delete Account";
 "settings.icloud" = "iCloud Sync";
 "settings.import_export" = "Import & Export";
 "settings.export_csv" = "Export Bills (CSV)";
@@ -69,7 +74,7 @@
 "tendency.span_90" = "90D";
 "tendency.span_180" = "180D";
 "tendency.drag_hint" = "Drag on chart to inspect any date";
-"tendency.no_data" = "No data";
+"tendency.no_data" = "No data to render";
 "tendency.avg" = "Average";
 "tendency.total" = "Total";
 "tendency.heatmap" = "Billing Heatmap (1Y)";
@@ -205,6 +210,7 @@
 
 "iFinance" = "iFinance";
 "auth.apple_frontend_only" = "Apple Sign In is currently UI-only and not connected to real authentication.";
+"auth.apple_failed" = "Apple Sign In failed. Please try again.";
 
 // Biometric lock
 "lock.face_id" = "Face ID";
@@ -214,6 +220,9 @@
 "lock.subtitle" = "Use biometric authentication to unlock";
 "lock.auth_reason" = "Authenticate to unlock iFinance";
 "lock.enable_reason" = "Authenticate to enable app lock";
+"lock.disable_reason" = "Authenticate to disable app lock";
+"lock.disable_reason_retry" = "Authenticate to disable app lock (attempt 2/2)";
+"lock.disable_reason_passcode" = "Enter your device passcode to disable app lock";
 "settings.biometric_lock" = "Face ID Lock";
 "settings.biometric_lock_desc" = " Lock when leaving and verify on return";
 
@@ -254,3 +263,173 @@
 "cat.inc.tax" = "Tax Refund";
 "cat.inc.unexpected" = "Unexpected Income";
 "cat.inc.other" = "Other";
+
+/* Search */
+"search.title" = "Search";
+"search.placeholder" = "Search categories or notes…";
+"search.clear_filter" = "Clear Filter";
+"search.no_result" = "No Results";
+"search.no_result.desc" = "Try a different keyword";
+"search.bill_matches" = "Matching Bills";
+"search.history" = "Recent Searches";
+"search.clear_history" = "Clear All";
+"search.cancel_filter" = "Cancel Search";
+"settings.language.restart_title" = "Language Change Requires Restart";
+"settings.language.restart_message" = "The language change will take effect after restart. Are you sure you want to restart now?";
+
+/* CloudKit Sync Status */
+"icloud.status_unknown" = "Status Unknown";
+"icloud.status_syncing" = "Syncing…";
+"icloud.status_idle" = "Synced";
+"icloud.status_conflict" = "Conflicts Detected";
+"icloud.status_no_account" = "iCloud Not Signed In";
+"icloud.status_network" = "Network Unavailable";
+"icloud.status_disabled" = "Sync Disabled";
+"icloud.status_error" = "Sync Error";
+"icloud.enable_sync" = "Enable iCloud Sync";
+"icloud.last_sync" = "Last Synced";
+"icloud.never_synced" = "Never Synced";
+"icloud.account_status" = "iCloud Account";
+"icloud.account_available" = "Available";
+"icloud.account_unavailable" = "Unavailable";
+"icloud.account_restricted" = "Restricted";
+"icloud.account_unknown" = "Unknown";
+"icloud.sync_now" = "Sync Now";
+"icloud.learn_more" = "Learn More";
+
+/* Notifications */
+"notification.budget_exceeded.title" = "Budget Alert 💰";
+"notification.budget_exceeded.body" = "You've spent %@ this month, exceeding your budget of %@!";
+"notification.reminder.title" = "记账 Reminder ✏️";
+"notification.reminder.body" = "You haven't logged any bills today. Time to add one!";
+"notification.daily_summary.title" = "Daily Summary 📊";
+"notification.daily_summary.body" = "Today's income: %@, expense: %@";
+"notification.action_view" = "View";
+"notification.action_dismiss" = "Dismiss";
+"notification.action_add_bill" = "Add Bill";
+"notification.action_skip" = "Skip";
+"notification.permission_denied" = "Notification permission denied. Please enable in Settings.";
+"notification.permission_title" = "Enable Notifications";
+"notification.permission_message" = "Enable notifications so we can remind you to log bills and budget alerts.";
+"icloud.status_section" = "Sync Status";
+"icloud.sync_description" = "When enabled, your bill data will automatically sync across all devices signed in with the same iCloud account.";
+
+/* Bill Time Range */
+"bill.time_range" = "Time Range";
+"bill.time_range.today" = "Today";
+"bill.time_range.week" = "This Week";
+"bill.time_range.month" = "This Month";
+"bill.time_range.year" = "This Year";
+
+/* Chart Display Types */
+"chart.type_line" = "Line Chart";
+"chart.type_bar" = "Bar Chart";
+"chart.type_pie" = "Pie Chart";
+
+"mac.dashboard.total_income_cumulative" = "Cumulative Income";
+"mac.dashboard.total_expense_cumulative" = "Cumulative Expense";
+
+/* Budget Chart */
+"bill.amount_legend" = "Amount";
+"bill.category_legend" = "Category";
+"budget.chart_type" = "Chart Type";
+
+/* Settings */
+"settings.appearance" = "Appearance";
+
+/* macOS Dashboard */
+"mac.dashboard.today_expense" = "Today's Expense";
+"mac.dashboard.today_income" = "Today's Income";
+"mac.dashboard.total_balance" = "Balance";
+"mac.dashboard.bill_count" = "Bill Count";
+"mac.dashboard.total_income" = "Total Income";
+"mac.dashboard.total_expense" = "Total Expense";
+"mac.dashboard.recent_bills" = "Recent Bills";
+"mac.dashboard.30day_trend" = "Last 30 Days";
+
+/* macOS Statistics */
+"mac.stat.period_week" = "This Week";
+"mac.stat.period_month" = "This Month";
+"mac.stat.period_year" = "This Year";
+"mac.stat.chart_line" = "Line Chart";
+"mac.stat.chart_bar" = "Bar Chart";
+"mac.stat.total_income" = "Total Income";
+"mac.stat.total_expense" = "Total Expense";
+"mac.stat.balance" = "Balance";
+"mac.stat.income_trend" = "Income & Expense Trend";
+"mac.stat.no_data" = "No Data";
+"mac.stat.date" = "Date";
+"mac.stat.expense" = "Expense";
+"mac.stat.income" = "Income";
+"mac.stat.expense_category" = "Expense Categories";
+"mac.stat.no_expense_data" = "No Expense Data";
+"mac.stat.count_bills" = "%d bills";
+"mac.stat.expense_breakdown" = "Expense Breakdown";
+
+/* macOS Bill List */
+"mac.bill.filter_all" = "All";
+"mac.bill.filter_expense" = "Expense";
+"mac.bill.filter_income" = "Income";
+"mac.bill.filter_transfer" = "Transfer";
+"mac.bill.today" = "Today";
+"mac.bill.yesterday" = "Yesterday";
+"mac.bill.recent" = "Recent";
+"mac.bill.search_placeholder" = "Search categories or notes...";
+"mac.bill.filter_type" = "Type";
+"mac.bill.total_count" = "%d bills total";
+"mac.bill.no_data" = "No Bill Data";
+"mac.bill.no_data_hint" = "Please add bills on iPhone or Apple Watch";
+"mac.bill.uncategorized" = "Uncategorized";
+"mac.bill.no_note" = "No Note";
+"mac.bill.count_bills" = "%d bills";
+
+/* macOS Add Bill */
+"mac.add.cancel" = "Cancel";
+"mac.add.add_bill" = "Add Bill";
+"mac.add.save" = "Save";
+"mac.add.transaction_type" = "Type";
+"mac.add.amount" = "Amount";
+"mac.add.note" = "Note";
+"mac.add.note_placeholder" = "Add note (optional)...";
+"mac.add.category" = "Category";
+"mac.add.no_note" = "No Note";
+
+/* macOS Main Nav */
+"mac.nav.home" = "Home";
+"mac.nav.bills" = "Bills";
+"mac.nav.statistics" = "Statistics";
+"mac.nav.settings" = "Settings";
+"mac.nav.dashboard_title" = "Home";
+"mac.nav.bills_title" = "Bills";
+"mac.nav.statistics_title" = "Statistics";
+"mac.nav.settings_title" = "Settings";
+
+/* macOS Settings */
+"mac.settings.appearance" = "Appearance";
+"mac.settings.theme_mode" = "Theme";
+"mac.settings.theme_light" = "Light";
+"mac.settings.theme_dark" = "Dark";
+"mac.settings.theme_system" = "System";
+"mac.settings.appearance_desc" = "Choose your preferred interface style.";
+"mac.settings.data_management" = "Data Management";
+"mac.settings.data_file_location" = "Data File Location";
+"mac.settings.bill_total_count" = "Total Bills";
+"mac.settings.export_data" = "Export Data";
+"mac.settings.clear_all_data" = "Clear All Data";
+"mac.settings.generate_test_data" = "Generate 1000 Test Records";
+"mac.settings.about" = "About";
+"mac.settings.version" = "Version";
+"mac.settings.platform" = "Platform";
+"mac.settings.app_description" = "A clean and elegant personal finance tracker.";
+"mac.settings.confirm_delete" = "Confirm Deletion";
+"mac.settings.confirm_delete_message" = "This will permanently delete all bill data and cannot be recovered. Continue?";
+"mac.settings.generate_test_title" = "Generate Test Data";
+"mac.settings.generate_test_message" = "Will generate 1000 random bills (distributed over the past year). Continue?";
+"mac.settings.generate_success" = "Successfully generated %d test records!";
+"mac.settings.generate_progress" = "Generated %d test records";
+"mac.settings.generate_error" = "Save failed: %@";
+"mac.settings.generate_final_error" = "Final save failed: %@";
+"mac.settings.generate_done" = "Done";
+"mac.settings.cancel" = "Cancel";
+"mac.settings.confirm" = "Delete";
+"mac.settings.generate" = "Generate";

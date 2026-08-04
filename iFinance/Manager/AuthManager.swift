@@ -8,10 +8,16 @@
 import Foundation
 import Combine
 import CryptoKit
+import AuthenticationServices
+internal import CoreData
 
+/// 认证管理器
+/// 账号凭证（密码哈希/盐）存储在 Core Data UserProfile 中，支持多账号
 @MainActor
 final class AuthManager: ObservableObject {
     static let shared = AuthManager()
+
+    // MARK: - 登录类型
 
     enum LoginFieldType {
         case email
@@ -24,78 +30,147 @@ final class AuthManager: ObservableObject {
         case apple
     }
 
+    // MARK: - Published 状态
+
     @Published private(set) var isAuthenticated = false
     @Published private(set) var hasAccount = false
     @Published private(set) var currentEmail = ""
     @Published private(set) var currentPhone = ""
-    @Published private(set) var nickname = UserDefaults.standard.string(forKey: Keys.nickname) ?? "用户123"
     @Published private(set) var currentProvider: SocialProvider?
+
+    /// 当前登录用户的Core Data记录
+    @Published private(set) var currentUser: UserProfile?
+
+    /// 头像数据（@Published，确保视图监听变化）
+    @Published private(set) var avatarData: Data?
+
+    // MARK: - 计算属性（从currentUser读取）
+
+    var userIdentifier: String {
+        currentUser?.userIdentifier ?? "anonymous"
+    }
+
+    var nickname: String {
+        currentUser?.nickname ?? "用户123"
+    }
+
+    var monthlyBudget: Double {
+        currentUser?.monthlyBudget ?? 3000
+    }
+
+    // MARK: - 私有属性
 
     private let defaults = UserDefaults.standard
     private let sessionLifetime: TimeInterval = 7 * 24 * 60 * 60
 
-    private enum Keys {
-        static let email = "AuthEmail"
-        static let phone = "AuthPhone"
-        static let passwordHash = "AuthPasswordHash"
-        static let passwordSalt = "AuthPasswordSalt"
-        static let isLoggedIn = "AuthIsLoggedIn"
-        static let lastActiveAt = "AuthLastActiveAt"
-        static let nickname = "UserProfileNickname"
-        static let provider = "AuthProvider"
-        static let providerID = "AuthProviderID"
+    private enum UDKeys {
+        static let lastLoginIdentifier = "AuthLastLoginIdentifier"
+        static let isLoggedIn          = "AuthIsLoggedIn"
+        static let lastActiveAt        = "AuthLastActiveAt"
+        // 向下兼容老版本 UserDefaults 凭证迁移
+        static let legacyEmail         = "AuthEmail"
+        static let legacyPhone         = "AuthPhone"
+        static let legacyHash          = "AuthPasswordHash"
+        static let legacySalt          = "AuthPasswordSalt"
+        static let legacyProvider      = "AuthProvider"
+        static let legacyProviderID    = "AuthProviderID"
+        static let legacyNickname      = "UserProfileNickname"
+        // 供 FetchRequest 使用
+        static let userIdentifier      = "AuthUserIdentifier"
     }
+
+    // MARK: - 初始化
 
     private init() {
         bootstrap()
     }
 
-    func bootstrap() {
-        nickname = defaults.string(forKey: Keys.nickname) ?? "User"
-        currentEmail = defaults.string(forKey: Keys.email) ?? ""
-        currentPhone = defaults.string(forKey: Keys.phone) ?? ""
-        if let providerRaw = defaults.string(forKey: Keys.provider) {
-            currentProvider = SocialProvider(rawValue: providerRaw)
-        } else {
-            currentProvider = nil
+    // MARK: - 调试：打印所有用户信息
+
+    /// 每次启动时输出 Core Data 中所有账号（仅调试用）
+    private func debugPrintAllUsers() {
+        let context = PersistenceController.shared.container.viewContext
+        let request: NSFetchRequest<UserProfile> = UserProfile.fetchRequest()
+        guard let profiles = try? context.fetch(request), !profiles.isEmpty else {
+            print("📋 [AuthManager] 当前没有任何注册账号")
+            return
         }
 
-        let hasPasswordAccount = defaults.string(forKey: Keys.passwordHash) != nil &&
-            defaults.string(forKey: Keys.passwordSalt) != nil &&
-            (!currentEmail.isEmpty || !currentPhone.isEmpty)
-        let hasProviderAccount = defaults.string(forKey: Keys.providerID) != nil && currentProvider != nil
+        print("📋 [AuthManager] ===== 启动时账号概览 (\(profiles.count) 个) =====")
+        for (index, profile) in profiles.enumerated() {
+            let identifier = profile.userIdentifier ?? "anonymous"
+            let email = profile.email ?? "—"
+            let phone = profile.phone ?? "—"
+            let hash = profile.passwordHash ?? "—"
+            let currentMarker = profile.id == currentUser?.id ? " ◀ 当前登录" : ""
+            print("""
+                【账号 \(index + 1)】
+                 identifier  : \(identifier)
+                 email       : \(email)
+                 phone       : \(phone)
+                 passwordHash: \(hash)\(currentMarker)
+                """)
+        }
+        print("==========================================")
+    }
 
-        hasAccount = hasPasswordAccount || hasProviderAccount
+    // MARK: - bootstrap
 
-        let loggedIn = defaults.bool(forKey: Keys.isLoggedIn)
+    func bootstrap() {
+        let context = PersistenceController.shared.container.viewContext
+
+        // 尝试将旧版 UserDefaults 凭证迁移到 Core Data
+        migrateLegacyCredentialsIfNeeded(context: context)
+
+        let loggedIn = defaults.bool(forKey: UDKeys.isLoggedIn)
         guard loggedIn else {
             isAuthenticated = false
+            currentUser = nil
+            avatarData = nil
+            debugPrintAllUsers()
             return
         }
 
         let now = Date()
-        let lastActive = defaults.object(forKey: Keys.lastActiveAt) as? Date ?? .distantPast
+        let lastActive = defaults.object(forKey: UDKeys.lastActiveAt) as? Date ?? .distantPast
         if now.timeIntervalSince(lastActive) > sessionLifetime {
             logout()
             return
         }
 
-        isAuthenticated = true
-        touch()
+        // 恢复上次登录的用户
+        if let identifier = defaults.string(forKey: UDKeys.lastLoginIdentifier) {
+            currentUser = fetchUserProfile(identifier: identifier, context: context)
+        }
+
+        if let user = currentUser {
+            currentEmail = user.email ?? ""
+            currentPhone = user.phone ?? ""
+            avatarData = user.avatarData
+            if let providerRaw = user.provider {
+                currentProvider = SocialProvider(rawValue: providerRaw)
+            }
+            hasAccount = true
+            isAuthenticated = true
+            syncUserIdentifierToDefaults()
+            touch()
+        } else {
+            logout()
+        }
+
+        debugPrintAllUsers()
     }
 
     func handleAppDidBecomeActive() {
         bootstrap()
-        if isAuthenticated {
-            touch()
-        }
+        if isAuthenticated { touch() }
     }
 
     func handleAppWillResignActive() {
-        if isAuthenticated {
-            touch()
-        }
+        if isAuthenticated { touch() }
     }
+
+    // MARK: - 注册
 
     @discardableResult
     func register(
@@ -109,184 +184,278 @@ final class AuthManager: ObservableObject {
         let normalizedPhone = normalizePhone(phone)
 
         if fieldType == .email {
-            if !isValidEmail(normalizedEmail) {
-                return "auth.invalid_email"
-            }
+            guard isValidEmail(normalizedEmail) else { return "auth.invalid_email" }
         } else {
-            if !isValidPhone(normalizedPhone) {
-                return "auth.invalid_phone"
-            }
+            guard isValidPhone(normalizedPhone) else { return "auth.invalid_phone" }
+        }
+        guard password.count >= 6 else { return "auth.password_too_short" }
+        guard password == confirmPassword else { return "auth.password_not_match" }
+
+        let context = PersistenceController.shared.container.viewContext
+
+        // 确定 userIdentifier：邮箱优先，否则手机号
+        let identifier = fieldType == .email ? normalizedEmail : normalizedPhone
+
+        // 检查是否已存在该账号
+        if fetchUserProfile(identifier: identifier, context: context) != nil {
+            return "auth.account_exists"
         }
 
-        if password.count < 6 {
-            return "auth.password_too_short"
-        }
-        if password != confirmPassword {
-            return "auth.password_not_match"
-        }
-
+        // 创建新 UserProfile
         let salt = UUID().uuidString
-        let hash = Self.hash(password: password, salt: salt)
+        let hash = Self.hashPassword(password: password, salt: salt)
 
-        defaults.set(normalizedEmail, forKey: Keys.email)
-        defaults.set(normalizedPhone, forKey: Keys.phone)
-        defaults.set(hash, forKey: Keys.passwordHash)
-        defaults.set(salt, forKey: Keys.passwordSalt)
-        defaults.set(nil, forKey: Keys.provider)
-        defaults.set(nil, forKey: Keys.providerID)
-        defaults.set(true, forKey: Keys.isLoggedIn)
-        defaults.set(Date(), forKey: Keys.lastActiveAt)
+        let profile = UserProfile(context: context)
+        profile.id = UUID()
+        profile.userIdentifier = identifier
+        profile.email = normalizedEmail.isEmpty ? nil : normalizedEmail
+        profile.phone = normalizedPhone.isEmpty ? nil : normalizedPhone
+        profile.passwordHash = hash
+        profile.passwordSalt = salt
+        profile.nickname = "用户\(Int.random(in: 100...999))"
+        profile.monthlyBudget = 3000
+        profile.createdAt = Date()
+        profile.updatedAt = Date()
 
-        if defaults.string(forKey: Keys.nickname)?.isEmpty != false {
-            defaults.set("用户\(Int.random(in: 100...999))", forKey: Keys.nickname)
+        do {
+            try context.save()
+        } catch {
+            return "auth.save_failed"
         }
 
-        currentEmail = normalizedEmail
-        currentPhone = normalizedPhone
-        currentProvider = nil
-        nickname = defaults.string(forKey: Keys.nickname) ?? "用户123"
-        hasAccount = true
-        isAuthenticated = true
+        // 登录
+        signIn(profile: profile)
         return nil
     }
+
+    // MARK: - 登录（邮箱/手机号+密码）
 
     @discardableResult
     func login(email: String, phone: String, password: String, fieldType: LoginFieldType) -> String? {
-        guard let storedHash = defaults.string(forKey: Keys.passwordHash),
-              let salt = defaults.string(forKey: Keys.passwordSalt) else {
-            return "auth.no_account"
-        }
-
         let normalizedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         let normalizedPhone = normalizePhone(phone)
-        let storedEmail = defaults.string(forKey: Keys.email)?.lowercased() ?? ""
-        let storedPhone = defaults.string(forKey: Keys.phone) ?? ""
 
-        if fieldType == .email {
-            guard normalizedEmail == storedEmail else {
-                return "auth.invalid_credentials"
-            }
-        } else {
-            guard normalizedPhone == storedPhone else {
-                return "auth.invalid_credentials"
-            }
+        let context = PersistenceController.shared.container.viewContext
+
+        // 查询匹配的 UserProfile
+        let identifier = fieldType == .email ? normalizedEmail : normalizedPhone
+        guard let profile = fetchUserProfile(identifier: identifier, context: context) else {
+            // 也尝试用邮箱/手机号字段匹配（账号 identifier 可能是另一个）
+            let found = findProfileByContact(
+                email: fieldType == .email ? normalizedEmail : nil,
+                phone: fieldType == .phone ? normalizedPhone : nil,
+                context: context
+            )
+            guard let found else { return "auth.no_account" }
+            return verifyAndSignIn(profile: found, password: password)
         }
 
-        let inputHash = Self.hash(password: password, salt: salt)
-        guard inputHash == storedHash else {
-            return "auth.invalid_credentials"
-        }
-
-        defaults.set(true, forKey: Keys.isLoggedIn)
-        defaults.set(Date(), forKey: Keys.lastActiveAt)
-        currentProvider = nil
-        hasAccount = true
-        isAuthenticated = true
-        currentEmail = storedEmail
-        currentPhone = storedPhone
-        nickname = defaults.string(forKey: Keys.nickname) ?? "用户123"
-        return nil
+        return verifyAndSignIn(profile: profile, password: password)
     }
+
+    // MARK: - 第三方登录
 
     @discardableResult
     func loginWithProvider(_ provider: SocialProvider, identifier: String) -> String? {
-        guard !identifier.isEmpty else {
-            return "auth.provider_failed"
+        guard !identifier.isEmpty else { return "auth.provider_failed" }
+
+        let context = PersistenceController.shared.container.viewContext
+
+        // 查找或创建 UserProfile
+        let profile: UserProfile
+        if let existing = fetchUserProfile(identifier: identifier, context: context) {
+            profile = existing
+        } else {
+            let p = UserProfile(context: context)
+            p.id = UUID()
+            p.userIdentifier = identifier
+            p.provider = provider.rawValue
+            p.providerID = identifier
+            p.nickname = {
+                switch provider {
+                case .wechat: return "微信用户"
+                case .qq:     return "QQ用户"
+                case .apple:  return "Apple用户"
+                }
+            }()
+            p.monthlyBudget = 3000
+            p.createdAt = Date()
+            p.updatedAt = Date()
+            try? context.save()
+            profile = p
         }
 
-        defaults.set(provider.rawValue, forKey: Keys.provider)
-        defaults.set(identifier, forKey: Keys.providerID)
-        defaults.set(true, forKey: Keys.isLoggedIn)
-        defaults.set(Date(), forKey: Keys.lastActiveAt)
-
-        if defaults.string(forKey: Keys.nickname)?.isEmpty != false {
-            let providerName: String
-            switch provider {
-            case .wechat: providerName = "微信用户"
-            case .qq: providerName = "QQ用户"
-            case .apple: providerName = "Apple用户"
-            }
-            defaults.set(providerName, forKey: Keys.nickname)
-        }
-
-        currentProvider = provider
-        nickname = defaults.string(forKey: Keys.nickname) ?? "用户123"
-        hasAccount = true
-        isAuthenticated = true
+        signIn(profile: profile)
         return nil
     }
 
-    func logout() {
-        defaults.set(false, forKey: Keys.isLoggedIn)
-        isAuthenticated = false
+    // MARK: - Sign in with Apple
+
+    @discardableResult
+    func handleSignInWithApple(result: Result<ASAuthorization, Error>) -> String? {
+        switch result {
+        case .success(let authorization):
+            guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential else {
+                return "auth.apple_failed"
+            }
+            let appleID = appleIDCredential.user
+
+            var displayName = "Apple用户"
+            if let fullName = appleIDCredential.fullName {
+                let given  = fullName.givenName  ?? ""
+                let family = fullName.familyName ?? ""
+                let combined = "\(family)\(given)".trimmingCharacters(in: .whitespaces)
+                if !combined.isEmpty { displayName = combined }
+            }
+
+            return loginWithProvider(.apple, identifier: appleID)
+                .map { _ in "auth.apple_failed" } ?? {
+                    // 补充设置昵称
+                    if currentUser?.nickname == "Apple用户" || currentUser?.nickname == nil {
+                        currentUser?.nickname = displayName
+                        try? PersistenceController.shared.container.viewContext.save()
+                    }
+                    return nil
+                }()
+
+        case .failure(let error):
+            if (error as NSError).code == ASAuthorizationError.canceled.rawValue { return nil }
+            return "auth.apple_failed"
+        }
     }
+
+    // MARK: - 登出
+
+    func logout() {
+        defaults.set(false, forKey: UDKeys.isLoggedIn)
+        defaults.removeObject(forKey: UDKeys.lastLoginIdentifier)
+        defaults.removeObject(forKey: UDKeys.userIdentifier)
+        isAuthenticated = false
+        currentUser = nil
+        avatarData = nil
+        currentEmail = ""
+        currentPhone = ""
+        currentProvider = nil
+        hasAccount = false
+    }
+
+    // MARK: - 注销账号（删除本人所有数据）
+
+    /// 删除当前账号的所有账单和 UserProfile 记录，注销后自动登出
+    func deleteAccount() {
+        guard let user = currentUser else { return }
+
+        let context = PersistenceController.shared.container.viewContext
+        let identifier = user.userIdentifier ?? "anonymous"
+
+        // 1. 删除该用户的所有账单
+        let billRequest: NSFetchRequest<NSFetchRequestResult> = Bill.fetchRequest()
+        billRequest.predicate = NSPredicate(format: "createdBy == %@", identifier)
+        let billDeleteRequest = NSBatchDeleteRequest(fetchRequest: billRequest)
+        try? context.execute(billDeleteRequest)
+
+        // 2. 删除 UserProfile 记录
+        context.delete(user)
+        try? context.save()
+
+        // 3. 登出
+        logout()
+    }
+
+    // MARK: - 删除所有账号（调试用）
+
+    /// 清空 Core Data 中所有 UserProfile 和所有 Bill（不可恢复）
+    func deleteAllAccounts() {
+        let context = PersistenceController.shared.container.viewContext
+
+        // 删除所有账单
+        let billRequest: NSFetchRequest<NSFetchRequestResult> = Bill.fetchRequest()
+        let billDelete = NSBatchDeleteRequest(fetchRequest: billRequest)
+        try? context.execute(billDelete)
+
+        // 删除所有用户
+        let userRequest: NSFetchRequest<NSFetchRequestResult> = UserProfile.fetchRequest()
+        let userDelete = NSBatchDeleteRequest(fetchRequest: userRequest)
+        try? context.execute(userDelete)
+
+        try? context.save()
+
+        // 登出当前
+        logout()
+
+        print("✅ [AuthManager] 已删除所有账号和账单")
+    }
+
+    // MARK: - 更新资料
 
     @discardableResult
     func updateNickname(_ newNickname: String) -> String? {
         let trimmed = newNickname.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
-            return "auth.nickname_empty"
-        }
-        defaults.set(trimmed, forKey: Keys.nickname)
-        nickname = trimmed
+        guard !trimmed.isEmpty else { return "auth.nickname_empty" }
+        guard let user = currentUser else { return nil }
+        user.nickname = trimmed
+        user.updatedAt = Date()
+        try? PersistenceController.shared.container.viewContext.save()
+        objectWillChange.send()
         return nil
+    }
+
+    func updateAvatar(_ data: Data) {
+        guard let user = currentUser else { return }
+        user.avatarData = data
+        user.updatedAt = Date()
+        try? PersistenceController.shared.container.viewContext.save()
+        avatarData = data
+    }
+
+    func updateMonthlyBudget(_ amount: Double) {
+        guard let user = currentUser else { return }
+        user.monthlyBudget = amount
+        user.updatedAt = Date()
+        try? PersistenceController.shared.container.viewContext.save()
+        objectWillChange.send()
     }
 
     @discardableResult
     func updateEmail(newEmail: String, password: String) -> String? {
-        let normalizedEmail = newEmail.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        guard !normalizedEmail.isEmpty else {
-            return "auth.email_empty"
-        }
-        guard isValidEmail(normalizedEmail) else {
-            return "auth.invalid_email"
-        }
-        guard verify(password: password) else {
-            return "auth.current_password_wrong"
-        }
-
-        defaults.set(normalizedEmail, forKey: Keys.email)
-        currentEmail = normalizedEmail
+        let normalized = newEmail.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !normalized.isEmpty else { return "auth.email_empty" }
+        guard isValidEmail(normalized) else { return "auth.invalid_email" }
+        guard verify(password: password) else { return "auth.current_password_wrong" }
+        guard let user = currentUser else { return nil }
+        user.email = normalized
+        user.updatedAt = Date()
+        currentEmail = normalized
+        try? PersistenceController.shared.container.viewContext.save()
         return nil
     }
 
     @discardableResult
     func updatePhone(newPhone: String, password: String) -> String? {
-        let normalizedPhone = normalizePhone(newPhone)
-        guard !normalizedPhone.isEmpty else {
-            return "auth.phone_empty"
-        }
-        guard isValidPhone(normalizedPhone) else {
-            return "auth.invalid_phone"
-        }
-        guard verify(password: password) else {
-            return "auth.current_password_wrong"
-        }
-
-        defaults.set(normalizedPhone, forKey: Keys.phone)
-        currentPhone = normalizedPhone
+        let normalized = normalizePhone(newPhone)
+        guard !normalized.isEmpty else { return "auth.phone_empty" }
+        guard isValidPhone(normalized) else { return "auth.invalid_phone" }
+        guard verify(password: password) else { return "auth.current_password_wrong" }
+        guard let user = currentUser else { return nil }
+        user.phone = normalized
+        user.updatedAt = Date()
+        currentPhone = normalized
+        try? PersistenceController.shared.container.viewContext.save()
         return nil
     }
 
     @discardableResult
     func updatePassword(currentPassword: String, newPassword: String, confirmPassword: String) -> String? {
-        guard verify(password: currentPassword) else {
-            return "auth.current_password_wrong"
-        }
-        guard newPassword.count >= 6 else {
-            return "auth.password_too_short"
-        }
-        guard newPassword == confirmPassword else {
-            return "auth.password_not_match"
-        }
-        guard currentPassword != newPassword else {
-            return "auth.password_same"
-        }
-
+        guard verify(password: currentPassword) else { return "auth.current_password_wrong" }
+        guard newPassword.count >= 6 else { return "auth.password_too_short" }
+        guard newPassword == confirmPassword else { return "auth.password_not_match" }
+        guard currentPassword != newPassword else { return "auth.password_same" }
+        guard let user = currentUser else { return nil }
         let salt = UUID().uuidString
-        let hash = Self.hash(password: newPassword, salt: salt)
-        defaults.set(salt, forKey: Keys.passwordSalt)
-        defaults.set(hash, forKey: Keys.passwordHash)
+        user.passwordSalt = salt
+        user.passwordHash = Self.hashPassword(password: newPassword, salt: salt)
+        user.updatedAt = Date()
+        try? PersistenceController.shared.container.viewContext.save()
         return nil
     }
 
@@ -300,46 +469,138 @@ final class AuthManager: ObservableObject {
     ) -> String? {
         let normalizedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         let normalizedPhone = normalizePhone(phone)
-        let storedEmail = defaults.string(forKey: Keys.email)?.lowercased() ?? ""
-        let storedPhone = defaults.string(forKey: Keys.phone) ?? ""
+        guard newPassword.count >= 6 else { return "auth.password_too_short" }
+        guard newPassword == confirmPassword else { return "auth.password_not_match" }
 
-        if fieldType == .email {
-            guard normalizedEmail == storedEmail, !normalizedEmail.isEmpty else {
-                return "auth.reset_account_not_match"
-            }
-        } else {
-            guard normalizedPhone == storedPhone, !normalizedPhone.isEmpty else {
-                return "auth.reset_account_not_match"
-            }
-        }
-
-        guard newPassword.count >= 6 else {
-            return "auth.password_too_short"
-        }
-        guard newPassword == confirmPassword else {
-            return "auth.password_not_match"
-        }
+        let context = PersistenceController.shared.container.viewContext
+        let identifier = fieldType == .email ? normalizedEmail : normalizedPhone
+        guard let profile = fetchUserProfile(identifier: identifier, context: context)
+                ?? findProfileByContact(
+                    email: fieldType == .email ? normalizedEmail : nil,
+                    phone: fieldType == .phone ? normalizedPhone : nil,
+                    context: context
+                )
+        else { return "auth.reset_account_not_match" }
 
         let salt = UUID().uuidString
-        let hash = Self.hash(password: newPassword, salt: salt)
-        defaults.set(salt, forKey: Keys.passwordSalt)
-        defaults.set(hash, forKey: Keys.passwordHash)
-        defaults.set(false, forKey: Keys.isLoggedIn)
-        isAuthenticated = false
+        profile.passwordSalt = salt
+        profile.passwordHash = Self.hashPassword(password: newPassword, salt: salt)
+        profile.updatedAt = Date()
+        try? context.save()
+        logout()
         return nil
     }
 
-    private func touch() {
-        defaults.set(Date(), forKey: Keys.lastActiveAt)
+    // MARK: - 私有辅助
+
+    private func signIn(profile: UserProfile) {
+        currentUser = profile
+        avatarData = profile.avatarData
+        currentEmail = profile.email ?? ""
+        currentPhone = profile.phone ?? ""
+        currentProvider = profile.provider.flatMap { SocialProvider(rawValue: $0) }
+        hasAccount = true
+        isAuthenticated = true
+        defaults.set(true, forKey: UDKeys.isLoggedIn)
+        defaults.set(Date(), forKey: UDKeys.lastActiveAt)
+        defaults.set(profile.userIdentifier, forKey: UDKeys.lastLoginIdentifier)
+        syncUserIdentifierToDefaults()
+    }
+
+    private func verifyAndSignIn(profile: UserProfile, password: String) -> String? {
+        guard let hash = profile.passwordHash,
+              let salt = profile.passwordSalt else {
+            return "auth.no_account"
+        }
+        guard Self.hashPassword(password: password, salt: salt) == hash else {
+            return "auth.invalid_credentials"
+        }
+        signIn(profile: profile)
+        return nil
+    }
+
+    private func fetchUserProfile(identifier: String, context: NSManagedObjectContext) -> UserProfile? {
+        let request: NSFetchRequest<UserProfile> = UserProfile.fetchRequest()
+        request.predicate = NSPredicate(format: "userIdentifier == %@", identifier)
+        request.fetchLimit = 1
+        return try? context.fetch(request).first
+    }
+
+    private func findProfileByContact(email: String?, phone: String?, context: NSManagedObjectContext) -> UserProfile? {
+        let request: NSFetchRequest<UserProfile> = UserProfile.fetchRequest()
+        if let email = email, !email.isEmpty {
+            request.predicate = NSPredicate(format: "email == %@", email)
+        } else if let phone = phone, !phone.isEmpty {
+            request.predicate = NSPredicate(format: "phone == %@", phone)
+        } else {
+            return nil
+        }
+        request.fetchLimit = 1
+        return try? context.fetch(request).first
     }
 
     private func verify(password: String) -> Bool {
-        guard let storedHash = defaults.string(forKey: Keys.passwordHash),
-              let salt = defaults.string(forKey: Keys.passwordSalt) else {
-            return false
-        }
-        return Self.hash(password: password, salt: salt) == storedHash
+        guard let user = currentUser,
+              let hash = user.passwordHash,
+              let salt = user.passwordSalt else { return false }
+        return Self.hashPassword(password: password, salt: salt) == hash
     }
+
+    private func syncUserIdentifierToDefaults() {
+        defaults.set(userIdentifier, forKey: UDKeys.userIdentifier)
+    }
+
+    private func touch() {
+        defaults.set(Date(), forKey: UDKeys.lastActiveAt)
+    }
+
+    // MARK: - 老版本 UserDefaults 迁移
+
+    private func migrateLegacyCredentialsIfNeeded(context: NSManagedObjectContext) {
+        guard let legacyHash = defaults.string(forKey: UDKeys.legacyHash),
+              let legacySalt = defaults.string(forKey: UDKeys.legacySalt) else { return }
+
+        let legacyEmail    = defaults.string(forKey: UDKeys.legacyEmail) ?? ""
+        let legacyPhone    = defaults.string(forKey: UDKeys.legacyPhone) ?? ""
+        let legacyNickname = defaults.string(forKey: UDKeys.legacyNickname)
+        let legacyProvider = defaults.string(forKey: UDKeys.legacyProvider)
+        let legacyProviderID = defaults.string(forKey: UDKeys.legacyProviderID)
+
+        let identifier: String
+        if !legacyEmail.isEmpty {
+            identifier = legacyEmail
+        } else if !legacyPhone.isEmpty {
+            identifier = legacyPhone
+        } else if let pid = legacyProviderID {
+            identifier = pid
+        } else {
+            return
+        }
+
+        // 如果 Core Data 中已经有这个账号就不重复迁移
+        if fetchUserProfile(identifier: identifier, context: context) != nil { return }
+
+        let profile = UserProfile(context: context)
+        profile.id = UUID()
+        profile.userIdentifier = identifier
+        profile.email = legacyEmail.isEmpty ? nil : legacyEmail
+        profile.phone = legacyPhone.isEmpty ? nil : legacyPhone
+        profile.passwordHash = legacyHash
+        profile.passwordSalt = legacySalt
+        profile.nickname = legacyNickname ?? "用户\(Int.random(in: 100...999))"
+        profile.provider = legacyProvider
+        profile.providerID = legacyProviderID
+        profile.monthlyBudget = 3000
+        profile.createdAt = Date()
+        profile.updatedAt = Date()
+        try? context.save()
+
+        // 清除旧版 UserDefaults 凭证，避免重复迁移
+        defaults.removeObject(forKey: UDKeys.legacyHash)
+        defaults.removeObject(forKey: UDKeys.legacySalt)
+    }
+
+    // MARK: - 验证/工具
 
     private func isValidEmail(_ email: String) -> Bool {
         let pattern = #"^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"#
@@ -357,9 +618,12 @@ final class AuthManager: ObservableObject {
             .replacingOccurrences(of: "-", with: "")
     }
 
-    private static func hash(password: String, salt: String) -> String {
+    static func hashPassword(password: String, salt: String) -> String {
         let payload = "\(salt)|\(password)"
         let digest = SHA256.hash(data: Data(payload.utf8))
         return digest.map { String(format: "%02x", $0) }.joined()
     }
+
+    // 临时存储 fullName 以供 Apple 登录后续使用
+    private var fullIDCredential: ASAuthorizationAppleIDCredential?
 }

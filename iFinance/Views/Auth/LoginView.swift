@@ -1,4 +1,5 @@
 import SwiftUI
+import AuthenticationServices
 
 struct LoginView: View {
     @EnvironmentObject private var authManager: AuthManager
@@ -162,19 +163,15 @@ struct LoginView: View {
                 }
             }
 
-            Button {
-                errorMessage = L10n.string("auth.apple_frontend_only")
-            } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "apple.logo")
-                    Text("auth.provider_apple")
-                        .fontWeight(.semibold)
-                }
-                .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .frame(height: 44)
-                .background(.black, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            SignInWithAppleButton(.signIn) { request in
+                request.requestedScopes = [.fullName, .email]
+            } onCompletion: { completion in
+                HapticManager.shared.light()
+                errorMessage = authManager.handleSignInWithApple(result: completion)
             }
+            .signInWithAppleButtonStyle(.white)
+            .frame(height: 44)
+            .cornerRadius(12)
         }
         .padding(16)
         .appGlassCard(cornerRadius: 20)

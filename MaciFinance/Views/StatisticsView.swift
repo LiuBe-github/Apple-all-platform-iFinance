@@ -15,15 +15,16 @@ struct StatisticsView: View {
     ) private var allBills: FetchedResults<Bill>
 
     @State private var selectedPeriod: Period = .month
+    @State private var selectedChartType: ChartType = .line
 
     enum Period: String, CaseIterable, Identifiable {
         case week, month, year
         var id: String { rawValue }
         var title: String {
             switch self {
-            case .week: return "本周"
-            case .month: return "本月"
-            case .year: return "本年"
+            case .week: return L10n.string("mac.stat.period_week")
+            case .month: return L10n.string("mac.stat.period_month")
+            case .year: return L10n.string("mac.stat.period_year")
             }
         }
 
@@ -41,6 +42,23 @@ struct StatisticsView: View {
             case .year:
                 guard let start = cal.date(from: cal.dateComponents([.year], from: now)) else { return (now, now) }
                 return (start, now)
+            }
+        }
+    }
+
+    enum ChartType: String, CaseIterable, Identifiable {
+        case line, bar
+        var id: String { rawValue }
+        var title: String {
+            switch self {
+            case .line: return L10n.string("mac.stat.chart_line")
+            case .bar: return L10n.string("mac.stat.chart_bar")
+            }
+        }
+        var icon: String {
+            switch self {
+            case .line: return "chart.line.uptrend.xyaxis"
+            case .bar: return "chart.bar.fill"
             }
         }
     }
@@ -70,7 +88,7 @@ struct StatisticsView: View {
 
     struct CategoryStat: Identifiable {
         let id = UUID()
-        let name: String
+        let name: String        // raw key (e.g. "cat.exp.food" or "uncategorized")
         let amount: Double
         let count: Int
         let icon: String
@@ -79,13 +97,14 @@ struct StatisticsView: View {
     private var expenseByCategory: [CategoryStat] {
         var dict: [String: (Double, Int)] = [:]
         for bill in periodBills where bill.type == "expenditure" {
-            let cat = bill.category ?? "其他"
+            let cat = bill.category ?? "uncategorized"
             dict[cat, default: (0, 0)].0 += bill.amount?.doubleValue ?? 0
             dict[cat, default: (0, 0)].1 += 1
         }
         return dict.map { key, val in
-            let expCat = ExpenditureCategory.allCases.first(where: { $0.rawValue == key })
-            return CategoryStat(name: key, amount: val.0, count: val.1, icon: expCat?.icon ?? "tag.fill")
+            let expCat = ExpenditureCategory.allCases.first(where: { $0.localizedKey == key || $0.rawValue == key })
+            let localizedName = expCat?.localizedKey ?? "mac.bill.uncategorized"
+            return CategoryStat(name: localizedName, amount: val.0, count: val.1, icon: expCat?.icon ?? "tag.fill")
         }
         .sorted { $0.amount > $1.amount }
     }
@@ -125,7 +144,7 @@ struct StatisticsView: View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 20) {
                 // Period picker
-                Picker("时间范围", selection: $selectedPeriod) {
+                Picker(L10n.string("bill.time_range"), selection: $selectedPeriod) {
                     ForEach(Period.allCases) { p in Text(p.title).tag(p) }
                 }
                 .pickerStyle(.segmented)
@@ -133,9 +152,9 @@ struct StatisticsView: View {
 
                 // Summary cards
                 HStack(spacing: 16) {
-                    StatCard(title: "总收入", value: totalIncome, icon: "arrow.up.circle.fill", color: .green)
-                    StatCard(title: "总支出", value: totalExpense, icon: "arrow.down.circle.fill", color: .red)
-                    StatCard(title: "结余", value: totalIncome - totalExpense, icon: "equal.circle.fill", color: totalIncome >= totalExpense ? .blue : .orange)
+                    StatCard(title: L10n.string("mac.stat.total_income"), value: totalIncome, icon: "arrow.up.circle.fill", color: .green)
+                    StatCard(title: L10n.string("mac.stat.total_expense"), value: totalExpense, icon: "arrow.down.circle.fill", color: .red)
+                    StatCard(title: L10n.string("mac.stat.balance"), value: totalIncome - totalExpense, icon: "equal.circle.fill", color: totalIncome >= totalExpense ? .blue : .orange)
                 }
 
                 // Line chart
@@ -153,60 +172,28 @@ struct StatisticsView: View {
 
     private var trendChartSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("收支趋势")
-                .font(.system(size: 17, weight: .semibold))
+            HStack {
+                Text(L10n.string("mac.stat.income_trend"))
+                    .font(.system(size: 17, weight: .semibold))
+                Spacer()
+                Picker("", selection: $selectedChartType) {
+                    ForEach(ChartType.allCases) { type in
+                        Label(type.title, systemImage: type.icon).tag(type)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 180)
+            }
 
             if dailyPoints.isEmpty || dailyPoints.allSatisfy({ $0.expense == 0 && $0.income == 0 }) {
-                Text("暂无数据")
+                Text(L10n.string("mac.stat.no_data"))
                     .font(.system(size: 14))
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, minHeight: 200)
                     .background(Color(nsColor: .controlBackgroundColor))
                     .cornerRadius(12)
             } else {
-                Chart {
-                    ForEach(dailyPoints) { point in
-                        AreaMark(
-                            x: .value("日期", point.date),
-                            y: .value("支出", point.expense)
-                        )
-                        .interpolationMethod(.catmullRom)
-                        .foregroundStyle(Color.red.opacity(0.15).gradient)
-
-                        LineMark(
-                            x: .value("日期", point.date),
-                            y: .value("支出", point.expense)
-                        )
-                        .interpolationMethod(.catmullRom)
-                        .lineStyle(StrokeStyle(lineWidth: 2.5))
-                        .foregroundStyle(.red)
-
-                        AreaMark(
-                            x: .value("日期", point.date),
-                            y: .value("收入", point.income)
-                        )
-                        .interpolationMethod(.catmullRom)
-                        .foregroundStyle(Color.green.opacity(0.15).gradient)
-
-                        LineMark(
-                            x: .value("日期", point.date),
-                            y: .value("收入", point.income)
-                        )
-                        .interpolationMethod(.catmullRom)
-                        .lineStyle(StrokeStyle(lineWidth: 2.5))
-                        .foregroundStyle(.green)
-                    }
-                }
-                .chartYAxis {
-                    AxisMarks(position: .leading) { _ in
-                        AxisValueLabel().font(.caption2)
-                        AxisGridLine().foregroundStyle(.secondary.opacity(0.12))
-                    }
-                }
-                .chartPlotStyle { plot in
-                    plot.background(Color(nsColor: .controlBackgroundColor).cornerRadius(14))
-                }
-                .frame(height: 260)
+                chartContent
             }
         }
         .padding(20)
@@ -215,15 +202,96 @@ struct StatisticsView: View {
         .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Color(nsColor: .separatorColor), lineWidth: 0.5))
     }
 
+    @ViewBuilder
+    private var chartContent: some View {
+        switch selectedChartType {
+        case .line:
+            lineChart
+        case .bar:
+            barChart
+        }
+    }
+
+    // MARK: Line Chart (纯折线，无曲线)
+
+    private var lineChart: some View {
+        Chart {
+            ForEach(dailyPoints) { point in
+                LineMark(
+                    x: .value(L10n.string("mac.stat.date"), point.date),
+                    y: .value(L10n.string("mac.stat.expense"), point.expense)
+                )
+                .interpolationMethod(.linear)
+                .lineStyle(StrokeStyle(lineWidth: 2.5))
+                .foregroundStyle(.red)
+
+                LineMark(
+                    x: .value(L10n.string("mac.stat.date"), point.date),
+                    y: .value(L10n.string("mac.stat.income"), point.income)
+                )
+                .interpolationMethod(.linear)
+                .lineStyle(StrokeStyle(lineWidth: 2.5))
+                .foregroundStyle(.green)
+            }
+        }
+        .chartYAxis {
+            AxisMarks(position: .leading) { _ in
+                AxisValueLabel().font(.caption2)
+                AxisGridLine().foregroundStyle(.secondary.opacity(0.12))
+            }
+        }
+        .chartPlotStyle { plot in
+            plot.background(Color(nsColor: .controlBackgroundColor).cornerRadius(14))
+        }
+        .frame(height: 260)
+    }
+
+    // MARK: Bar Chart
+
+    private var barChart: some View {
+        Chart {
+            ForEach(dailyPoints) { point in
+                BarMark(
+                    x: .value(L10n.string("mac.stat.date"), point.date),
+                    y: .value(L10n.string("mac.stat.expense"), point.expense)
+                )
+                .foregroundStyle(.red.opacity(0.8))
+                .position(by: .value(L10n.string("mac.bill.filter_type"), L10n.string("mac.stat.expense")))
+
+                BarMark(
+                    x: .value(L10n.string("mac.stat.date"), point.date),
+                    y: .value(L10n.string("mac.stat.income"), point.income)
+                )
+                .foregroundStyle(.green.opacity(0.8))
+                .position(by: .value(L10n.string("mac.bill.filter_type"), L10n.string("mac.stat.income")))
+            }
+        }
+        .chartYAxis {
+            AxisMarks(position: .leading) { _ in
+                AxisValueLabel().font(.caption2)
+                AxisGridLine().foregroundStyle(.secondary.opacity(0.12))
+            }
+        }
+        .chartForegroundStyleScale([
+            L10n.string("mac.stat.expense"): Color.red,
+            L10n.string("mac.stat.income"): Color.green
+        ])
+        .chartLegend(position: .top)
+        .chartPlotStyle { plot in
+            plot.background(Color(nsColor: .controlBackgroundColor).cornerRadius(14))
+        }
+        .frame(height: 260)
+    }
+
     // MARK: Category Breakdown Section
 
     private var categoryBreakdownSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("支出分类")
+            Text(L10n.string("mac.stat.expense_category"))
                 .font(.system(size: 17, weight: .semibold))
 
             if expenseByCategory.isEmpty {
-                Text("暂无支出数据")
+                Text(L10n.string("mac.stat.no_expense_data"))
                     .font(.system(size: 14))
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, minHeight: 120)
@@ -260,7 +328,7 @@ private struct CategoryRow: View {
                     .font(.system(size: 13))
                     .foregroundStyle(.red)
 
-                Text(stat.name)
+                Text(L10n.string(stat.name))
                     .font(.system(size: 13, weight: .medium))
 
                 Spacer()
@@ -268,7 +336,7 @@ private struct CategoryRow: View {
                 Text(formatCurrency(stat.amount))
                     .font(.system(size: 13, weight: .semibold, design: .monospaced))
 
-                Text("\(stat.count)笔")
+                Text(String(format: L10n.string("mac.stat.count_bills"), stat.count))
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
             }

@@ -1,0 +1,45 @@
+/* Tab titles */
+"tab.summary" = "概要";
+"tab.add" = "入力";
+"tab.history" = "履歴";
+
+/* Summary view */
+"summary.today_expense" = "今日支出";
+"summary.today_income" = "今日収入";
+"summary.today_balance" = "今日残高";
+"summary.today_count" = "記録数";
+"summary.no_data" = "データなし";
+
+/* Add bill view */
+"add.expense" = "支出";
+"add.income" = "収入";
+"add.amount" = "金額";
+"add.category" = "カテゴリ";
+"add.save" = "保存";
+"add.cancel" = "キャンセル";
+"add.success" = "保存完了！";
+"add.fail" = "保存失敗";
+"add.no_phone" = "iPhone 未接続";
+"add.sync_success" = "iPhone に同期完了";
+"add.sync_cached" = "キャッシュ済み";
+
+/* History view */
+"history.title" = "履歴";
+"history.today" = "今日";
+"history.empty" = "記録なし";
+"history.hint" = "入力をタップして記録";
+
+/* Categories */
+"category.food" = "飲食";
+"category.shopping" = "買い物";
+"category.transport" = "交通";
+"category.entertainment" = "娯楽";
+"category.daily" = "日用品";
+"category.salary" = "給与";
+"category.bonus" = "ボーナス";
+"category.redpacket" = "红包";
+"category.other" = "その他";
+
+/* Status */
+"status.connected" = "iPhone 接続済み";
+"status.disconnected" = "未接続";

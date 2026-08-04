@@ -64,6 +64,12 @@ struct iFinanceApp: App {
                 biometricLock.evaluateBiometricCapability()
                 // 启动时尝试锁定（requestLock 是幂等的：未启用/已锁定/冷却期 = 空操作）
                 biometricLock.requestLock()
+                // 激活 Watch 连接，接收手表端发来的账单数据
+                WatchSessionManager.shared.activate()
+                // 通知功能已暂时禁用
+                // Task {
+                //     _ = await NotificationManager.shared.requestAuthorization()
+                // }
             }
             .onChange(of: scenePhase) { _, newPhase in
                 switch newPhase {

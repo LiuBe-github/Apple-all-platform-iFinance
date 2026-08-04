@@ -6,15 +6,20 @@
 //
 
 import SwiftUI
+import Charts
 internal import CoreData
 
 // MARK: - BudgetView
 struct BudgetView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.colorScheme) private var colorScheme
+    @EnvironmentObject private var authManager: AuthManager
     
     @FetchRequest private var currentMonthExpenditures: FetchedResults<Bill>
-    @AppStorage("monthly_budget_amount") private var monthlyBudget: Double = 3000.0
+    
+    private var monthlyBudget: Double {
+        authManager.monthlyBudget
+    }
     
     // MARK: - 静态格式化器
     private static let currencyFormatter: NumberFormatter = {
@@ -30,6 +35,21 @@ struct BudgetView: View {
     @State private var budgetInput = ""
     @FocusState private var isBudgetFieldFocused: Bool
     
+    // 图表切换状态
+    @State private var chartType: CategoryChartType = .list
+    
+    enum CategoryChartType: String, CaseIterable {
+        case list = "列表"
+        case pie = "饼图"
+
+        var displayName: String {
+            switch self {
+            case .list: return String(localized: "budget.chart_type", defaultValue: "图表类型")
+            case .pie: return String(localized: "chart.type_pie", defaultValue: "饼图")
+            }
+        }
+    }
+    
     init() {
         let calendar = Calendar.current
         let today = Date()
@@ -38,14 +58,15 @@ struct BudgetView: View {
             let endOfMonth = calendar.date(byAdding: .month, value: 1, to: startOfMonth)
         else {
             let req: NSFetchRequest<Bill> = Bill.fetchRequest()
+            req.predicate = PersistenceController.billUserPredicate
             req.sortDescriptors = [NSSortDescriptor(keyPath: \Bill.date, ascending: false)]
             _currentMonthExpenditures = FetchRequest(fetchRequest: req)
             return
         }
         let req: NSFetchRequest<Bill> = Bill.fetchRequest()
         req.predicate = NSPredicate(
-            format: "type == %@ AND date >= %@ AND date < %@ AND amount != nil AND category != NULL",
-            "expenditure", startOfMonth as NSDate, endOfMonth as NSDate
+            format: "type == %@ AND date >= %@ AND date < %@ AND amount != nil AND category != NULL AND createdBy == %@",
+            "expenditure", startOfMonth as NSDate, endOfMonth as NSDate, PersistenceController.currentUserIdentifier
         )
         req.sortDescriptors = [NSSortDescriptor(keyPath: \Bill.date, ascending: false)]
         _currentMonthExpenditures = FetchRequest(fetchRequest: req)
@@ -256,7 +277,7 @@ struct BudgetView: View {
     // MARK: - 分类列表
     private var categoryList: some View {
         VStack(spacing: 0) {
-            // 标题行
+            // 标题行 + 切换器
             HStack {
                 Text("budget.categories")
                     .font(.subheadline)
@@ -266,28 +287,124 @@ struct BudgetView: View {
                 Text(String(format: String(localized: "budget.categories_count"), categoryItems.count))
                     .font(.caption)
                     .foregroundStyle(.tertiary)
+                
+                // 图表类型切换
+                Picker("budget.chart_type", selection: $chartType) {
+                    ForEach(CategoryChartType.allCases, id: \.self) { type in
+                        Text(type.displayName).tag(type)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 120)
             }
             .padding(.horizontal, 4)
-            .padding(.bottom, 10)
+            .padding(.bottom, 12)
             
-            // 分类卡片
+            // 根据选择显示列表或饼图
+            if chartType == .pie {
+                pieChartView
+            } else {
+                categoryListContent
+            }
+        }
+    }
+    
+    // MARK: - 分类列表内容
+    private var categoryListContent: some View {
+        VStack(spacing: 1) {
+            ForEach(Array(categoryItems.enumerated()), id: \.element.category) { index, item in
+                CategoryRowView(
+                    category: item.category,
+                    amount: item.amount,
+                    total: totalExpenditure,
+                    isLast: index == categoryItems.count - 1
+                )
+            }
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 2)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+    
+    // MARK: - 饼状图视图
+    private var pieChartView: some View {
+        VStack(spacing: 16) {
+            // 饼图
+            Chart(categoryItems, id: \.category) { item in
+                SectorMark(
+                    angle: .value(L10n.string("bill.amount_legend"), item.amount),
+                    innerRadius: .ratio(0.5),
+                    angularInset: 1.5
+                )
+                .foregroundStyle(by: .value(L10n.string("bill.category_legend"), item.category.localizedDisplayName))
+                .cornerRadius(4)
+            }
+            .chartLegend(position: .bottom, alignment: .center, spacing: 12)
+            .frame(height: 240)
+            .padding(.horizontal, 8)
+            
+            // 分类金额列表
             VStack(spacing: 1) {
                 ForEach(Array(categoryItems.enumerated()), id: \.element.category) { index, item in
-                    CategoryRowView(
-                        category: item.category,
-                        amount: item.amount,
-                        total: totalExpenditure,
-                        isLast: index == categoryItems.count - 1
-                    )
+                    HStack(spacing: 12) {
+                        // 颜色指示
+                        Circle()
+                            .fill(colorForCategory(item.category))
+                            .frame(width: 10, height: 10)
+                        
+                        Text(item.category.localizedDisplayName)
+                            .font(.system(size: 14))
+                            .foregroundStyle(.primary)
+                        
+                        Spacer()
+                        
+                        Text(formatAmount(item.amount))
+                            .font(.system(size: 14, weight: .semibold, design: .rounded))
+                            .foregroundStyle(.primary)
+                        
+                        Text("\(Int(item.amount / totalExpenditure * 100))%")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 40, alignment: .trailing)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    
+                    if index < categoryItems.count - 1 {
+                        Rectangle()
+                            .fill(Color.secondary.opacity(0.08))
+                            .frame(height: 0.5)
+                            .padding(.leading, 38)
+                    }
                 }
             }
+            .padding(.vertical, 8)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .fill(Color(UIColor.secondarySystemGroupedBackground))
-                    .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 2)
             )
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
+        .padding(.horizontal, 4)
+    }
+    
+    // 分类颜色
+    private static let palette: [Color] = [
+        Color(red: 0.18, green: 0.60, blue: 1.0),
+        Color(red: 0.30, green: 0.78, blue: 0.44),
+        Color(red: 1.0,  green: 0.60, blue: 0.10),
+        Color(red: 0.75, green: 0.35, blue: 1.0),
+        Color(red: 1.0,  green: 0.30, blue: 0.30),
+        Color(red: 0.10, green: 0.75, blue: 0.85),
+        Color(red: 1.0,  green: 0.80, blue: 0.10),
+        Color(red: 0.55, green: 0.55, blue: 0.60),
+    ]
+    
+    private func colorForCategory(_ category: ExpenditureCategory) -> Color {
+        let idx = (ExpenditureCategory.allCases.firstIndex(of: category) ?? 0)
+        return Self.palette[idx % Self.palette.count]
     }
     
     // MARK: - 空状态
@@ -442,7 +559,7 @@ struct BudgetView: View {
         guard let newValue = Double(budgetInput), newValue > 0 else { return }
         
         withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-            monthlyBudget = newValue
+            authManager.updateMonthlyBudget(newValue)
         }
         
         // 触觉反馈
@@ -566,6 +683,7 @@ struct CategoryRowView: View {
         BudgetView()
     }
     .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
+    .environmentObject(AuthManager.shared)
 }
 
 #Preview("深色模式") {
@@ -574,4 +692,5 @@ struct CategoryRowView: View {
     }
     .preferredColorScheme(.dark)
     .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
+    .environmentObject(AuthManager.shared)
 }

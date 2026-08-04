@@ -34,8 +34,12 @@ private struct RingProgressView: View {
 struct BudgetCardView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.colorScheme) private var colorScheme
+    @EnvironmentObject private var authManager: AuthManager
 
-    @AppStorage("monthly_budget_amount") private var monthlyBudget: Double = 0.0
+    // 预算从 AuthManager 获取（与 BudgetView 保持一致）
+    private var monthlyBudget: Double {
+        authManager.monthlyBudget
+    }
 
     @FetchRequest private var currentMonthBills: FetchedResults<Bill>
 
@@ -56,6 +60,7 @@ struct BudgetCardView: View {
             let endOfMonth = calendar.date(byAdding: .month, value: 1, to: startOfMonth)
         else {
             let request: NSFetchRequest<Bill> = Bill.fetchRequest()
+            request.predicate = PersistenceController.billUserPredicate
             request.sortDescriptors = [NSSortDescriptor(keyPath: \Bill.date, ascending: false)]
             _currentMonthBills = FetchRequest(fetchRequest: request)
             return
@@ -63,10 +68,11 @@ struct BudgetCardView: View {
         
         let request: NSFetchRequest<Bill> = Bill.fetchRequest()
         request.predicate = NSPredicate(
-            format: "type == %@ AND date >= %@ AND date < %@ AND amount != nil",
+            format: "type == %@ AND date >= %@ AND date < %@ AND amount != nil AND createdBy == %@",
             "expenditure",
             startOfMonth as NSDate,
-            endOfMonth   as NSDate
+            endOfMonth   as NSDate,
+            PersistenceController.currentUserIdentifier
         )
         request.sortDescriptors = [NSSortDescriptor(keyPath: \Bill.date, ascending: false)]
         _currentMonthBills = FetchRequest(fetchRequest: request)

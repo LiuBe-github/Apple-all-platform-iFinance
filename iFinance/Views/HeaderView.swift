@@ -8,13 +8,11 @@
 import SwiftUI
 
 struct HeaderView: View {
+    @EnvironmentObject private var authManager: AuthManager
     @State private var showingAddBillView = false
-    
-    // 从 UserDefaults 读取头像数据（自动监听变化）
-    @AppStorage("UserProfileAvatarData") private var avatarData: Data?
-    
+
     var isTransactionView: Bool = false
-    
+
     var body: some View {
         HStack {
             if isTransactionView {
@@ -28,15 +26,15 @@ struct HeaderView: View {
                         .padding()
                 }
             }
-            
+
             Spacer()
-            
+
             NavigationLink {
                 ProfileView()
             } label: {
                 Group {
-                    if let avatarData = avatarData,
-                       let uiImage = UIImage(data: avatarData) {
+                    if let data = authManager.avatarData,
+                       let uiImage = UIImage(data: data) {
                         Image(uiImage: uiImage)
                             .resizable()
                             .aspectRatio(contentMode: .fill)
@@ -44,7 +42,7 @@ struct HeaderView: View {
                             .clipShape(Circle())
                     } else {
                         Image(systemName: "person.circle.fill")
-                            .font(.system(size: 30))
+                            .font(.system(size: 26))
                     }
                 }
                 .foregroundColor(.blue)
@@ -64,5 +62,6 @@ struct HeaderView: View {
 #Preview {
     NavigationView {
         HeaderView(isTransactionView: true)
+            .environmentObject(AuthManager.shared)
     }
 }

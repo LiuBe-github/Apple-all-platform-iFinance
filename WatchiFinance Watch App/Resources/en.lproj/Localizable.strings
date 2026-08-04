@@ -1,0 +1,45 @@
+/* Tab titles */
+"tab.summary" = "Summary";
+"tab.add" = "Add";
+"tab.history" = "History";
+
+/* Summary view */
+"summary.today_expense" = "Today Expense";
+"summary.today_income" = "Today Income";
+"summary.today_balance" = "Today's Balance";
+"summary.today_count" = "Records";
+"summary.no_data" = "No Data";
+
+/* Add bill view */
+"add.expense" = "Expense";
+"add.income" = "Income";
+"add.amount" = "Amount";
+"add.category" = "Category";
+"add.save" = "Save";
+"add.cancel" = "Cancel";
+"add.success" = "Saved!";
+"add.fail" = "Failed";
+"add.no_phone" = "iPhone not connected";
+"add.sync_success" = "Synced to iPhone";
+"add.sync_cached" = "Cached, sync later";
+
+/* History view */
+"history.title" = "History";
+"history.today" = "Today";
+"history.empty" = "No records";
+"history.hint" = "Tap Add to record";
+
+/* Categories */
+"category.food" = "Food";
+"category.shopping" = "Shopping";
+"category.transport" = "Transport";
+"category.entertainment" = "Entertainment";
+"category.daily" = "Daily";
+"category.salary" = "Salary";
+"category.bonus" = "Bonus";
+"category.redpacket" = "Red Packet";
+"category.other" = "Other";
+
+/* Status */
+"status.connected" = "iPhone Connected";
+"status.disconnected" = "Not Connected";

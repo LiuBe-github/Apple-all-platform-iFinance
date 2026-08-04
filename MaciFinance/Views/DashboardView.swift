@@ -12,7 +12,7 @@ struct DashboardView: View {
 
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \Bill.date, ascending: false)],
-        predicate: nil,
+        predicate: NSPredicate(format: "createdBy == %@", PersistenceController.currentUserIdentifier),
         animation: .default
     ) private var allBills: FetchedResults<Bill>
 
@@ -27,7 +27,7 @@ struct DashboardView: View {
 
         _todayBills = FetchRequest(
             sortDescriptors: [NSSortDescriptor(keyPath: \Bill.date, ascending: false)],
-            predicate: NSPredicate(format: "date >= %@ AND date < %@", startOfDay as NSDate, endOfDay as NSDate)
+            predicate: NSPredicate(format: "date >= %@ AND date < %@ AND createdBy == %@", startOfDay as NSDate, endOfDay as NSDate, PersistenceController.currentUserIdentifier)
         )
     }
 
@@ -108,10 +108,10 @@ struct DashboardView: View {
             VStack(spacing: 20) {
                 // MARK: Summary Cards
                 HStack(spacing: 16) {
-                    StatCard(title: "今日支出", value: todayExpense, icon: "arrow.down.circle.fill", color: .red)
-                    StatCard(title: "今日收入", value: todayIncome, icon: "arrow.up.circle.fill", color: .green)
-                    StatCard(title: "总余额", value: balance, icon: "yensign.circle.fill", color: .blue)
-                    StatCard(title: "账单数", count: billCount, icon: "list.bullet", color: .orange)
+                    StatCard(title: L10n.string("mac.dashboard.today_expense"), value: todayExpense, icon: "arrow.down.circle.fill", color: .red)
+                    StatCard(title: L10n.string("mac.dashboard.today_income"), value: todayIncome, icon: "arrow.up.circle.fill", color: .green)
+                    StatCard(title: L10n.string("mac.dashboard.total_balance"), value: balance, icon: "yensign.circle.fill", color: .blue)
+                    StatCard(title: L10n.string("mac.dashboard.bill_count"), count: billCount, icon: "list.bullet", color: .orange)
                 }
 
                 // MARK: Overview Section
@@ -120,16 +120,16 @@ struct DashboardView: View {
                     GridItem(.flexible(), spacing: 16)
                 ], spacing: 16) {
                     OverviewCard(
-                        title: "总收入",
+                        title: L10n.string("mac.dashboard.total_income"),
                         value: totalIncome,
-                        subtitle: "累计收入",
+                        subtitle: L10n.string("mac.dashboard.total_income_cumulative"),
                         icon: "wallet.pass",
                         color: Color.green.opacity(0.12)
                     )
                     OverviewCard(
-                        title: "总支出",
+                        title: L10n.string("mac.dashboard.total_expense"),
                         value: totalExpense,
-                        subtitle: "累计支出",
+                        subtitle: L10n.string("mac.dashboard.total_expense_cumulative"),
                         icon: "creditcard",
                         color: Color.red.opacity(0.12)
                     )
@@ -150,11 +150,11 @@ struct DashboardView: View {
 
     private var recentTransactionsSection: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("最近账单")
+            Text(L10n.string("mac.dashboard.recent_bills"))
                 .font(.system(size: 17, weight: .semibold))
 
             if allBills.isEmpty {
-                Text("暂无数据")
+                Text(L10n.string("mac.stat.no_data"))
                     .font(.system(size: 14))
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity)
@@ -266,11 +266,11 @@ private struct ChartSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("近 30 天趋势")
+            Text(L10n.string("mac.dashboard.30day_trend"))
                 .font(.system(size: 17, weight: .semibold))
 
             if dataPoints.allSatisfy({ $0.expense == 0 && $0.income == 0 }) {
-                Text("暂无数据")
+                Text(L10n.string("mac.stat.no_data"))
                     .font(.system(size: 14))
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, minHeight: 200)
@@ -278,15 +278,15 @@ private struct ChartSection: View {
                 Chart {
                     ForEach(dataPoints) { point in
                         BarMark(
-                            x: .value("日期", point.date, unit: .day),
-                            y: .value("支出", point.expense)
+                            x: .value(L10n.string("mac.stat.date"), point.date, unit: .day),
+                            y: .value(L10n.string("mac.stat.expense"), point.expense)
                         )
                         .foregroundStyle(Color.red.gradient)
                         .cornerRadius(3, style: .continuous)
 
                         BarMark(
-                            x: .value("日期", point.date, unit: .day),
-                            y: .value("收入", point.income)
+                            x: .value(L10n.string("mac.stat.date"), point.date, unit: .day),
+                            y: .value(L10n.string("mac.stat.income"), point.income)
                         )
                         .foregroundStyle(Color.green.gradient)
                         .cornerRadius(3, style: .continuous)
@@ -333,9 +333,8 @@ private struct BillRow: View {
 
     private var dateText: String {
         guard let date = bill.date else { return "" }
-        let formatter = DateFormatter()
-        formatter.dateFormat = "M月d日 HH:mm"
-        return formatter.string(from: date)
+        let f = Date.FormatStyle(date: .numeric, time: .shortened)
+        return date.formatted(f)
     }
 
     var body: some View {
@@ -351,9 +350,9 @@ private struct BillRow: View {
             }
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(bill.category ?? "未分类")
+                Text(bill.category ?? L10n.string("mac.bill.uncategorized"))
                     .font(.system(size: 13, weight: .medium))
-                if let note = bill.note, !note.isEmpty, note != "无备注" {
+                if let note = bill.note, !note.isEmpty, note != L10n.string("mac.bill.no_note") {
                     Text(note)
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
