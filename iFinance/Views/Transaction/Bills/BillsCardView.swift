@@ -136,6 +136,16 @@ private struct DayGroupCard: View, Equatable {
     let date:  Date
     let bills: [Bill]
 
+    private static let amountFormatter: NumberFormatter = {
+        let f = NumberFormatter()
+        f.numberStyle = .currency
+        f.currencySymbol = "¥"
+        f.locale = Locale(identifier: "zh_CN")
+        f.maximumFractionDigits = 2
+        f.minimumFractionDigits = 2
+        return f
+    }()
+
     // 基于账单数据内容判断是否需要重新计算 dayNet
     // 比较方式：日期 + 账单数量 + 每笔账单的金额和类型
     static func == (lhs: DayGroupCard, rhs: DayGroupCard) -> Bool {
@@ -165,13 +175,7 @@ private struct DayGroupCard: View, Equatable {
     
     private var dayNetLabel: String {
         let abs = Swift.abs(dayNet)
-        let f = NumberFormatter()
-        f.numberStyle           = .currency
-        f.currencySymbol        = "¥"
-        f.locale                = Locale(identifier: "zh_CN")
-        f.maximumFractionDigits = 2
-        f.minimumFractionDigits = 2
-        let str = f.string(from: NSNumber(value: abs)) ?? "¥\(abs)"
+        let str = Self.amountFormatter.string(from: NSNumber(value: abs)) ?? "¥\(abs)"
         return dayNet >= 0 ? "+\(str)" : "-\(str)"
     }
     

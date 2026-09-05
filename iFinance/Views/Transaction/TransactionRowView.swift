@@ -9,6 +9,23 @@ import SwiftUI
 
 struct TransactionRowView: View {
     @ObservedObject var bill: Bill
+
+    private static let amountFormatter: NumberFormatter = {
+        let f = NumberFormatter()
+        f.numberStyle = .currency
+        f.currencySymbol = "¥"
+        f.locale = Locale(identifier: "zh_CN")
+        f.maximumFractionDigits = 2
+        f.minimumFractionDigits = 2
+        return f
+    }()
+
+    private static let timeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "zh_CN")
+        f.dateFormat = "HH:mm"
+        return f
+    }()
     
     // MARK: - 解析分类
     private enum BillCategory {
@@ -71,13 +88,7 @@ struct TransactionRowView: View {
     
     private var amountText: String {
         let abs = Swift.abs(amount)
-        let f = NumberFormatter()
-        f.numberStyle = .currency
-        f.currencySymbol  = "¥"
-        f.locale = Locale(identifier: "zh_CN")
-        f.maximumFractionDigits = 2
-        f.minimumFractionDigits = 2
-        let str = f.string(from: NSNumber(value: abs)) ?? "¥\(abs)"
+        let str = Self.amountFormatter.string(from: NSNumber(value: abs)) ?? "¥\(abs)"
         return amount >= 0 ? "+\(str)" : "-\(str)"
     }
     
@@ -93,10 +104,7 @@ struct TransactionRowView: View {
     // MARK: - 时间
     private var timeText: String {
         guard let date = bill.date else { return "" }
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "zh_CN")
-        f.dateFormat = "HH:mm"
-        return f.string(from: date)
+        return Self.timeFormatter.string(from: date)
     }
     
     // MARK: - Body

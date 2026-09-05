@@ -623,7 +623,4 @@ final class AuthManager: ObservableObject {
         let digest = SHA256.hash(data: Data(payload.utf8))
         return digest.map { String(format: "%02x", $0) }.joined()
     }
-
-    // 临时存储 fullName 以供 Apple 登录后续使用
-    private var fullIDCredential: ASAuthorizationAppleIDCredential?
 }

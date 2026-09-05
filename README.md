@@ -184,7 +184,7 @@ iFinance/
 | **AuthenticationServices** | Sign in with Apple |
 | **Network.framework** | 网络状态实时监控 |
 | **Combine** | `ObservableObject` + `@Published` 响应式数据流 |
-| **Nuke** (`kean/Nuke v12.8.0`) | 高性能图片加载与三层缓存（SPM 依赖） |
+| **自研图片缓存** | 内存 + 磁盘双层缓存，配合图片降采样与请求去重 |
 | **UniformTypeIdentifiers** | CSV 导入导出 |
 | **CloudKit / UserNotifications** | iCloud 同步与本地通知（预留，暂禁用） |
 
@@ -204,7 +204,7 @@ iFinance/
 
 - **Xcode** 16+
 - **Swift** 5.0
-- **SPM 依赖**：`https://github.com/kean/Nuke`（v12.8.0）
+- **外部依赖**：无（图片加载使用内置 `ImageCache` / `ImageLoader` / `ImageDownsampler`）
 
 ## 🚀 快速开始
 

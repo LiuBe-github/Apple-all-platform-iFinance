@@ -19,7 +19,6 @@ private struct SharePayload: Identifiable {
 // MARK: - 主视图
 struct HomeView: View {
     @Environment(\.displayScale) private var displayScale
-    @Environment(\.managedObjectContext) private var viewContext
     @EnvironmentObject private var authManager: AuthManager
     @State private var showProfile = false
 

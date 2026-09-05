@@ -225,13 +225,6 @@ struct AddBillView: View {
         showingAlert = true
     }
     
-    private func getFormattedDateString(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return formatter.string(from: date)
-    }
-
     private func transferField(titleKey: LocalizedStringKey, text: Binding<String>, systemImage: String) -> some View {
         HStack(spacing: 10) {
             Image(systemName: systemImage)

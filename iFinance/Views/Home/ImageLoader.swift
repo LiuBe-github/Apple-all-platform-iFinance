@@ -14,6 +14,15 @@ final class ImageLoader: ObservableObject {
     @Published private(set) var image: UIImage?
     @Published private(set) var isLoaded: Bool = false
 
+    /// 复用同一个 URLSession，避免每次请求都新建连接池
+    private static let sharedSession: URLSession = {
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForResource = 15
+        config.timeoutIntervalForRequest = 8
+        config.urlCache = nil // 不使用系统 URL 缓存，由 ImageCache 自行管理
+        return URLSession(configuration: config)
+    }()
+
     /// 当前加载的URL（用于防竞态）
     private var currentURL: URL?
 
@@ -74,14 +83,7 @@ final class ImageLoader: ObservableObject {
 
     private func performDownload(url: URL, key: String) async -> UIImage? {
         do {
-            // 配置 URLSession：10 秒超时
-            let config = URLSessionConfiguration.default
-            config.timeoutIntervalForResource = 10
-            config.timeoutIntervalForRequest = 8
-            config.urlCache = nil // 不使用系统的 URL 缓存，我们自己管理
-            let session = URLSession(configuration: config)
-
-            let (data, response) = try await session.data(from: url)
+            let (data, response) = try await Self.sharedSession.data(from: url)
 
             // 检查 HTTP 状态码
             guard let httpResponse = response as? HTTPURLResponse,
@@ -108,11 +110,7 @@ final class ImageLoader: ObservableObject {
         guard ImageCache.shared.get(key) == nil,
               ImageCache.shared.getFromDisk(key) == nil else { return }
 
-        let config = URLSessionConfiguration.default
-        config.timeoutIntervalForResource = 15
-        let session = URLSession(configuration: config)
-
-        guard let (data, _) = try? await session.data(from: url),
+        guard let (data, _) = try? await Self.sharedSession.data(from: url),
               let downsampled = ImageDownsampler.downsample(data, to: CGSize(width: 300, height: 420))
         else { return }
 

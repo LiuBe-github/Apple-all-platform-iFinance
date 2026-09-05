@@ -59,11 +59,6 @@ struct EditBillView: View {
                             }
                         }
                 }
-                .alert("bill.amount_invalid", isPresented: $showingAlert) {
-                    Button("common.ok", role: .cancel) {}
-                } message: {
-                    Text("bill.amount_invalid_msg")
-                }
                 
                 Section("bill.type") {
                     Picker("bill.type_picker", selection: $selectedType) {
@@ -113,25 +108,14 @@ struct EditBillView: View {
                     } message: {
                         Text("bill.amount_invalid_msg")
                     }
+                    }
                 }
-            }
-            .onAppear {
-                setupInitialValues()
-            }
         }
     }
     
     // 验证输入是否有效（至少金额要能转成数字）
     private var isValidInput: Bool {
         !amountString.isEmpty && Double(amountString) != nil
-    }
-    
-    private func setupInitialValues() {
-        amountString = bill.amount?.stringValue ?? ""
-        selectedType = bill.type ?? "expenditure"
-        note = bill.note ?? ""
-        category = bill.category ?? ""
-        selectedDate = bill.date ?? Date()
     }
     
     private func saveBill() {
