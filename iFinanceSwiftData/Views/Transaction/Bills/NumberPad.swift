@@ -1,0 +1,336 @@
+//
+//  NumberPad.swift
+//  iFinance
+//
+//  数字键盘主视图 - 用于 AddBillView 中的金额输入
+//
+
+import SwiftUI
+
+struct NumberPad: View {
+    @Binding var displayText: String
+    @Binding var currentOperator: String
+    @Binding var transactionType: AddBillView.TransactionType
+    @Binding var note: String
+    @Binding var selectedDate: Date
+    @State private var isEditingNote = false
+    @State private var showDatePicker = false
+    @State private var keyboardHeight: CGFloat = 0
+    @FocusState private var isNoteFocused: Bool
+    
+    let onSave: (() -> Void)?
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            VStack(spacing: 10) {
+                HStack(spacing: 8) {
+                    Text("¥")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.secondary)
+
+                    Text(displayText)
+                        .font(.system(size: 30, weight: .semibold, design: .rounded))
+                        .foregroundColor({
+                            switch transactionType {
+                            case .expenditure: return .red
+                            case .income: return .green
+                            case .transfer: return .orange
+                            }
+                        }())
+                        .contentTransition(.numericText())
+                        .animation(.snappy(duration: 0.25), value: displayText)
+
+                    Spacer()
+                }
+
+                Divider()
+                    .foregroundStyle(.secondary.opacity(0.2))
+
+                HStack {
+                    Button(action: {
+                        HapticManager.shared.light()
+                        showDatePicker = true
+                    }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "calendar")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Text(getFormattedDateString(selectedDate))
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(
+                            Capsule()
+                                .fill(Color.primary.opacity(0.06))
+                        )
+                    }
+                    .buttonStyle(ScaleButtonStyle(pressedScale: 0.92))
+
+                    Spacer()
+
+                    HStack(spacing: 6) {
+                        Image(systemName: "square.and.pencil")
+                            .font(.caption2)
+                            .foregroundColor(note.isEmpty ? .secondary : .blue)
+
+                        ZStack(alignment: .leading) {
+                            if note.isEmpty && !isEditingNote {
+                                Text("bill.note_add")
+                                    .foregroundColor(.gray)
+                                    .font(.caption)
+                            }
+
+                            TextField("", text: $note)
+                                .font(.caption)
+                                .foregroundColor(.primary)
+                                .focused($isNoteFocused)
+                                .onTapGesture {
+                                    isEditingNote = true
+                                    isNoteFocused = true
+                                }
+                                .onSubmit {
+                                    isEditingNote = false
+                                    isNoteFocused = false
+                                }
+                        }
+                        .frame(maxWidth: 140, alignment: .trailing)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill(Color.primary.opacity(0.06))
+                    )
+                }
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(Color(UIColor.secondarySystemGroupedBackground))
+            )
+            
+            VStack(spacing: 10) {
+                // 第一行
+                HStack(spacing: 8) {
+                    ForEach(1...3, id: \.self) { num in
+                        NumberButton(value: String(num)) {
+                            handleNumberTap(String(num))
+                        }
+                    }
+                    
+                    // 操作按钮 - 加乘
+                    OperationButton(
+                        symbol: "+×",
+                        color: .blue,
+                        action: {
+                            handleOperationTap("+", altOp: "×")
+                        }
+                    )
+                }
+                
+                // 第二行
+                HStack(spacing: 8) {
+                    ForEach(4...6, id: \.self) { num in
+                        NumberButton(value: String(num)) {
+                            handleNumberTap(String(num))
+                        }
+                    }
+                    
+                    // 操作按钮 - 减除
+                    OperationButton(
+                        symbol: "-÷",
+                        color: .purple,
+                        action: {
+                            handleOperationTap("-", altOp: "÷")
+                        }
+                    )
+                }
+                
+                // 第三行
+                HStack(spacing: 8) {
+                    ForEach(7...9, id: \.self) { num in
+                        NumberButton(value: String(num)) {
+                            handleNumberTap(String(num))
+                        }
+                    }
+                    
+                    // 自定义按钮 - 百分比
+                    OperationButton(
+                        symbol: "%",
+                        color: .orange,
+                        action: {
+                            handlePercentage()
+                        }
+                    )
+                }
+                
+                // 第四行
+                HStack(spacing: 8) {
+                    NumberButton(value: ".") {
+                        handleNumberTap(".")
+                    }
+                    
+                    NumberButton(value: "0") {
+                        handleNumberTap("0")
+                    }
+                    
+                    NumberButton(value: "delete", systemImage: "delete.backward") {
+                        handleDeleteTap()
+                    }
+                    
+                    // 完成按钮
+                    Button(action: {
+                        HapticManager.shared.heavy() // 重要操作
+                        onSave?()
+                    }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 17, weight: .semibold))
+                            Text("common.done")
+                                .font(.title3)
+                                .fontWeight(.bold)
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            Color(red: 1.0, green: 0.55, blue: 0.45),
+                                            Color(red: 0.95, green: 0.38, blue: 0.30)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .shadow(color: Color(red: 0.95, green: 0.43, blue: 0.35).opacity(0.35), radius: 6, x: 0, y: 3)
+                        )
+                    }
+                    .buttonStyle(ScaleButtonStyle(pressedScale: 0.94))
+                }
+            }
+            .padding(.horizontal, 4)
+        }
+        .padding(.top, 10)
+        .padding(.horizontal, 14)
+        .padding(.bottom, 0)
+        .background(
+            Color(UIColor.systemGroupedBackground)
+                .clipShape(
+                    RoundedRectangle(cornerRadius: 26, style: .continuous)
+                )
+        )
+        .padding(.horizontal, 0)
+        .padding(.bottom, keyboardHeight)
+        .ignoresSafeArea(edges: .bottom)
+        .animation(.easeOut(duration: 0.2), value: keyboardHeight)
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillChangeFrameNotification)) { note in
+            guard let frame = note.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
+            let screenHeight = UIScreen.main.bounds.height
+            let overlap = max(0, screenHeight - frame.origin.y)
+            keyboardHeight = overlap == 0 ? 0 : overlap - 12
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+            keyboardHeight = 0
+        }
+        .sheet(isPresented: $showDatePicker) {
+            DatePickerView(selectedDate: $selectedDate, onConfirm: {
+                showDatePicker = false
+            })
+        }
+    }
+    
+    private func handleNumberTap(_ number: String) {
+        // 触感反馈：数字按键 — 轻量高频
+        HapticManager.shared.light()
+
+        // 1. 防止重复输入小数点
+        if number == "." && displayText.contains(".") {
+            HapticManager.shared.error() // 无效输入
+            return
+        }
+        
+        if displayText == "0.00" {
+            // 2. 如果当前是 0.00 且输入的是小数点，应该显示 "0." 而不是直接替换
+            if number == "." {
+                displayText = "0."
+            } else {
+                displayText = number
+            }
+        } else {
+            // 3. 限制小数位
+            if displayText.contains(".") {
+                let parts = displayText.split(separator: ".")
+                if parts.count > 1 {
+                    let decimalPart = parts[1]
+                    if decimalPart.count >= 2 && number != "." {
+                        return
+                    }
+                }
+            }
+            displayText += number
+        }
+    }
+    
+    private func handleDeleteTap() {
+        // 触感反馈：删除操作
+        HapticManager.shared.rigid()
+
+        // 如果当前是0.00，不允许退格
+        if displayText == "0.00" {
+            return
+        }
+        
+        // 如果只剩一个字符，重置为0.00
+        if displayText.count <= 1 {
+            displayText = "0.00"
+        } else {
+            displayText = String(displayText.dropLast())
+        }
+    }
+    
+    private func handleOperationTap(_ primaryOp: String, altOp: String) {
+        // 触感反馈：运算符
+        HapticManager.shared.medium()
+
+        // 确定当前操作符
+        let newOp = (currentOperator == primaryOp) ? altOp : primaryOp
+        
+        // 更新当前操作符状态
+        currentOperator = newOp
+        
+        // 如果显示文本以操作符结尾，则替换最后一个字符
+        if let lastChar = displayText.last, ["+", "-", "×", "÷"].contains(String(lastChar)) {
+            displayText = String(displayText.dropLast()) + newOp
+        } else {
+            // 否则追加操作符
+            displayText += newOp
+        }
+    }
+    
+    private func handlePercentage() {
+        // 触感反馈：百分比转换
+        HapticManager.shared.medium()
+
+        // 百分比操作 - 将当前金额除以100
+        if let value = Double(displayText), value != 0 {
+            let newValue = value / 100
+            displayText = String(format: "%.2f", newValue)
+        }
+    }
+    
+    private func getFormattedDateString(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
+    }
+}
+
+// MARK: - 组件已提取到 NumberPadComponents.swift

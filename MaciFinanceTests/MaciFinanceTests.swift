@@ -445,7 +445,9 @@ struct BillListLogicTests {
         let filtered = bills.filter {
             $0.note?.localizedCaseInsensitiveContains(searchText) ?? false
         }
-        #expect(filtered.count == 2)
+        // 只有「午餐」命中「午」；「晚餐」不含该关键字
+        #expect(filtered.count == 1)
+        #expect(filtered.first?.note == "午餐")
     }
 
     @MainActor

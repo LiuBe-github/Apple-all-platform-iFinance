@@ -4,7 +4,7 @@
 //
 
 import SwiftUI
-internal import CoreData
+import SwiftData
 
 /// 趋势卡片视图（支出或收入）
 struct TrendCard: View {
@@ -179,7 +179,7 @@ struct TrendCard: View {
             }
             // 判断账单是否在这个小时内
             if billHourStart >= hourStart && billHourStart < hourEnd {
-                total += bill.amount?.doubleValue ?? 0
+                total += bill.amountDouble
             }
         }
         return total

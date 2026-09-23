@@ -1,0 +1,274 @@
+//
+//  BillsCard.swift
+//  iFinance
+//
+//  Created by 刘不易 on 2026/1/12.
+//
+
+import SwiftUI
+import SwiftData
+
+// MARK: - 时间范围枚举
+enum TimeRange: String, CaseIterable {
+    case today = "本日"
+    case thisWeek = "本周"
+    case thisMonth = "本月"
+    case thisYear = "本年"
+
+    var dateRange: (start: Date, end: Date) {
+        let calendar = Calendar.current
+        let now = Date()
+
+        switch self {
+        case .today:
+            let start = calendar.startOfDay(for: now)
+            return (start, now)
+        case .thisWeek:
+            let start = calendar.dateInterval(of: .weekOfYear, for: now)?.start ?? now
+            return (start, now)
+        case .thisMonth:
+            let start = calendar.dateInterval(of: .month, for: now)?.start ?? now
+            return (start, now)
+        case .thisYear:
+            let start = calendar.dateInterval(of: .year, for: now)?.start ?? now
+            return (start, now)
+        }
+    }
+
+    var displayName: String {
+        switch self {
+        case .today: return String(localized: "bill.time_range.today", defaultValue: "本日")
+        case .thisWeek: return String(localized: "bill.time_range.week", defaultValue: "本周")
+        case .thisMonth: return String(localized: "bill.time_range.month", defaultValue: "本月")
+        case .thisYear: return String(localized: "bill.time_range.year", defaultValue: "本年")
+        }
+    }
+}
+
+struct BillsCardView: View {
+    @Query(filter: PersistenceController.billUserPredicate, sort: \Bill.date, order: .reverse, animation: .default)
+    private var bills: [Bill]
+
+    @State private var selectedTimeRange: TimeRange = .thisMonth
+    var selectedCategory: Binding<String?>?
+    var selectedNote: Binding<String?>?
+
+    // MARK: - 按时间范围、类别、备注过滤
+    private var filteredBills: [Bill] {
+        let range = selectedTimeRange.dateRange
+        let catValue = selectedCategory?.wrappedValue
+        let noteValue = selectedNote?.wrappedValue
+        return bills.filter { bill in
+            guard let date = bill.date else { return false }
+            let inTimeRange = date >= range.start && date <= range.end
+            let inCategory: Bool
+            if let cat = catValue {
+                inCategory = bill.category == cat
+            } else {
+                inCategory = true
+            }
+            let inNote: Bool
+            if let note = noteValue {
+                inNote = bill.note == note
+            } else {
+                inNote = true
+            }
+            return inTimeRange && inCategory && inNote
+        }
+    }
+    
+    // MARK: - 按日分组
+    private var groupedBills: [(date: Date, bills: [Bill])] {
+        guard !filteredBills.isEmpty else { return [] }
+        let grouped = Dictionary(grouping: filteredBills) { bill in
+            Calendar.current.startOfDay(for: bill.date ?? Date())
+        }
+        return grouped.sorted { $0.key > $1.key }.map { ($0.key, $0.value) }
+    }
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            // 时间范围选择器
+            timeRangePicker
+            
+            // 账单列表
+            Group {
+                if groupedBills.isEmpty {
+                    emptyState
+                } else {
+                    ForEach(groupedBills, id: \.date) { group in
+                        DayGroupCard(date: group.date, bills: group.bills)
+                    }
+                }
+            }
+            .id(selectedTimeRange)
+            .transition(.opacity.combined(with: .move(edge: .bottom)))
+            .animation(.spring(response: 0.45, dampingFraction: 0.85), value: selectedTimeRange)
+        }
+    }
+    
+    // MARK: - 时间范围选择器
+    private var timeRangePicker: some View {
+        Picker("bill.time_range", selection: $selectedTimeRange) {
+            ForEach(TimeRange.allCases, id: \.self) { range in
+                Text(range.displayName).tag(range)
+            }
+        }
+        .pickerStyle(.segmented)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .onChange(of: selectedTimeRange) { _, _ in
+            HapticManager.shared.selectionChanged()
+        }
+    }
+    
+    private var emptyState: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "tray")
+                .font(.system(size: 32, weight: .light))
+                .foregroundStyle(.tertiary)
+                .symbolEffect(.bounce, value: selectedTimeRange)
+            Text("bill.empty")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 48)
+        .appGlassCard(cornerRadius: 16)
+    }
+}
+
+// MARK: - 单日分组卡片
+private struct DayGroupCard: View, Equatable {
+    let date:  Date
+    let bills: [Bill]
+
+    @State private var appeared = false
+
+    private static let amountFormatter: NumberFormatter = {
+        let f = NumberFormatter()
+        f.numberStyle = .currency
+        f.currencySymbol = "¥"
+        f.locale = Locale(identifier: "zh_CN")
+        f.maximumFractionDigits = 2
+        f.minimumFractionDigits = 2
+        return f
+    }()
+
+    // 基于账单数据内容判断是否需要重新计算 dayNet
+    // 比较方式：日期 + 账单数量 + 每笔账单的金额和类型
+    static func == (lhs: DayGroupCard, rhs: DayGroupCard) -> Bool {
+        lhs.date == rhs.date && lhs.bills.count == rhs.bills.count &&
+        zip(lhs.sortedBills, rhs.sortedBills).allSatisfy { bill1, bill2 in
+            bill1.amount == bill2.amount && bill1.type == bill2.type
+        }
+    }
+    
+    private var sortedBills: [Bill] {
+        bills.sorted { ($0.date ?? Date()) > ($1.date ?? Date()) }
+    }
+    
+    /// 当日净额：收入为正，支出为负
+    private var dayNet: Double {
+        bills.reduce(0.0) { total, bill in
+            let amt = bill.amountDouble
+            return bill.type == "expenditure" ? total - amt : total + amt
+        }
+    }
+    
+    private var dayNetColor: Color {
+        dayNet >= 0
+        ? Color(red: 0.18, green: 0.78, blue: 0.44)
+        : Color(red: 1.0,  green: 0.27, blue: 0.23)
+    }
+    
+    private var dayNetLabel: String {
+        let abs = Swift.abs(dayNet)
+        let str = Self.amountFormatter.string(from: NSNumber(value: abs)) ?? "¥\(abs)"
+        return dayNet >= 0 ? "+\(str)" : "-\(str)"
+    }
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // ── 日期头部 ──
+            HStack(alignment: .center) {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(dayLabel)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(.primary)
+                    Text(weekdayLabel)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Text(dayNetLabel)
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundStyle(dayNetColor)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            
+            // 分隔线
+            Rectangle()
+                .fill(Color.secondary.opacity(0.08))
+                .frame(height: 0.5)
+                .padding(.leading, 16)
+            
+            // ── 账单行 ──
+            VStack(spacing: 0) {
+                ForEach(Array(sortedBills.enumerated()), id: \.element.persistentModelID) { index, bill in
+                    NavigationLink(
+                        destination: EditBillView(bill: bill).toolbar(.hidden, for: .tabBar)
+                    ) {
+                        TransactionRowView(bill: bill)
+                    }
+                    .buttonStyle(.plain)
+                    
+                    if index < sortedBills.count - 1 {
+                        Rectangle()
+                            .fill(Color.secondary.opacity(0.06))
+                            .frame(height: 0.5)
+                            .padding(.leading, 62)  // 与图标右边缘对齐
+                    }
+                }
+            }
+        }
+        .appGlassCard(cornerRadius: 16)
+        .opacity(appeared ? 1 : 0)
+        .offset(y: appeared ? 0 : 10)
+        .onAppear {
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
+                appeared = true
+            }
+        }
+    }
+    
+    // MARK: 日期格式
+    private var dayLabel: String {
+        let cal = Calendar.current
+        if cal.isDateInToday(date)     { return String(localized: "common.today") }
+        if cal.isDateInYesterday(date) { return String(localized: "common.yesterday") }
+        
+        return date.formatted(.dateTime.month(.abbreviated).day())
+    }
+    
+    private var weekdayLabel: String {
+        // 今天/昨天不再重复显示星期
+        let cal = Calendar.current
+        if cal.isDateInToday(date) || cal.isDateInYesterday(date) {
+            return date.formatted(.dateTime.month(.abbreviated).day().weekday(.wide))
+        }
+        return date.formatted(.dateTime.weekday(.wide))
+    }
+}
+
+// MARK: - 预览
+#Preview {
+    ScrollView {
+        BillsCardView()
+            .padding(.horizontal, 16)
+            .padding(.top, 12)
+    }
+    .background(Color(UIColor.systemGroupedBackground))
+    .environment(\.modelContext, PersistenceController.preview.container.viewContext)
+}

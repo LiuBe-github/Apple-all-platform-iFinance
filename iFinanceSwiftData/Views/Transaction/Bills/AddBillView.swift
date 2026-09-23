@@ -1,0 +1,342 @@
+//
+//  AddBillView.swift
+//  iFinance
+//
+//  Created by 刘不易 on 2026/1/13.
+//
+
+import SwiftUI
+import SwiftData
+import Foundation
+
+struct AddBillView: View {
+    enum TransactionType: Hashable {
+        case expenditure
+        case income
+        case transfer
+    }
+    
+    // 网格视图的行数和列数
+    private let columns = [
+        GridItem(.flexible(), spacing: 4),
+        GridItem(.flexible(), spacing: 4),
+        GridItem(.flexible(), spacing: 4),
+        GridItem(.flexible(), spacing: 4),
+        GridItem(.flexible(), spacing: 4),
+    ]
+    
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var viewContext
+    
+    @State private var displayText: String = "0.00"
+    @State private var note: String = ""
+    @State private var isEditingNote = false
+    @State private var transactionType: TransactionType = .expenditure
+    @State private var selectedExpenditureCategory: ExpenditureCategory? = .foodAndBeverage
+    @State private var selectedIncomeCategory: IncomeCategory? = .salary
+    @State private var showNumberPad = true
+    @State private var currentOperator: String = "+"
+    @State private var selectedDate: Date = Date()
+    @State private var showingAlert = false
+    @State private var alertMessage = ""
+    @State private var transferFrom: String = ""
+    @State private var transferTo: String = ""
+    
+    var body: some View {
+        NavigationStack {
+            ZStack(alignment: .bottom) {
+                // 主要内容区域（可滚动）
+                ScrollView {
+                    VStack(alignment: .leading) {
+                        Group {
+                            if transactionType == .expenditure {
+                                LazyVGrid(columns: columns, spacing: 20) {
+                                    ForEach(ExpenditureCategory.allCases, id: \.self) { category in
+                                        ExpenditureCategoryItemView(category: category, selectedCategory:  $selectedExpenditureCategory)
+                                            .onTapGesture {
+                                                HapticManager.shared.light()
+                                            }
+                                    }
+                                }
+                                .padding(.horizontal, 12)
+                            } else if transactionType == .income {
+                                LazyVGrid(columns: columns, spacing: 20) {
+                                    ForEach(IncomeCategory.allCases, id: \.self) { category in
+                                        IncomeCategoryItemView(category: category, selectedCategory:  $selectedIncomeCategory)
+                                            .onTapGesture {
+                                                HapticManager.shared.light()
+                                            }
+                                    }
+                                }
+                                .padding(.horizontal, 12)
+                            } else {
+                                transferForm
+                            }
+                        }
+                        .id(transactionType)
+                        .transition(.opacity.combined(with: .move(edge: .bottom)))
+                        .animation(.spring(response: 0.4, dampingFraction: 0.85), value: transactionType)
+                        
+                        // 占位符，确保内容不会被底部键盘遮挡
+                        Color.clear
+                            .frame(height: 300) // 键盘高度的占位
+                    }
+                }
+                
+                // 固定在底部的数字键盘
+                if showNumberPad {
+                    NumberPad(
+                        displayText: $displayText,
+                        currentOperator: $currentOperator,
+                        transactionType: $transactionType,
+                        note: $note,
+                        selectedDate: $selectedDate
+                    ) {
+                        saveBill()
+                        // 解析显示文本获取最终数值
+                        // let result = parseExpression(displayText)
+                    }
+                    .transition(.move(edge: .bottom))
+                    .background(Color(UIColor.systemBackground))
+                    .padding(.bottom, -20)
+                }
+            }
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        HapticManager.shared.light()
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                    }
+                }
+                ToolbarItem(placement: .title) {
+                    Picker("bill.view_picker", selection:  $transactionType) {
+                        Text("bill.type_expenditure")
+                            .tag(TransactionType.expenditure)
+                        Text("bill.type_income")
+                            .tag(TransactionType.income)
+                        Text("bill.type_transfer")
+                            .tag(TransactionType.transfer)
+                    }
+                    .frame(width: 300)
+                    .pickerStyle(SegmentedPickerStyle())
+                }
+            }
+        }
+        .alert(alertMessage, isPresented: $showingAlert) {
+            Button("common.ok", role: .cancel){ }
+        }
+        
+    }
+    
+    // MARK: - 转账表单
+    private var transferForm: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("bill.transfer_hint")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+
+            VStack(spacing: 12) {
+                transferField(
+                    titleKey: "bill.transfer_from",
+                    text: $transferFrom,
+                    systemImage: "arrow.up.right"
+                )
+
+                transferField(
+                    titleKey: "bill.transfer_to",
+                    text: $transferTo,
+                    systemImage: "arrow.down.left"
+                )
+            }
+
+            Button {
+                HapticManager.shared.medium()
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                    swap(&transferFrom, &transferTo)
+                }
+            } label: {
+                Label("bill.transfer_swap", systemImage: "arrow.left.arrow.right")
+            }
+            .buttonStyle(.bordered)
+            .tint(.blue)
+        }
+        .padding(.horizontal)
+    }
+    
+    private func saveBill() {
+        let result = parseExpression(displayText)
+        guard result > 0 else {
+            showAlert(message: String(localized: "bill.amount_gt_zero"))
+            return
+        }
+        
+        let categoryString: String
+        switch transactionType {
+        case .expenditure:
+            guard let cat = selectedExpenditureCategory else {
+                showAlert(message: String(localized: "bill.choose_category"))
+                return
+            }
+            categoryString = cat.rawValue
+        case .income:
+            guard let cat = selectedIncomeCategory else {
+                showAlert(message: String(localized: "bill.choose_category"))
+                return
+            }
+            categoryString = cat.rawValue
+        case .transfer:
+            guard !transferFrom.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                  !transferTo.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                showAlert(message: String(localized: "bill.transfer_account_required"))
+                return
+            }
+            categoryString = "transfer"
+        }
+        
+        // 创建对象（SwiftData）
+        let newBill = Bill()
+        viewContext.insert(newBill)
+        
+        // 所有非可选字段必须赋非nil值
+        newBill.id = UUID()
+        newBill.amount = Decimal(result)
+        newBill.date = selectedDate
+        newBill.type = transactionType == .expenditure ? "expenditure" :
+        transactionType == .income ? "income" : "transfer"
+        newBill.category = categoryString
+        if transactionType == .transfer {
+            let route = "\(transferFrom) → \(transferTo)"
+            if note.isEmpty {
+                newBill.note = route
+            } else {
+                newBill.note = "\(note) · \(route)"
+            }
+        } else {
+            newBill.note = note.isEmpty ? nil : note
+        }
+        newBill.createdAt = Date()
+        newBill.createdBy = AuthManager.shared.userIdentifier
+        newBill.updatedAt = Date()
+        newBill.updatedBy = AuthManager.shared.userIdentifier
+        // 尝试保存
+        do {
+            try viewContext.save()
+            HapticManager.shared.success()
+            dismiss()
+        } catch {
+            HapticManager.shared.error()
+            showAlert(message: String(localized: "bill.save_failed"))
+        }
+    }
+    
+    private func showAlert(message: String) {
+        HapticManager.shared.warning()
+        alertMessage = message
+        showingAlert = true
+    }
+    
+    private func transferField(titleKey: LocalizedStringKey, text: Binding<String>, systemImage: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: systemImage)
+                .foregroundStyle(.blue)
+                .frame(width: 22)
+            Text(titleKey)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            TextField("", text: text)
+                .textInputAutocapitalization(.words)
+                .disableAutocorrection(true)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color(UIColor.secondarySystemBackground))
+        )
+    }
+    
+    // 解析表达式并计算结果
+    private func parseExpression(_ expression: String) -> Double {
+        // 移除所有操作符
+        let numbersOnly = expression.replacingOccurrences(of: "[^0-9.]", with: " ", options: .regularExpression)
+        let numberStrings = numbersOnly.components(separatedBy: " ").filter { !$0.isEmpty }
+        
+        // 提取数字
+        var numbers: [Double] = []
+        for numberStr in numberStrings {
+            if let number = Double(numberStr) {
+                // 修正前导零，例如05.22变为5.22
+                let formattedNumber = formatNumber(number)
+                numbers.append(formattedNumber)
+            }
+        }
+        
+        // 如果只有一个数字，直接返回
+        guard numbers.count > 1 else {
+            return numbers.first ?? 0.0
+        }
+        
+        // 提取操作符
+        let operators = extractOperators(from: expression)
+        
+        // 执行计算
+        var result = numbers[0]
+        for i in 1..<numbers.count {
+            if i-1 < operators.count {
+                switch operators[i-1] {
+                case "+":
+                    result += numbers[i]
+                case "-":
+                    result -= numbers[i]
+                case "×":
+                    result *= numbers[i]
+                case "÷":
+                    if numbers[i] != 0 {
+                        result /= numbers[i]
+                    }
+                default:
+                    break
+                }
+            }
+        }
+        
+        return result
+    }
+    
+    private func extractOperators(from expression: String) -> [String] {
+        var operators: [String] = []
+        var currentNumber = ""
+        
+        for char in expression {
+            if char.isNumber || char == "." {
+                currentNumber += String(char)
+            } else {
+                if !currentNumber.isEmpty {
+                    currentNumber = ""
+                }
+                if ["+", "-", "×", "÷"].contains(String(char)) {
+                    operators.append(String(char))
+                }
+            }
+        }
+        
+        return operators
+    }
+    
+    private func formatNumber(_ number: Double) -> Double {
+        // 修正前导零，例如05.22变为5.22
+        let stringRep = String(number)
+        if let doubleValue = Double(stringRep) {
+            return doubleValue
+        }
+        return number
+    }
+}
+
+#Preview {
+    AddBillView()
+        .environment(\.modelContext, PersistenceController.preview.container.viewContext)
+}

@@ -265,8 +265,8 @@ final class iFinanceTests: XCTestCase {
 
     func testExpenditureCategoryAllCases() {
         let all = ExpenditureCategory.allCases
-        // 枚举中共有 21 个 case
-        XCTAssertEqual(all.count, 21)
+        // 枚举中共有 25 个 case
+        XCTAssertEqual(all.count, 25)
     }
 
     func testExpenditureCategoryRawValues() {
@@ -292,7 +292,8 @@ final class iFinanceTests: XCTestCase {
 
     func testIncomeCategoryAllCases() {
         let all = IncomeCategory.allCases
-        XCTAssertEqual(all.count, 10)
+        // 枚举中共有 11 个 case
+        XCTAssertEqual(all.count, 11)
     }
 
     func testIncomeCategoryRawValues() {
@@ -506,6 +507,7 @@ final class iFinanceTests: XCTestCase {
             accent: .red,
             billType: "expenditure",
             allSeries: series,
+            allBills: [],
             span: .constant(SpanOption.all[1]),
             chartType: .constant(.line),
             selectedDate: .constant(nil),

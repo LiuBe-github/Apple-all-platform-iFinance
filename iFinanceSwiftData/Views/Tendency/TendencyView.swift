@@ -4,20 +4,17 @@
 //
 
 import SwiftUI
-internal import CoreData
+import SwiftData
 
 /// 趋势分析视图 - 显示收支趋势图表和活跃度热力图
 struct TendencyView: View {
     @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject private var authManager: AuthManager
     
-    // MARK: - Core Data
+    // MARK: - 数据查询（SwiftData）
     
-    @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \Bill.date, ascending: true)],
-        predicate: PersistenceController.billUserPredicate,
-        animation: .default
-    ) private var allBills: FetchedResults<Bill>
+    @Query(filter: PersistenceController.billUserPredicate, sort: \Bill.date, animation: .default)
+    private var allBills: [Bill]
     
     // MARK: - 视图状态
     
@@ -155,7 +152,7 @@ struct TendencyView: View {
                   date >= start,
                   date < tomorrow else { continue }  // 使用 < tomorrow 而非 <= today
             let dayKey = cal.startOfDay(for: date)
-            dailyTotals[dayKey, default: 0] += bill.amount?.doubleValue ?? 0
+            dailyTotals[dayKey, default: 0] += bill.amountDouble
         }
         
         // 生成完整日期序列（填补空白日期）
