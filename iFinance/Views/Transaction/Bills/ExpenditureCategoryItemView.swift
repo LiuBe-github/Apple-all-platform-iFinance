@@ -17,7 +17,7 @@ struct ExpenditureCategoryItemView: View {
     }
     
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: AppSpacing.xs) {
             // 图标按钮
             Button(action: {
                 // 如果不是当前选中的项目，则更改选择
@@ -26,7 +26,7 @@ struct ExpenditureCategoryItemView: View {
                 }
             }) {
                 Image(systemName: category.icon)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.callout.weight(.semibold))
                     .foregroundStyle(isSelected ? .white : .primary)
                     .frame(width: 40, height: 40)
                     .background(
@@ -47,7 +47,7 @@ struct ExpenditureCategoryItemView: View {
                     .shadow(color: isSelected ? Color.red.opacity(0.35) : .clear, radius: 5, x: 0, y: 2)
                     .symbolEffect(.bounce, value: isSelected)
                     .scaleEffect(isSelected ? 1.06 : 1)
-                    .animation(.spring(response: 0.35, dampingFraction: 0.6), value: isSelected)
+                    .appAnimation(AppMotion.standard, value: isSelected)
             }
             .disabled(isSelected) // 已选中的项目不可点击
             .buttonStyle(ScaleButtonStyle(pressedScale: 0.88))

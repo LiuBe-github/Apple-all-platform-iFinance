@@ -23,13 +23,13 @@ struct NumberButton: View {
     var body: some View {
         Button(action: action) {
             ZStack {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous)
                     .fill(Color(UIColor.secondarySystemFill))
                     .frame(height: 54)
                 
                 if let systemImage = systemImage {
                     Image(systemName: systemImage)
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(AppTypography.body.weight(.semibold))
                         .foregroundColor(.primary)
                 } else {
                     Text(value)
@@ -38,7 +38,7 @@ struct NumberButton: View {
                 }
             }
             .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous)
                     .strokeBorder(Color.primary.opacity(0.05), lineWidth: 1)
             )
         }
@@ -57,11 +57,11 @@ struct OperationButton: View {
     var body: some View {
         Button(action: action) {
             ZStack {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous)
                     .fill(color.opacity(0.12))
                     .frame(height: 54)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous)
                             .strokeBorder(color.opacity(0.25), lineWidth: 1)
                     )
                 

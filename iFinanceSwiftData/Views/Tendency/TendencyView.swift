@@ -53,7 +53,7 @@ struct TendencyView: View {
                 AppBackgroundView()
                 
                 ScrollView(showsIndicators: false) {
-                    VStack(spacing: 16) {
+                    VStack(spacing: AppSpacing.lg) {
                         // 支出趋势
                         TrendCard(
                             titleKey: "tendency.expense",
@@ -83,9 +83,10 @@ struct TendencyView: View {
                         // 活跃度热力图
                         TendencyHeatmapView(dailyBillCounts: dailyBillCounts)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 12)
-                    .padding(.bottom, 28)
+                    .padding(.horizontal, AppSpacing.lg)
+                    .padding(.top, AppSpacing.md)
+                    .padding(.bottom, AppSpacing.section)
+                    .appContentWidth()
                 }
             }
             .navigationTitle("tab.tendency")

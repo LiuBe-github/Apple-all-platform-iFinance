@@ -18,6 +18,7 @@
 | `iFinanceSwiftData/Manager/{CloudKitSyncManager,NotificationManager}.swift` | 禁用 stub（与 iOS 版一致，复制） |
 | `iFinanceSwiftData/Helper/{LocalizationHelper,HapticManager}.swift` | `L10n` / `AppLanguage` / `LanguageSettingView` / 触觉反馈（复制） |
 | `iFinanceSwiftData/Views/**` | 由 iOS 版复制改造的视图层 |
+| `iFinanceSwiftData/Views/Common/AppDesignTokens.swift`、`AppMotion.swift` | 布局/字体与动画 token（与 iOS 版逐字一致的副本） |
 | `iFinanceSwiftData/Resources/Info.plist`、`Assets.xcassets` | 独立 Info.plist 与图标资源 |
 | `iFinanceSwiftDataTests/SwiftDataCoreTests.swift` | Swift Testing：CRUD / 账号隔离 / 聚合 / 哈希 |
 

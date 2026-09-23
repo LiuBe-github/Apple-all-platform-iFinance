@@ -18,11 +18,11 @@ struct AddBillView: View {
     
     // 网格视图的行数和列数
     private let columns = [
-        GridItem(.flexible(), spacing: 4),
-        GridItem(.flexible(), spacing: 4),
-        GridItem(.flexible(), spacing: 4),
-        GridItem(.flexible(), spacing: 4),
-        GridItem(.flexible(), spacing: 4),
+        GridItem(.flexible(), spacing: AppSpacing.xs),
+        GridItem(.flexible(), spacing: AppSpacing.xs),
+        GridItem(.flexible(), spacing: AppSpacing.xs),
+        GridItem(.flexible(), spacing: AppSpacing.xs),
+        GridItem(.flexible(), spacing: AppSpacing.xs),
     ]
     
     @Environment(\.dismiss) private var dismiss
@@ -50,7 +50,7 @@ struct AddBillView: View {
                     VStack(alignment: .leading) {
                         Group {
                             if transactionType == .expenditure {
-                                LazyVGrid(columns: columns, spacing: 20) {
+                                LazyVGrid(columns: columns, spacing: AppSpacing.xl) {
                                     ForEach(ExpenditureCategory.allCases, id: \.self) { category in
                                         ExpenditureCategoryItemView(category: category, selectedCategory:  $selectedExpenditureCategory)
                                             .onTapGesture {
@@ -58,9 +58,9 @@ struct AddBillView: View {
                                             }
                                     }
                                 }
-                                .padding(.horizontal, 12)
+                                .padding(.horizontal, AppSpacing.md)
                             } else if transactionType == .income {
-                                LazyVGrid(columns: columns, spacing: 20) {
+                                LazyVGrid(columns: columns, spacing: AppSpacing.xl) {
                                     ForEach(IncomeCategory.allCases, id: \.self) { category in
                                         IncomeCategoryItemView(category: category, selectedCategory:  $selectedIncomeCategory)
                                             .onTapGesture {
@@ -68,14 +68,14 @@ struct AddBillView: View {
                                             }
                                     }
                                 }
-                                .padding(.horizontal, 12)
+                                .padding(.horizontal, AppSpacing.md)
                             } else {
                                 transferForm
                             }
                         }
                         .id(transactionType)
                         .transition(.opacity.combined(with: .move(edge: .bottom)))
-                        .animation(.spring(response: 0.4, dampingFraction: 0.85), value: transactionType)
+                        .appAnimation(AppMotion.standard, value: transactionType)
                         
                         // 占位符，确保内容不会被底部键盘遮挡
                         Color.clear
@@ -132,12 +132,12 @@ struct AddBillView: View {
     
     // MARK: - 转账表单
     private var transferForm: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: AppSpacing.lg) {
             Text("bill.transfer_hint")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
 
-            VStack(spacing: 12) {
+            VStack(spacing: AppSpacing.md) {
                 transferField(
                     titleKey: "bill.transfer_from",
                     text: $transferFrom,
@@ -153,7 +153,7 @@ struct AddBillView: View {
 
             Button {
                 HapticManager.shared.medium()
-                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                withAnimation(AppMotion.standard) {
                     swap(&transferFrom, &transferTo)
                 }
             } label: {
@@ -237,7 +237,7 @@ struct AddBillView: View {
     }
     
     private func transferField(titleKey: LocalizedStringKey, text: Binding<String>, systemImage: String) -> some View {
-        HStack(spacing: 10) {
+        HStack(spacing: AppSpacing.md) {
             Image(systemName: systemImage)
                 .foregroundStyle(.blue)
                 .frame(width: 22)
@@ -249,10 +249,10 @@ struct AddBillView: View {
                 .disableAutocorrection(true)
                 .frame(maxWidth: .infinity, alignment: .trailing)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        .padding(.horizontal, AppSpacing.md)
+        .padding(.vertical, AppSpacing.md)
         .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: AppRadius.row, style: .continuous)
                 .fill(Color(UIColor.secondarySystemBackground))
         )
     }

@@ -66,7 +66,7 @@ struct TendencyChartView: View {
     // MARK: - 视图
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: AppSpacing.md) {
             // 图表类型切换
             HStack {
                 Spacer()
@@ -99,7 +99,7 @@ struct TendencyChartView: View {
             } else {
                 chartContent
                     .frame(height: TendencyConstants.chartHeight)
-                    .animation(.easeInOut(duration: 0.3), value: chartType)
+                    .appAnimation(AppMotion.standard, value: chartType)
             }
         }
     }
@@ -137,12 +137,12 @@ struct TendencyChartView: View {
     @ViewBuilder
     private var noDataPlaceholder: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous)
                 .fill(accent.opacity(0.06))
                 .frame(height: TendencyConstants.chartHeight)
                 .blur(radius: 12)
             
-            VStack(spacing: 10) {
+            VStack(spacing: AppSpacing.md) {
                 Image(systemName: "chart.line.uptrend.xyaxis")
                     .font(.system(size: 32))
                     .foregroundStyle(accent.opacity(0.6))
@@ -212,11 +212,11 @@ struct TendencyChartView: View {
         }
         .chartPlotStyle { plot in
             plot.background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous)
                     .fill(accent.opacity(0.06))
             )
         }
-        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: selectedDate)
+        .appAnimation(AppMotion.standard, value: selectedDate)
         .padding(.horizontal, TendencyConstants.chartHorizontalPadding)
     }
     
@@ -263,11 +263,11 @@ struct TendencyChartView: View {
         }
         .chartPlotStyle { plot in
             plot.background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous)
                     .fill(accent.opacity(0.06))
             )
         }
-        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: selectedDate)
+        .appAnimation(AppMotion.standard, value: selectedDate)
         .padding(.horizontal, TendencyConstants.chartHorizontalPadding)
     }
     
@@ -409,8 +409,8 @@ struct TendencyChartView: View {
             .font(.caption2)
             .fontWeight(.semibold)
             .foregroundStyle(colorScheme == .dark ? .white : .black)
-            .padding(.vertical, 4)
-            .padding(.horizontal, 8)
+            .padding(.vertical, AppSpacing.xs)
+            .padding(.horizontal, AppSpacing.sm)
             .background(
                 Capsule()
                     .fill(colorScheme == .dark ? Color.black.opacity(0.78) : Color.white.opacity(0.95))

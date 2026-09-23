@@ -19,6 +19,7 @@ private struct SharePayload: Identifiable {
 // MARK: - 主视图
 struct HomeView: View {
     @Environment(\.displayScale) private var displayScale
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @EnvironmentObject private var authManager: AuthManager
     @State private var showProfile = false
 
@@ -93,24 +94,24 @@ struct HomeView: View {
                                 balance: todayBalance,
                                 billCount: todayBills.count
                             )
-                            .padding(.horizontal, 20)
-                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                            .padding(.horizontal, AppSpacing.screen)
+                            .transition(AppMotion.resolvedTransition(AppMotion.riseIn, reduceMotion: reduceMotion))
 
-                            Spacer(minLength: 16)
+                            Spacer(minLength: AppSpacing.lg)
 
                             // 名言卡片
                             SentenceCardView(sentence: s, displaySize: cardSize)
                                 .id(s.id)
-                                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                                .clipShape(RoundedRectangle(cornerRadius: AppRadius.sheet, style: .continuous))
                                 .shadow(color: .black.opacity(0.18), radius: 20, x: 0, y: 8)
                                 .opacity(cardOpacity)
                                 .scaleEffect(cardScale)
-                                .padding(.horizontal, 20)
+                                .padding(.horizontal, AppSpacing.xl)
 
-                            Spacer(minLength: 28)
+                            Spacer(minLength: AppSpacing.xxl)
 
                             // 操作按钮
-                            HStack(spacing: 48) {
+                            HStack(spacing: AppSpacing.section) {
                                 Button {
                                     guard !isRefreshing else { return }
                                     HapticManager.shared.medium()
@@ -144,10 +145,11 @@ struct HomeView: View {
                                 .foregroundStyle(.primary)
                                 .buttonStyle(ScaleButtonStyle())
                             }
-                            .padding(.bottom, 20)
+                            .padding(.bottom, AppSpacing.xl)
                             .opacity(cardOpacity)
                         }
                     }
+                    .appContentWidth()
                     .opacity(contentVisible ? 1 : 0)
                     .offset(y: contentVisible ? 0 : 18)
                 }
@@ -206,8 +208,8 @@ struct HomeView: View {
 
     /// 卡片宽度（自适应屏幕）
     private var cardSize: CGSize {
-        let screenWidth = min(UIScreen.main.bounds.width, 500) // 限制最大尺寸
-        return CGSize(width: screenWidth - 40, height: 500)
+        CGSize(width: AppLayout.contentMaxWidth - AppSpacing.screen * 2,
+               height: AppLayout.heroImageMaxHeight)
     }
 
     // MARK: - 加载 JSON
@@ -225,7 +227,7 @@ struct HomeView: View {
 
         // 首次加载完成后的入场动画
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.85)) {
+            withAnimation(AppMotion.resolved(AppMotion.emphasized, reduceMotion: reduceMotion)) {
                 contentVisible = true
             }
         }
@@ -253,10 +255,10 @@ struct HomeView: View {
         isRefreshing = true
 
         // 刷新按钮转一圈
-        withAnimation(.easeInOut(duration: 0.5)) { refreshAngle += 360 }
+        withAnimation(AppMotion.resolved(AppMotion.ambient, reduceMotion: reduceMotion)) { refreshAngle += 360 }
 
         // 卡片淡出缩小
-        withAnimation(.easeIn(duration: 0.18)) {
+        withAnimation(AppMotion.resolved(AppMotion.quick, reduceMotion: reduceMotion)) {
             cardOpacity = 0
             cardScale = 0.94
         }
@@ -272,7 +274,7 @@ struct HomeView: View {
             nextSentence = nil
 
             // 卡片弹入
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.78)) {
+            withAnimation(AppMotion.resolved(AppMotion.emphasized, reduceMotion: reduceMotion)) {
                 cardOpacity = 1
                 cardScale = 1
             }
@@ -303,7 +305,7 @@ struct HomeView: View {
                 dateText: todayDateText
             )
             .frame(width: cardWidth, height: totalHeight)
-            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: AppRadius.sheet, style: .continuous))
         )
         renderer.scale = displayScale
 

@@ -14,7 +14,7 @@ struct ProfileView: View {
 
                 Form {
                     Section {
-                        VStack(spacing: 16) {
+                        VStack(spacing: AppSpacing.lg) {
                             PhotosPicker(
                                 selection: $selectedAvatar,
                                 matching: .images,
@@ -41,7 +41,7 @@ struct ProfileView: View {
                                                     .resizable()
                                                     .aspectRatio(contentMode: .fit)
                                                     .foregroundStyle(.secondary)
-                                                    .padding(24)
+                                                    .padding(AppSpacing.xxl)
                                             }
                                         }
                                         .frame(width: 84, height: 84)
@@ -78,7 +78,7 @@ struct ProfileView: View {
                         }
                         .frame(maxWidth: .infinity)
                         .listRowBackground(Color.clear)
-                        .padding(.vertical, 8)
+                        .padding(.vertical, AppSpacing.sm)
                     }
                     .listRowSeparator(.hidden)
                     .listRowInsets(EdgeInsets())
@@ -113,6 +113,7 @@ struct ProfileView: View {
                 }
             }
             .scrollContentBackground(.hidden)
+            .appContentWidth(AppLayout.formMaxWidth)
             .navigationTitle("profile.title")
             .navigationBarTitleDisplayMode(.large)
             .onAppear {

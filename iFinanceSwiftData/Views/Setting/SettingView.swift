@@ -43,7 +43,7 @@ struct SettingsGroup<Content: View>: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 8) {
+            HStack(spacing: AppSpacing.sm) {
                 Image(systemName: icon)
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(iconColor)
@@ -52,18 +52,18 @@ struct SettingsGroup<Content: View>: View {
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.secondary)
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 24)
-            .padding(.bottom, 10)
+            .padding(.horizontal, AppSpacing.xl)
+            .padding(.top, AppSpacing.xxl)
+            .padding(.bottom, AppSpacing.md)
 
             VStack(spacing: 0) {
                 content()
             }
             .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: AppRadius.row, style: .continuous)
                     .fill(Color(UIColor.secondarySystemGroupedBackground))
             )
-            .padding(.horizontal, 20)
+            .padding(.horizontal, AppSpacing.xl)
         }
     }
 }
@@ -83,7 +83,7 @@ struct SettingsRow: View {
             HapticManager.shared.light()
             action?()
         } label: {
-            HStack(spacing: 12) {
+            HStack(spacing: AppSpacing.md) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 8, style: .continuous)
                         .fill(
@@ -118,8 +118,8 @@ struct SettingsRow: View {
                         .foregroundStyle(.tertiary)
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.horizontal, AppSpacing.lg)
+            .padding(.vertical, AppSpacing.md)
             .contentShape(Rectangle())
         }
         .buttonStyle(ScaleButtonStyle(pressedScale: 0.97))
@@ -193,7 +193,7 @@ private struct AboutAppView: View {
     var body: some View {
         List {
             Section {
-                VStack(spacing: 12) {
+                VStack(spacing: AppSpacing.md) {
                     Image(systemName: "chart.line.uptrend.xyaxis")
                         .font(.system(size: 46, weight: .semibold))
                         .foregroundStyle(.blue)
@@ -204,7 +204,7 @@ private struct AboutAppView: View {
                         .multilineTextAlignment(.center)
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
+                .padding(.vertical, AppSpacing.md)
             }
 
             Section(String(localized: "settings.version_section")) {
@@ -221,11 +221,14 @@ private struct AboutAppView: View {
             }
 
             Section(String(localized: "settings.wechat_section")) {
-                VStack(spacing: 8) {
-                    Image("MyWeChat").resizable().scaledToFit().frame(width: 180, height: 180)
-                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                VStack(spacing: AppSpacing.sm) {
+                    Image("MyWeChat")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxWidth: 180, maxHeight: 180)
+                        .clipShape(RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous))
                     Text(String(localized: "settings.wechat_desc")).font(.footnote).foregroundStyle(.secondary)
-                }.frame(maxWidth: .infinity).padding(.vertical, 6)
+                }.frame(maxWidth: .infinity).padding(.vertical, AppSpacing.sm)
             }
         }
         .navigationTitle(String(localized: "settings.about_me"))
@@ -293,7 +296,7 @@ struct SettingView: View {
                                 HapticManager.shared.medium()
                                 showDeleteAccountConfirmation = true
                             } label: {
-                                HStack(spacing: 12) {
+                                HStack(spacing: AppSpacing.md) {
                                     ZStack {
                                         RoundedRectangle(cornerRadius: 8, style: .continuous)
                                             .fill(Color.red.opacity(0.12))
@@ -306,8 +309,8 @@ struct SettingView: View {
                                         .font(.body).foregroundStyle(.red)
                                     Spacer()
                                 }
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 12)
+                                .padding(.horizontal, AppSpacing.lg)
+                                .padding(.vertical, AppSpacing.md)
                                 .contentShape(Rectangle())
                             }
                             .buttonStyle(.plain)
@@ -340,7 +343,7 @@ struct SettingView: View {
                         SettingsGroup(title: String(localized: "settings.general"), icon: "gearshape.fill", iconColor: .gray) {
                             // 生物识别锁
                             if biometricLock.isBiometricAvailable {
-                                HStack(spacing: 12) {
+                                HStack(spacing: AppSpacing.md) {
                                     ZStack {
                                         RoundedRectangle(cornerRadius: 8, style: .continuous)
                                             .fill(.indigo.opacity(0.15))
@@ -367,8 +370,8 @@ struct SettingView: View {
                                             handleLockToggle(newValue)
                                         }
                                 }
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 12)
+                                .padding(.horizontal, AppSpacing.lg)
+                                .padding(.vertical, AppSpacing.md)
                             }
 
                             SettingsRow(icon: "globe", iconColor: .indigo, title: String(localized: "settings.language")) {
@@ -388,9 +391,10 @@ struct SettingView: View {
                         }
 
                         // 登出
-                        logoutButton.padding(.top, 24).padding(.bottom, 120)
+                        logoutButton.padding(.top, AppSpacing.xxl).padding(.bottom, 120)
                     }
                 }
+                .appContentWidth(AppLayout.formMaxWidth)
             }
             .navigationTitle("settings.title")
             .navigationBarTitleDisplayMode(.large)
@@ -447,7 +451,7 @@ struct SettingView: View {
     // MARK: - 头像区域
 
     private var profileHeader: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: AppSpacing.lg) {
             ZStack {
                 Circle()
                     .fill(
@@ -482,12 +486,12 @@ struct SettingView: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: AppSpacing.xs) {
                 Text("iFinance").font(.title2.weight(.bold))
                 Text(String(localized: "settings.about_desc")).font(.subheadline).foregroundStyle(.secondary)
             }
             Spacer()
-        }.padding(24).padding(.top, 8)
+        }.padding(AppSpacing.xxl).padding(.top, AppSpacing.sm)
     }
 
     // MARK: - 主题选择器
@@ -499,9 +503,9 @@ struct SettingView: View {
             ForEach(ThemeMode.allCases, id: \.self) { theme in
                 Button {
                     HapticManager.shared.selectionChanged()
-                    withAnimation(.spring(response: 0.36, dampingFraction: 0.80)) { selectedTheme = theme }
+                    withAnimation(AppMotion.standard) { selectedTheme = theme }
                 } label: {
-                    VStack(spacing: 6) {
+                    VStack(spacing: AppSpacing.sm) {
                         ZStack {
                             if selectedTheme == theme {
                                 Circle()
@@ -529,8 +533,8 @@ struct SettingView: View {
                 .frame(maxWidth: .infinity)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
+        .padding(.horizontal, AppSpacing.lg)
+        .padding(.vertical, AppSpacing.lg)
     }
 
     private func themeColor(_ t: ThemeMode) -> Color {
@@ -573,21 +577,21 @@ struct SettingView: View {
 
     private var logoutButton: some View {
         Button { HapticManager.shared.medium(); authManager.logout() } label: {
-            HStack(spacing: 6) {
+            HStack(spacing: AppSpacing.sm) {
                 Image(systemName: "rectangle.portrait.and.arrow.right")
                     .font(.system(size: 14, weight: .medium))
                 Text(String(localized: "profile.logout")).font(.body.weight(.medium))
             }
             .foregroundStyle(.red)
-            .frame(maxWidth: .infinity).padding(.vertical, 14)
-            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color(UIColor.secondarySystemGroupedBackground)))
+            .frame(maxWidth: .infinity).padding(.vertical, AppSpacing.lg)
+            .background(RoundedRectangle(cornerRadius: AppRadius.row, style: .continuous).fill(Color(UIColor.secondarySystemGroupedBackground)))
             .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: AppRadius.row, style: .continuous)
                     .strokeBorder(Color.red.opacity(0.18), lineWidth: 0.8)
             )
         }
         .buttonStyle(ScaleButtonStyle(pressedScale: 0.97))
-        .padding(.horizontal, 20)
+        .padding(.horizontal, AppSpacing.xl)
     }
 
     // MARK: - 导出/导入逻辑

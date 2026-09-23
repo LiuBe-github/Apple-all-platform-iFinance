@@ -305,6 +305,7 @@ Watch 端前缀独立：`add.*`、`category.*`、`summary.*`、`history.*`、`ta
 | 触觉反馈 | `HapticManager.shared`：`light/medium/heavy/soft/rigid/success/warning/error/selectionChanged` 共 9 个方法 | `iFinance/Helper/HapticManager.swift:16-110` |
 | 数字动画 | `.contentTransition(.numericText())` | 卡片金额展示处 |
 | 图标动效 | `.symbolEffect(...)` | 刷新/分享/选中/超支等场景 |
+| 设计/动画 token | `Views/Common/AppDesignTokens.swift`（`AppSpacing`/`AppRadius`/`AppLayout`/`AppTypography`）与 `AppMotion.swift`（`quick`/`standard`/`emphasized`/`numeric` + Reduce Motion 降级） | 2026-09 起新增 UI 一律用 token，禁止再写魔法数字 |
 
 macOS 端有独立副本：`MaciFinance/Views/Common/AppVisualStyle.swift`（130 行）与 `MaciFinance/Helpers/HapticManager.swift`（46 行，桌面端为空实现/降级）。
 

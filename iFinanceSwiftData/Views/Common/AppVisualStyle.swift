@@ -95,7 +95,7 @@ struct AppBackgroundView: View {
 
 extension View {
     /// 毛玻璃卡片样式（统一三端视觉语言）
-    func appGlassCard(cornerRadius: CGFloat = 22) -> some View {
+    func appGlassCard(cornerRadius: CGFloat = AppRadius.card) -> some View {
         self
             .background {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
@@ -111,20 +111,20 @@ extension View {
                                 lineWidth: 0.8
                             )
                     }
-                    .shadow(color: .black.opacity(0.07), radius: 18, x: 0, y: 10)
+                    .shadow(color: .black.opacity(0.07), radius: 14, x: 0, y: 8)
             }
     }
 
     /// 柔和的次级阴影（用于非玻璃卡片）
     func appSoftShadow() -> some View {
-        self.shadow(color: .black.opacity(0.06), radius: 10, x: 0, y: 4)
+        self.shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 4)
     }
 
     /// 数字滚动过渡（金额变化时平滑滚动）
     func appNumericTransition(value: Double) -> some View {
         self
             .contentTransition(.numericText(value: value))
-            .animation(.snappy(duration: 0.35), value: value)
+            .animation(AppMotion.numeric, value: value)
     }
 }
 
@@ -137,7 +137,7 @@ struct ScaleButtonStyle: ButtonStyle {
         configuration.label
             .scaleEffect(configuration.isPressed ? pressedScale : 1)
             .opacity(configuration.isPressed ? 0.85 : 1)
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: configuration.isPressed)
+            .animation(AppMotion.press, value: configuration.isPressed)
     }
 }
 
@@ -165,7 +165,7 @@ struct ShimmerView: View {
             .frame(width: geo.size.width * 0.6)
             .offset(x: phase * geo.size.width * 1.6)
             .onAppear {
-                withAnimation(.linear(duration: 1.4).repeatForever(autoreverses: false)) {
+                withAnimation(AppMotion.shimmer) {
                     phase = 1
                 }
             }

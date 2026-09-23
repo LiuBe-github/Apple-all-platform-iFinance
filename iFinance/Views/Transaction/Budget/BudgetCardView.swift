@@ -25,7 +25,7 @@ private struct RingProgressView: View {
                     style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))
-                .animation(.spring(response: 0.6, dampingFraction: 0.8), value: progress)
+                .appAnimation(AppMotion.emphasized, value: progress)
         }
     }
 }
@@ -116,7 +116,7 @@ struct BudgetCardView: View {
     
     // MARK: 卡片内容
     private var cardContent: some View {
-        HStack(alignment: .center, spacing: 20) {
+        HStack(alignment: .center, spacing: AppSpacing.xl) {
             
             // ── 左侧：文字信息 ──
             VStack(alignment: .leading, spacing: 0) {
@@ -144,7 +144,7 @@ struct BudgetCardView: View {
                 Spacer().frame(height: 16)
                 
                 // 已花 / 剩余 两列
-                HStack(spacing: 20) {
+                HStack(spacing: AppSpacing.xl) {
                     amountColumn(
                         title: String(localized: "budget.spent"),
                         value: spent,
@@ -190,12 +190,12 @@ struct BudgetCardView: View {
             }
             .frame(width: 72)
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 18)
+        .padding(.horizontal, AppSpacing.xl)
+        .padding(.vertical, AppSpacing.xl)
         .background(cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: AppRadius.sheet, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            RoundedRectangle(cornerRadius: AppRadius.sheet, style: .continuous)
                 .stroke(Color.primary.opacity(0.06), lineWidth: 1)
         )
         .shadow(color: .black.opacity(colorScheme == .dark ? 0.25 : 0.07), radius: 12, x: 0, y: 4)
@@ -216,7 +216,7 @@ struct BudgetCardView: View {
     }
     
     private var progressBar: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: AppSpacing.xs) {
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     Capsule()
@@ -225,7 +225,7 @@ struct BudgetCardView: View {
                     Capsule()
                         .fill(accentColor)
                         .frame(width: geo.size.width * CGFloat(progress), height: 5)
-                        .animation(.spring(response: 0.5, dampingFraction: 0.75), value: progress)
+                        .appAnimation(AppMotion.standard, value: progress)
                 }
             }
             .frame(height: 5)

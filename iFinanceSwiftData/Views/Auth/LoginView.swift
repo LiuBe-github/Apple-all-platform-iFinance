@@ -26,7 +26,7 @@ struct LoginView: View {
                 AppBackgroundView()
 
                 ScrollView(showsIndicators: false) {
-                    VStack(spacing: 18) {
+                    VStack(spacing: AppSpacing.xl) {
                         header
                         modePicker
                         typePicker
@@ -41,10 +41,11 @@ struct LoginView: View {
                                 .transition(.opacity.combined(with: .move(edge: .top)))
                         }
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 30)
-                    .padding(.bottom, 24)
-                    .animation(.spring(response: 0.4, dampingFraction: 0.8), value: errorMessage)
+                    .padding(.horizontal, AppSpacing.xl)
+                    .padding(.top, AppSpacing.section)
+                    .padding(.bottom, AppSpacing.xxl)
+                    .appContentWidth(AppLayout.formMaxWidth)
+                    .appAnimation(AppMotion.standard, value: errorMessage)
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
@@ -59,7 +60,7 @@ struct LoginView: View {
     }
 
     private var header: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: AppSpacing.md) {
             ZStack {
                 Circle()
                     .fill(
@@ -124,7 +125,7 @@ struct LoginView: View {
     }
 
     private var credentialForm: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: AppSpacing.md) {
             if loginType == .email {
                 TextField(String(localized: "auth.email_placeholder"), text: $email)
                     .textInputAutocapitalization(.never)
@@ -159,13 +160,13 @@ struct LoginView: View {
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
-                        in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        in: RoundedRectangle(cornerRadius: AppRadius.row, style: .continuous)
                     )
                     .foregroundStyle(.white)
                     .shadow(color: Color.blue.opacity(0.35), radius: 8, x: 0, y: 4)
             }
             .buttonStyle(ScaleButtonStyle(pressedScale: 0.97))
-            .padding(.top, 4)
+            .padding(.top, AppSpacing.xs)
 
             if authMode == .login {
                 Button("auth.forgot_password") {
@@ -176,12 +177,12 @@ struct LoginView: View {
                 .foregroundStyle(.blue)
             }
         }
-        .padding(16)
-        .appGlassCard(cornerRadius: 20)
+        .padding(AppSpacing.lg)
+        .appGlassCard(cornerRadius: AppRadius.sheet)
     }
 
     private var socialLoginSection: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: AppSpacing.md) {
             HStack {
                 Rectangle().fill(.secondary.opacity(0.2)).frame(height: 1)
                 Text("auth.third_party_login")
@@ -190,7 +191,7 @@ struct LoginView: View {
                 Rectangle().fill(.secondary.opacity(0.2)).frame(height: 1)
             }
 
-            HStack(spacing: 12) {
+            HStack(spacing: AppSpacing.md) {
                 socialButton(title: String(localized: "auth.provider_wechat"), systemImage: "message.fill", color: Color.green) {
                     HapticManager.shared.light()
                     errorMessage = authManager.loginWithProvider(.wechat, identifier: "wx_\(UUID().uuidString)")
@@ -212,13 +213,13 @@ struct LoginView: View {
             .frame(height: 44)
             .cornerRadius(12)
         }
-        .padding(16)
-        .appGlassCard(cornerRadius: 20)
+        .padding(AppSpacing.lg)
+        .appGlassCard(cornerRadius: AppRadius.sheet)
     }
 
     private func socialButton(title: String, systemImage: String, color: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 6) {
+            HStack(spacing: AppSpacing.sm) {
                 Image(systemName: systemImage)
                 Text(title)
                     .fontWeight(.semibold)
@@ -232,7 +233,7 @@ struct LoginView: View {
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 ),
-                in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+                in: RoundedRectangle(cornerRadius: AppRadius.row, style: .continuous)
             )
             .shadow(color: color.opacity(0.25), radius: 5, x: 0, y: 2)
         }

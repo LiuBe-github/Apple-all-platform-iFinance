@@ -30,7 +30,7 @@ struct TendencyHeatmapView: View {
     // MARK: - 视图
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: AppSpacing.md) {
             HStack {
                 Text("tendency.heatmap")
                     .font(.headline)
@@ -51,7 +51,7 @@ struct TendencyHeatmapView: View {
     // MARK: - 图例
     
     private var legendRow: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: AppSpacing.sm) {
             Spacer()
             Text(L10n.string("tendency.heatmap_less"))
                 .font(.caption2)
@@ -59,7 +59,7 @@ struct TendencyHeatmapView: View {
             ForEach(0..<5) { level in
                 RoundedRectangle(cornerRadius: 3, style: .continuous)
                     .fill(heatColor(level: level))
-                    .frame(width: 12, height: 12)
+                    .frame(width: AppLayout.heatmapCell, height: AppLayout.heatmapCell)
             }
             Text(L10n.string("tendency.heatmap_more"))
                 .font(.caption2)
@@ -71,11 +71,11 @@ struct TendencyHeatmapView: View {
     
     @ViewBuilder
     private var heatmapGrid: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
             // 选中提示条
             ZStack {
                 if let selected = selectedCellDate {
-                    HStack(spacing: 6) {
+                    HStack(spacing: AppSpacing.sm) {
                         Image(systemName: "calendar")
                             .font(.caption2)
                         Text(selected.formatted(.dateTime.month().day().weekday(.abbreviated)))
@@ -90,8 +90,8 @@ struct TendencyHeatmapView: View {
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 5)
+                    .padding(.horizontal, AppSpacing.md)
+                    .padding(.vertical, AppSpacing.sm)
                     .background(
                         Capsule()
                             .fill(.ultraThinMaterial)
@@ -105,19 +105,19 @@ struct TendencyHeatmapView: View {
             }
             .frame(maxWidth: .infinity)
             .frame(height: 26)
-            .animation(.spring(response: 0.35, dampingFraction: 0.75), value: selectedCellDate)
+            .appAnimation(AppMotion.standard, value: selectedCellDate)
             
             GeometryReader { geo in
                 ScrollViewReader { proxy in
                     ScrollView(.horizontal, showsIndicators: false) {
-                        VStack(alignment: .leading, spacing: 8) {
+                        VStack(alignment: .leading, spacing: AppSpacing.sm) {
                             // 月份标签（放在 ScrollView 内部，跟随滚动）
                             monthLabelsView
                             
                             // 热力图网格
-                            HStack(alignment: .top, spacing: 4) {
+                            HStack(alignment: .top, spacing: AppSpacing.xs) {
                                 ForEach(weeks.indices, id: \.self) { weekIndex in
-                                    VStack(spacing: 4) {
+                                    VStack(spacing: AppSpacing.xs) {
                                         ForEach(weeks[weekIndex].indices, id: \.self) { dayIndex in
                                             heatCell(for: weeks[weekIndex][dayIndex], index: weekIndex * 7 + dayIndex)
                                         }
@@ -125,7 +125,7 @@ struct TendencyHeatmapView: View {
                                     .id(weekIndex)
                                 }
                             }
-                            .padding(.vertical, 4)
+                            .padding(.vertical, AppSpacing.xs)
                         }
                         .frame(width: totalHeatmapWidth, alignment: .leading)
                     }
@@ -133,20 +133,20 @@ struct TendencyHeatmapView: View {
                         if let lastIndex = weeks.indices.last {
                             proxy.scrollTo(lastIndex, anchor: .trailing)
                         }
-                        withAnimation(.easeOut(duration: 0.5)) {
+                        withAnimation(AppMotion.standard) {
                             cellsAppeared = true
                         }
                     }
                 }
             }
-            .frame(height: 7 * 12 + 40) // 7天 × 12px + 月份标签高度
+            .frame(height: 7 * AppLayout.heatmapCell + 40) // 7 天 × 单元格 + 月份标签高度
         }
     }
     
     /// 月份标签视图（跟随热力图滚动）
     @ViewBuilder
     private var monthLabelsView: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: AppSpacing.xs) {
             ForEach(monthLabels, id: \.offset) { label in
                 Text(label.title)
                     .font(.caption2)
@@ -176,12 +176,12 @@ struct TendencyHeatmapView: View {
             )
             .scaleEffect(isSelected ? 1.22 : 1)
             .opacity(cellsAppeared ? 1 : 0)
-            .animation(.spring(response: 0.4, dampingFraction: 0.8).delay(Double(index) * 0.003), value: cellsAppeared)
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
+            .appAnimation(AppMotion.emphasized.delay(AppMotion.entranceDelay(index: index)), value: cellsAppeared)
+            .appAnimation(AppMotion.quick, value: isSelected)
             .contentShape(Rectangle())
             .onTapGesture {
                 HapticManager.shared.selectionChanged()
-                withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                withAnimation(AppMotion.standard) {
                     selectedCellDate = selectedCellDate?.startOfDay == date.startOfDay ? nil : date
                 }
             }

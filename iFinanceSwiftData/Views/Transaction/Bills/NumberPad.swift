@@ -21,9 +21,9 @@ struct NumberPad: View {
     let onSave: (() -> Void)?
     
     var body: some View {
-        VStack(spacing: 12) {
-            VStack(spacing: 10) {
-                HStack(spacing: 8) {
+        VStack(spacing: AppSpacing.md) {
+            VStack(spacing: AppSpacing.md) {
+                HStack(spacing: AppSpacing.sm) {
                     Text("¥")
                         .font(.title2)
                         .fontWeight(.semibold)
@@ -39,7 +39,7 @@ struct NumberPad: View {
                             }
                         }())
                         .contentTransition(.numericText())
-                        .animation(.snappy(duration: 0.25), value: displayText)
+                        .appAnimation(AppMotion.numeric, value: displayText)
 
                     Spacer()
                 }
@@ -52,7 +52,7 @@ struct NumberPad: View {
                         HapticManager.shared.light()
                         showDatePicker = true
                     }) {
-                        HStack(spacing: 6) {
+                        HStack(spacing: AppSpacing.sm) {
                             Image(systemName: "calendar")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
@@ -60,8 +60,8 @@ struct NumberPad: View {
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
+                        .padding(.horizontal, AppSpacing.md)
+                        .padding(.vertical, AppSpacing.sm)
                         .background(
                             Capsule()
                                 .fill(Color.primary.opacity(0.06))
@@ -71,7 +71,7 @@ struct NumberPad: View {
 
                     Spacer()
 
-                    HStack(spacing: 6) {
+                    HStack(spacing: AppSpacing.sm) {
                         Image(systemName: "square.and.pencil")
                             .font(.caption2)
                             .foregroundColor(note.isEmpty ? .secondary : .blue)
@@ -98,24 +98,24 @@ struct NumberPad: View {
                         }
                         .frame(maxWidth: 140, alignment: .trailing)
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
+                    .padding(.horizontal, AppSpacing.md)
+                    .padding(.vertical, AppSpacing.sm)
                     .background(
                         Capsule()
                             .fill(Color.primary.opacity(0.06))
                     )
                 }
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
+            .padding(.horizontal, AppSpacing.lg)
+            .padding(.vertical, AppSpacing.md)
             .background(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous)
                     .fill(Color(UIColor.secondarySystemGroupedBackground))
             )
             
-            VStack(spacing: 10) {
+            VStack(spacing: AppSpacing.md) {
                 // 第一行
-                HStack(spacing: 8) {
+                HStack(spacing: AppSpacing.sm) {
                     ForEach(1...3, id: \.self) { num in
                         NumberButton(value: String(num)) {
                             handleNumberTap(String(num))
@@ -133,7 +133,7 @@ struct NumberPad: View {
                 }
                 
                 // 第二行
-                HStack(spacing: 8) {
+                HStack(spacing: AppSpacing.sm) {
                     ForEach(4...6, id: \.self) { num in
                         NumberButton(value: String(num)) {
                             handleNumberTap(String(num))
@@ -151,7 +151,7 @@ struct NumberPad: View {
                 }
                 
                 // 第三行
-                HStack(spacing: 8) {
+                HStack(spacing: AppSpacing.sm) {
                     ForEach(7...9, id: \.self) { num in
                         NumberButton(value: String(num)) {
                             handleNumberTap(String(num))
@@ -169,7 +169,7 @@ struct NumberPad: View {
                 }
                 
                 // 第四行
-                HStack(spacing: 8) {
+                HStack(spacing: AppSpacing.sm) {
                     NumberButton(value: ".") {
                         handleNumberTap(".")
                     }
@@ -187,9 +187,9 @@ struct NumberPad: View {
                         HapticManager.shared.heavy() // 重要操作
                         onSave?()
                     }) {
-                        HStack(spacing: 6) {
+                        HStack(spacing: AppSpacing.sm) {
                             Image(systemName: "checkmark.circle.fill")
-                                .font(.system(size: 17, weight: .semibold))
+                                .font(AppTypography.body.weight(.semibold))
                             Text("common.done")
                                 .font(.title3)
                                 .fontWeight(.bold)
@@ -198,7 +198,7 @@ struct NumberPad: View {
                         .frame(maxWidth: .infinity)
                         .frame(height: 50)
                         .background(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            RoundedRectangle(cornerRadius: AppRadius.row, style: .continuous)
                                 .fill(
                                     LinearGradient(
                                         colors: [
@@ -215,21 +215,21 @@ struct NumberPad: View {
                     .buttonStyle(ScaleButtonStyle(pressedScale: 0.94))
                 }
             }
-            .padding(.horizontal, 4)
+            .padding(.horizontal, AppSpacing.xs)
         }
-        .padding(.top, 10)
-        .padding(.horizontal, 14)
+        .padding(.top, AppSpacing.md)
+        .padding(.horizontal, AppSpacing.lg)
         .padding(.bottom, 0)
         .background(
             Color(UIColor.systemGroupedBackground)
                 .clipShape(
-                    RoundedRectangle(cornerRadius: 26, style: .continuous)
+                    RoundedRectangle(cornerRadius: AppRadius.sheet, style: .continuous)
                 )
         )
         .padding(.horizontal, 0)
         .padding(.bottom, keyboardHeight)
         .ignoresSafeArea(edges: .bottom)
-        .animation(.easeOut(duration: 0.2), value: keyboardHeight)
+        .appAnimation(AppMotion.quick, value: keyboardHeight)
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillChangeFrameNotification)) { note in
             guard let frame = note.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
             let screenHeight = UIScreen.main.bounds.height

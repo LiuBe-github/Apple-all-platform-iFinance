@@ -109,18 +109,18 @@ struct TransactionRowView: View {
     
     // MARK: - Body
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: AppSpacing.md) {
             
             // 图标圆圈（渐变底）
             Image(systemName: icon)
-                .font(.system(size: 15, weight: .medium))
+                .font(AppTypography.secondary.weight(.medium))
                 .foregroundStyle(iconColor)
                 .appIconTile(iconColor)
             
             // 分类名 + 时间
             VStack(alignment: .leading, spacing: 3) {
                 categoryText
-                    .font(.system(size: 15, weight: .medium))
+                    .font(AppTypography.secondary.weight(.medium))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
                 
@@ -143,8 +143,8 @@ struct TransactionRowView: View {
                 .font(.system(size: 11, weight: .medium))
                 .foregroundStyle(.quaternary)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.horizontal, AppSpacing.lg)
+        .padding(.vertical, AppSpacing.md)
         .contentShape(Rectangle())
     }
 }

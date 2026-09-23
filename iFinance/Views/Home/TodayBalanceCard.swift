@@ -43,24 +43,22 @@ struct TodayBalanceCard: View {
     }
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: AppSpacing.md) {
             // ── 左侧：金额 ──
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 5) {
+            VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                HStack(spacing: AppSpacing.xs) {
                     Image(systemName: "sun.max.fill")
                         .font(.system(size: 10, weight: .semibold))
                         .foregroundStyle(.orange)
                     Text(dateLabel)
-                        .font(.system(size: 11, weight: .medium))
+                        .font(AppTypography.tiny.weight(.medium))
                         .foregroundStyle(.tertiary)
                 }
 
-                HStack(alignment: .firstTextBaseline, spacing: 5) {
+                HStack(alignment: .firstTextBaseline, spacing: AppSpacing.xs) {
                     Text(formatted(balance))
-                        .font(.system(size: 28, weight: .heavy, design: .rounded))
+                        .appAmountStyle(size: 28, weight: .heavy)
                         .foregroundStyle(balanceColor)
-                        .minimumScaleFactor(0.6)
-                        .lineLimit(1)
                         .appNumericTransition(value: NSDecimalNumber(decimal: balance).doubleValue)
 
                     Text(balance >= 0 ? String(localized: "home.surplus") : String(localized: "home.deficit"))
@@ -73,7 +71,7 @@ struct TodayBalanceCard: View {
             Spacer()
 
             // ── 右侧：三栏统计 ──
-            HStack(spacing: 12) {
+            HStack(spacing: AppSpacing.md) {
                 miniStat(icon: "arrow.down.circle.fill", tint: .green,
                          value: formatted(income), label: String(localized: "home.income_label"))
                 miniStat(icon: "arrow.up.circle.fill", tint: .red,
@@ -82,22 +80,17 @@ struct TodayBalanceCard: View {
                          value: "\(billCount)", label: String(localized: "home.count_label"))
             }
         }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 14)
-        .appGlassCard(cornerRadius: 20)
-        .opacity(appeared ? 1 : 0)
-        .offset(y: appeared ? 0 : 14)
-        .onAppear {
-            withAnimation(.spring(response: 0.55, dampingFraction: 0.82).delay(0.05)) {
-                appeared = true
-            }
-        }
+        .padding(.horizontal, AppLayout.cardPadding)
+        .padding(.vertical, AppSpacing.md)
+        .appGlassCard(cornerRadius: AppRadius.sheet)
+        .appEntrance(index: 0, visible: appeared)
+        .onAppear { appeared = true }
     }
 
     private func miniStat(icon: String, tint: Color, value: String, label: String) -> some View {
-        VStack(spacing: 4) {
+        VStack(spacing: AppSpacing.xs) {
             ZStack {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                RoundedRectangle(cornerRadius: AppRadius.control, style: .continuous)
                     .fill(
                         LinearGradient(
                             colors: [tint.opacity(0.20), tint.opacity(0.08)],
@@ -106,7 +99,7 @@ struct TodayBalanceCard: View {
                         )
                     )
                     .overlay(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        RoundedRectangle(cornerRadius: AppRadius.control, style: .continuous)
                             .strokeBorder(tint.opacity(0.25), lineWidth: 0.8)
                     )
                 Image(systemName: icon)
@@ -116,16 +109,16 @@ struct TodayBalanceCard: View {
             .frame(width: 26, height: 26)
 
             Text(value)
-                .font(.system(size: 12, weight: .bold, design: .rounded))
+                .font(AppTypography.amount(12, weight: .bold))
                 .foregroundStyle(.primary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
 
             Text(label)
-                .font(.system(size: 9))
+                .font(AppTypography.tiny)
                 .foregroundStyle(.quaternary)
         }
-        .frame(minWidth: 40)
+        .frame(minWidth: 40, minHeight: AppLayout.listRowMinHeight)
     }
 }
 

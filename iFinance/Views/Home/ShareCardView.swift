@@ -62,7 +62,7 @@ struct ShareCardView: View {
                     .frame(height: h)
 
                     // 名言文字
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: AppSpacing.sm) {
                         Text("\u{201C}")
                             .font(.system(size: 36, weight: .bold, design: .serif))
                             .foregroundStyle(.white.opacity(0.25))
@@ -82,14 +82,14 @@ struct ShareCardView: View {
                                 .italic()
                         }
                     }
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 28)
+                    .padding(.horizontal, AppSpacing.xxl)
+                    .padding(.bottom, AppSpacing.section)
                 }
             }
             .aspectRatio(imageAspectRatio, contentMode: .fit)
 
             // ── 下半部分：当日记账统计 ──
-            VStack(spacing: 14) {
+            VStack(spacing: AppSpacing.lg) {
                 // 日期标题
                 Text(dateText)
                     .font(.system(size: 13, weight: .semibold))
@@ -107,17 +107,17 @@ struct ShareCardView: View {
                     .foregroundStyle(dailyBalance >= 0 ? .green : .red)
 
                 // 三栏统计
-                HStack(spacing: 20) {
+                HStack(spacing: AppSpacing.xl) {
                     statColumn(title: "home.share_income", value: incomeTotal, color: .green)
                     Divider().frame(height: 32)
                     statColumn(title: "home.share_expense", value: expenseTotal, color: .red)
                     Divider().frame(height: 32)
                     statColumn(title: "home.share_count", value: "\(billCount)", color: .blue)
                 }
-                .padding(.horizontal, 12)
+                .padding(.horizontal, AppSpacing.md)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 22)
+            .padding(.vertical, AppSpacing.xxl)
             .background(Color(UIColor.secondarySystemBackground))
         }
     }

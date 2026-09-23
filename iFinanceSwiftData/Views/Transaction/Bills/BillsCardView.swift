@@ -87,7 +87,7 @@ struct BillsCardView: View {
     }
     
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: AppSpacing.md) {
             // 时间范围选择器
             timeRangePicker
             
@@ -103,7 +103,7 @@ struct BillsCardView: View {
             }
             .id(selectedTimeRange)
             .transition(.opacity.combined(with: .move(edge: .bottom)))
-            .animation(.spring(response: 0.45, dampingFraction: 0.85), value: selectedTimeRange)
+            .appAnimation(AppMotion.standard, value: selectedTimeRange)
         }
     }
     
@@ -115,15 +115,15 @@ struct BillsCardView: View {
             }
         }
         .pickerStyle(.segmented)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .padding(.horizontal, AppSpacing.lg)
+        .padding(.vertical, AppSpacing.sm)
         .onChange(of: selectedTimeRange) { _, _ in
             HapticManager.shared.selectionChanged()
         }
     }
     
     private var emptyState: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: AppSpacing.md) {
             Image(systemName: "tray")
                 .font(.system(size: 32, weight: .light))
                 .foregroundStyle(.tertiary)
@@ -134,7 +134,7 @@ struct BillsCardView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 48)
-        .appGlassCard(cornerRadius: 16)
+        .appGlassCard(cornerRadius: AppRadius.card)
     }
 }
 
@@ -194,7 +194,7 @@ private struct DayGroupCard: View, Equatable {
             HStack(alignment: .center) {
                 VStack(alignment: .leading, spacing: 1) {
                     Text(dayLabel)
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(AppTypography.secondary.weight(.semibold))
                         .foregroundStyle(.primary)
                     Text(weekdayLabel)
                         .font(.caption)
@@ -205,14 +205,14 @@ private struct DayGroupCard: View, Equatable {
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
                     .foregroundStyle(dayNetColor)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.horizontal, AppSpacing.lg)
+            .padding(.vertical, AppSpacing.md)
             
             // 分隔线
             Rectangle()
                 .fill(Color.secondary.opacity(0.08))
                 .frame(height: 0.5)
-                .padding(.leading, 16)
+                .padding(.leading, AppSpacing.lg)
             
             // ── 账单行 ──
             VStack(spacing: 0) {
@@ -233,11 +233,11 @@ private struct DayGroupCard: View, Equatable {
                 }
             }
         }
-        .appGlassCard(cornerRadius: 16)
+        .appGlassCard(cornerRadius: AppRadius.card)
         .opacity(appeared ? 1 : 0)
         .offset(y: appeared ? 0 : 10)
         .onAppear {
-            withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
+            withAnimation(AppMotion.standard) {
                 appeared = true
             }
         }
@@ -266,8 +266,8 @@ private struct DayGroupCard: View, Equatable {
 #Preview {
     ScrollView {
         BillsCardView()
-            .padding(.horizontal, 16)
-            .padding(.top, 12)
+            .padding(.horizontal, AppSpacing.lg)
+            .padding(.top, AppSpacing.md)
     }
     .background(Color(UIColor.systemGroupedBackground))
     .environment(\.modelContext, PersistenceController.preview.container.viewContext)

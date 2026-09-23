@@ -36,6 +36,8 @@
 | `Views/Auth/LoginView.swift` | `LoginView` | 登录/注册/忘记密码/Apple 登录 |
 | `Views/iCloudSync/iCloudSyncView.swift` | `iCloudSyncView` | iCloud 同步设置页（对应禁用 stub） |
 | `Views/Common/AppVisualStyle.swift` | `AppBackgroundView`、`ScaleButtonStyle`、`ShimmerView` + `View` 扩展 | 全项目视觉统一 |
+| `Views/Common/AppDesignTokens.swift` | `AppSpacing`、`AppRadius`、`AppLayout`、`AppTypography` | 布局/间距/圆角/字体 token（HIG 尺度） |
+| `Views/Common/AppMotion.swift` | `AppMotion` + `appAnimation` / `appEntrance` / `appPressable` | 动画节奏 token（含 Reduce Motion 降级） |
 
 ## 2. 根容器：`ContentView`（`Views/ContentView.swift:11`）
 
@@ -48,6 +50,21 @@ enum Tab { case home, transaction, tendency, setting }
 依赖：`@Environment(\.managedObjectContext) var viewContext`；子视图通过 `@EnvironmentObject AuthManager` 获取登录态。
 
 ## 3. 视觉样式 API：`Common/AppVisualStyle.swift`
+
+### 3.1 设计 token（`AppDesignTokens.swift` / `AppMotion.swift`）
+
+新增 UI 必须使用 token，不要写魔法数字：
+
+| Token | 取值 | 用途 |
+|-------|------|------|
+| `AppSpacing` | `xs=4 / sm=8 / md=12 / lg=16 / xl=20 / xxl=24 / section=32 / screen=20` | 所有 padding 与 `spacing:` |
+| `AppRadius` | `control=10 / row=14 / card=16 / sheet=22` | 控件、列表行、卡片、弹层圆角 |
+| `AppLayout` | `cardPadding=16`、`cardPaddingCozy=20`、`contentMaxWidth=700`、`formMaxWidth=640`、`listRowMinHeight=44`、`heroImageMaxHeight=520`、`chartHeightCompact/Regular`、`heatmapCell=12` | 卡片内边距、iPad 内容宽度、最小行高、图片与图表尺寸 |
+| `AppTypography` | `screenTitle` / `sectionTitle` / `body` / `secondary` / `caption` / `tiny` / `amount(_:)` | 语义字体（跟随 Dynamic Type）；金额用 `.appAmountStyle(size:weight:)` |
+| `AppMotion` | `quick=0.18s easeOut`、`standard=spring(0.35, 0.85)`、`emphasized=spring(0.5, 0.82)`、`numeric=snappy(0.35)`、`press`、`shimmer`、`ambient` | 全部动画参数 |
+| 修饰器 | `.appAmountStyle(size:weight:)`、`.appContentWidth(_:)`、`.appCardPadding(cozy:)`、`.appAnimation(_:value:)`、`.appEntrance(index:visible:)`、`.appPressable()` | 统一挂载点 |
+
+`appAnimation` / `appEntrance` 会自动读取 `\.accessibilityReduceMotion`：开启「减弱动态效果」时，标准/强调档降级为 `easeOut(0.15)`，位移类转场通过 `AppMotion.resolvedTransition(_:reduceMotion:)` 退化为纯淡入淡出。
 
 | API | 签名 | 说明 |
 |-----|------|------|

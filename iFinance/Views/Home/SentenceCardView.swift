@@ -11,6 +11,7 @@ import SwiftUI
 struct SentenceCardView: View {
     let sentence: DailySentence
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @StateObject private var loader = ImageLoader()
     @State private var imageVisible = false
     @State private var contentVisible = false
@@ -44,7 +45,7 @@ struct SentenceCardView: View {
     var body: some View {
         GeometryReader { geo in
             let w = geo.size.width
-            let h = w / imageAspectRatio
+            let h = height(for: w)
 
             ZStack(alignment: .bottomLeading) {
 
@@ -56,10 +57,10 @@ struct SentenceCardView: View {
                             .scaledToFill()
                             .frame(width: w, height: h)
                             .clipped()
-                            .scaleEffect(imageVisible ? 1 : 1.07)
+                            .scaleEffect(imageVisible || reduceMotion ? 1 : 1.07)
                             .opacity(imageVisible ? 1 : 0)
                             .onAppear {
-                                withAnimation(.easeOut(duration: 0.7)) {
+                                withAnimation(AppMotion.resolved(AppMotion.emphasized, reduceMotion: reduceMotion)) {
                                     imageVisible = true
                                 }
                             }
@@ -92,7 +93,7 @@ struct SentenceCardView: View {
                 .opacity(imageVisible ? 1 : 0)
 
                 // ── 文字 ──
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: AppSpacing.md) {
                     Text("\u{201C}")
                         .font(.system(size: 52, weight: .bold, design: .serif))
                         .foregroundStyle(.white.opacity(0.30))
@@ -114,19 +115,20 @@ struct SentenceCardView: View {
                             .shadow(color: .black.opacity(0.4), radius: 3, x: 0, y: 1)
                     }
                 }
-                .padding(.horizontal, 24)
-                .padding(.bottom, 28)
-                .padding(.top, 160)
+                .padding(.horizontal, AppSpacing.xxl)
+                .padding(.bottom, AppSpacing.xxl)
+                .padding(.top, max(h * 0.36, 120))
                 .opacity(contentVisible ? 1 : 0)
-                .offset(y: contentVisible ? 0 : 10)
+                .offset(y: contentVisible || reduceMotion ? 0 : 10)
                 .onAppear {
-                    withAnimation(.easeOut(duration: 0.55).delay(0.15)) {
+                    withAnimation(AppMotion.resolved(AppMotion.emphasized, reduceMotion: reduceMotion).delay(0.15)) {
                         contentVisible = true
                     }
                 }
             }
         }
         .aspectRatio(imageAspectRatio, contentMode: .fit)
+        .frame(maxHeight: AppLayout.heroImageMaxHeight)
         .onAppear {
             guard let url = imageURL else { return }
             loader.load(url: url, targetSize: displaySize)
@@ -135,9 +137,14 @@ struct SentenceCardView: View {
             // 切换句子时重置入场状态
             imageVisible = false
             contentVisible = false
-            withAnimation(.easeOut(duration: 0.7)) { imageVisible = true }
-            withAnimation(.easeOut(duration: 0.55).delay(0.15)) { contentVisible = true }
+            withAnimation(AppMotion.resolved(AppMotion.emphasized, reduceMotion: reduceMotion)) { imageVisible = true }
+            withAnimation(AppMotion.resolved(AppMotion.emphasized, reduceMotion: reduceMotion).delay(0.15)) { contentVisible = true }
         }
+    }
+
+    /// 卡片高度：按宽度等比，并受 `AppLayout.heroImageMaxHeight` 限制（避免 iPad 上被过度拉长）
+    private func height(for width: CGFloat) -> CGFloat {
+        min(width / imageAspectRatio, AppLayout.heroImageMaxHeight)
     }
 }
 

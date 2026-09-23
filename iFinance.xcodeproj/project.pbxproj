@@ -92,7 +92,7 @@
 
 /* Begin PBXFileReference section */
 		003BA8EC0B1E69804BEF27E6 /* en.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; name = en.lproj; path = iFinance/Resources/Localization/en.lproj; sourceTree = "<group>"; };
-		261971CA25B30CEA2D73D6E9 /* EconomicQuotes.json */ = {isa = PBXFileReference; includeInIndex = 1; name = EconomicQuotes.json; path = iFinance/Resources/EconomicQuotes.json; sourceTree = "<group>"; };
+		261971CA25B30CEA2D73D6E9 /* EconomicQuotes.json */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.json; name = EconomicQuotes.json; path = iFinance/Resources/EconomicQuotes.json; sourceTree = "<group>"; };
 		513DA5A9F61567D029481243 /* iFinanceSwiftDataTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = iFinanceSwiftDataTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		52EFDB27E3B2B2A5593F612C /* iFinanceSwiftData.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iFinanceSwiftData.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		561D674DAC8A233B0F0EAEC6 /* zh-Hans.lproj */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; name = "zh-Hans.lproj"; path = "iFinance/Resources/Localization/zh-Hans.lproj"; sourceTree = "<group>"; };
@@ -138,8 +138,6 @@
 		};
 		53C6C37ACA06CF4282AD0964 /* iFinanceSwiftDataTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = iFinanceSwiftDataTests;
 			sourceTree = "<group>";
 		};
@@ -153,57 +151,41 @@
 		};
 		9A8B0C2C2F0EA0F1003ECE8B /* iFinanceTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = iFinanceTests;
 			sourceTree = "<group>";
 		};
 		9A8B0C362F0EA0F1003ECE8B /* iFinanceUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = iFinanceUITests;
 			sourceTree = "<group>";
 		};
 		9A8B0C4C2F0EA158003ECE8B /* WatchiFinance Watch App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = "WatchiFinance Watch App";
 			sourceTree = "<group>";
 		};
 		9A8B0C5A2F0EA15A003ECE8B /* WatchiFinance Watch AppTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = "WatchiFinance Watch AppTests";
 			sourceTree = "<group>";
 		};
 		9A8B0C642F0EA15A003ECE8B /* WatchiFinance Watch AppUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = "WatchiFinance Watch AppUITests";
 			sourceTree = "<group>";
 		};
 		9A8B0C7B2F0EA219003ECE8B /* MaciFinance */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = MaciFinance;
 			sourceTree = "<group>";
 		};
 		9A8B0C8E2F0EA21C003ECE8B /* MaciFinanceTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = MaciFinanceTests;
 			sourceTree = "<group>";
 		};
 		9A8B0C982F0EA21C003ECE8B /* MaciFinanceUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = MaciFinanceUITests;
 			sourceTree = "<group>";
 		};

@@ -44,7 +44,7 @@ struct TransactionView: View {
                             .padding(.bottom)
                     } else {
                         // 没有账单时显示提示
-                        VStack(spacing: 12) {
+                        VStack(spacing: AppSpacing.md) {
                             Spacer()
                             Image(systemName: "text.badge.plus")
                                 .font(.system(size: 40, weight: .light))
@@ -58,9 +58,10 @@ struct TransactionView: View {
                         }
                         .frame(maxHeight: 400)
                         .padding(.horizontal)
-                        .appGlassCard(cornerRadius: 20)
+                        .appGlassCard(cornerRadius: AppRadius.sheet)
                     }
                 }
+                .appContentWidth()
                 .refreshable {
                     // 短暂延迟让用户看到加载指示器
                     try? await Task.sleep(nanoseconds: 800_000_000)
@@ -183,10 +184,10 @@ struct SearchSheet: View {
             VStack(spacing: 0) {
                 // 搜索框
                 searchBar
-                    .padding(.top, 8)
+                    .padding(.top, AppSpacing.sm)
 
                 Divider()
-                    .padding(.top, 8)
+                    .padding(.top, AppSpacing.sm)
 
                 // 结果列表
                 ScrollView {
@@ -266,7 +267,7 @@ struct SearchSheet: View {
                         }
                     }
                     .padding(.horizontal)
-                    .padding(.bottom, 20)
+                    .padding(.bottom, AppSpacing.xl)
                 }
             }
             .navigationTitle(L10n.string("search.title"))
@@ -314,11 +315,11 @@ struct SearchSheet: View {
             }
 
             ForEach(historyKeywords, id: \.self) { keyword in
-                HStack(spacing: 8) {
+                HStack(spacing: AppSpacing.sm) {
                     Button {
                         searchText = keyword
                     } label: {
-                        HStack(spacing: 8) {
+                        HStack(spacing: AppSpacing.sm) {
                             Image(systemName: "clock.arrow.circlepath")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -327,8 +328,8 @@ struct SearchSheet: View {
                                 .foregroundStyle(.primary)
                             Spacer()
                         }
-                        .padding(.vertical, 10)
-                        .padding(.leading, 4)
+                        .padding(.vertical, AppSpacing.md)
+                        .padding(.leading, AppSpacing.xs)
                     }
                     .buttonStyle(.plain)
 
@@ -342,14 +343,14 @@ struct SearchSheet: View {
                     }
                     .buttonStyle(.plain)
                 }
-                .padding(.horizontal, 12)
+                .padding(.horizontal, AppSpacing.md)
             }
         }
     }
 
     // MARK: - 搜索框
     private var searchBar: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: AppSpacing.sm) {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(.secondary)
             TextField(L10n.string("search.placeholder"), text: $searchText)
@@ -367,11 +368,11 @@ struct SearchSheet: View {
                 .buttonStyle(.plain)
             }
         }
-        .padding(12)
+        .padding(AppSpacing.md)
         .background(Color(UIColor.systemGray6))
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .clipShape(RoundedRectangle(cornerRadius: AppRadius.control))
         .padding(.horizontal)
-        .padding(.bottom, 4)
+        .padding(.bottom, AppSpacing.xs)
     }
 
     // MARK: - 过滤后的支出类别
@@ -428,7 +429,7 @@ private struct BillNoteRow: View {
 
     var body: some View {
         Button(action: onSelect) {
-            HStack(spacing: 12) {
+            HStack(spacing: AppSpacing.md) {
                 // 金额
                 Text(formattedAmount)
                     .font(.system(size: 15, weight: .semibold, design: .rounded))
@@ -441,7 +442,7 @@ private struct BillNoteRow: View {
                         .foregroundStyle(.primary)
                         .lineLimit(1)
 
-                    HStack(spacing: 4) {
+                    HStack(spacing: AppSpacing.xs) {
                         Text(categoryLabel)
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -459,8 +460,8 @@ private struct BillNoteRow: View {
                     .font(.caption)
                     .foregroundStyle(.tertiary)
             }
-            .padding(.vertical, 10)
-            .padding(.horizontal, 12)
+            .padding(.vertical, AppSpacing.md)
+            .padding(.horizontal, AppSpacing.md)
         }
         .buttonStyle(.plain)
     }
@@ -474,7 +475,7 @@ private struct CategoryRow<Category: TransactionCategory>: View {
 
     var body: some View {
         Button(action: onSelect) {
-            HStack(spacing: 12) {
+            HStack(spacing: AppSpacing.md) {
                 Image(systemName: category.icon)
                     .font(.system(size: 18))
                     .foregroundStyle(isSelected ? .white : .blue)
@@ -495,8 +496,8 @@ private struct CategoryRow<Category: TransactionCategory>: View {
                         .foregroundStyle(.blue)
                 }
             }
-            .padding(.vertical, 10)
-            .padding(.horizontal, 12)
+            .padding(.vertical, AppSpacing.md)
+            .padding(.horizontal, AppSpacing.md)
         }
         .buttonStyle(.plain)
     }
@@ -509,7 +510,7 @@ private struct SectionHeader: View {
     let color: Color
 
     var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: AppSpacing.sm) {
             Image(systemName: systemImage)
                 .foregroundStyle(color)
             Text(title)
@@ -517,8 +518,8 @@ private struct SectionHeader: View {
                 .foregroundStyle(.secondary)
             Spacer()
         }
-        .padding(.top, 12)
-        .padding(.bottom, 4)
+        .padding(.top, AppSpacing.md)
+        .padding(.bottom, AppSpacing.xs)
     }
 }
 

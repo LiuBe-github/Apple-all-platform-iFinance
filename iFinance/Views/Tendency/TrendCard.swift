@@ -64,7 +64,7 @@ struct TrendCard: View {
     // MARK: - 视图
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: AppSpacing.md) {
             // 标题行
             HStack {
                 Text(titleKey)
@@ -103,8 +103,8 @@ struct TrendCard: View {
                 scrollPosition: $scrollPosition,
                 chartType: $chartType
             )
-            .animation(.spring(response: 0.5, dampingFraction: 0.85), value: span)
-            .animation(.spring(response: 0.5, dampingFraction: 0.85), value: chartType)
+            .appAnimation(AppMotion.emphasized, value: span)
+            .appAnimation(AppMotion.emphasized, value: chartType)
         }
         .padding(TendencyConstants.cardPadding)
         .appGlassCard(cornerRadius: TendencyConstants.cardCornerRadius)
@@ -119,7 +119,7 @@ struct TrendCard: View {
         let nonZero = values.filter { $0 > 0 }
         let avg = nonZero.isEmpty ? 0 : nonZero.reduce(0, +) / Double(nonZero.count)
         
-        HStack(spacing: 10) {
+        HStack(spacing: AppSpacing.md) {
             statPill(icon: "arrow.up.right.circle.fill", titleKey: "tendency.avg", value: "¥\(formatAmount(avg))", accent: accent)
             statPill(icon: "chart.bar.fill", titleKey: "tendency.total", value: "¥\(formatAmount(total))", accent: accent.opacity(0.85))
         }
@@ -127,8 +127,8 @@ struct TrendCard: View {
     
     @ViewBuilder
     private func statPill(icon: String, titleKey: LocalizedStringKey, value: String, accent: Color) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 5) {
+        VStack(alignment: .leading, spacing: AppSpacing.xs) {
+            HStack(spacing: AppSpacing.sm) {
                 Image(systemName: icon)
                     .font(.caption2.weight(.semibold))
                 Text(titleKey)
@@ -143,8 +143,8 @@ struct TrendCard: View {
                 .minimumScaleFactor(0.7)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, 10)
-        .padding(.horizontal, 12)
+        .padding(.vertical, AppSpacing.md)
+        .padding(.horizontal, AppSpacing.md)
         .background {
             RoundedRectangle(cornerRadius: TendencyConstants.statPillCornerRadius, style: .continuous)
                 .fill(

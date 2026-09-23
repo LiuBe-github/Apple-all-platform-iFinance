@@ -121,16 +121,16 @@ struct BudgetView: View {
         ScrollView {
             VStack(spacing: 0) {
                 summaryHeader
-                    .padding(.horizontal, 20)
-                    .padding(.top, 20)
-                    .padding(.bottom, 28)
+                    .padding(.horizontal, AppSpacing.xl)
+                    .padding(.top, AppSpacing.xl)
+                    .padding(.bottom, AppSpacing.section)
                 
                 if categoryItems.isEmpty {
                     emptyState
                         .padding(.top, 60)
                 } else {
                     categoryList
-                        .padding(.horizontal, 16)
+                        .padding(.horizontal, AppSpacing.lg)
                 }
                 
                 Spacer(minLength: 40)
@@ -145,14 +145,14 @@ struct BudgetView: View {
                     budgetInput = String(format: "%.0f", monthlyBudget)
                     isEditingBudget = true
                 } label: {
-                    HStack(spacing: 4) {
+                    HStack(spacing: AppSpacing.xs) {
                         Image(systemName: "slider.horizontal.3")
                             .font(.system(size: 14, weight: .medium))
                         Text("budget.adjust")
-                            .font(.system(size: 15, weight: .medium))
+                            .font(AppTypography.secondary.weight(.medium))
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
+                    .padding(.horizontal, AppSpacing.md)
+                    .padding(.vertical, AppSpacing.sm)
                     .foregroundStyle(.blue)
                 }
             }
@@ -164,11 +164,11 @@ struct BudgetView: View {
     
     // MARK: - 顶部 Summary
     private var summaryHeader: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: AppSpacing.xl) {
             
             // ── 月份 + 预算总额 ──
             HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: AppSpacing.xs) {
                     Text(monthLabel)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
@@ -192,7 +192,7 @@ struct BudgetView: View {
                         .stroke(accentColor,
                                 style: StrokeStyle(lineWidth: 7, lineCap: .round))
                         .rotationEffect(.degrees(-90))
-                        .animation(.spring(response: 0.55, dampingFraction: 0.8), value: progress)
+                        .appAnimation(AppMotion.emphasized, value: progress)
                     
                     VStack(spacing: 1) {
                         Text("\(Int(progress * 100))%")
@@ -206,14 +206,14 @@ struct BudgetView: View {
             }
             
             // ── 细进度条 ──
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: AppSpacing.sm) {
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
                         Capsule().fill(Color.secondary.opacity(0.1)).frame(height: 6)
                         Capsule()
                             .fill(accentColor)
                             .frame(width: geo.size.width * CGFloat(progress), height: 6)
-                            .animation(.spring(response: 0.5, dampingFraction: 0.75), value: progress)
+                            .appAnimation(AppMotion.standard, value: progress)
                     }
                 }
                 .frame(height: 6)
@@ -248,9 +248,9 @@ struct BudgetView: View {
                          value: String(format: String(localized: "budget.count_value"), currentMonthExpenditures.count),
                          color: .primary)
             }
-            .padding(.vertical, 14)
+            .padding(.vertical, AppSpacing.lg)
             .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                RoundedRectangle(cornerRadius: AppRadius.row, style: .continuous)
                     .fill(Color(UIColor.secondarySystemGroupedBackground))
                     .shadow(color: .black.opacity(0.04), radius: 6, x: 0, y: 2)
             )
@@ -300,8 +300,8 @@ struct BudgetView: View {
                 .pickerStyle(.segmented)
                 .frame(width: 120)
             }
-            .padding(.horizontal, 4)
-            .padding(.bottom, 12)
+            .padding(.horizontal, AppSpacing.xs)
+            .padding(.bottom, AppSpacing.md)
             
             // 根据选择显示列表或饼图
             if chartType == .pie {
@@ -325,16 +325,16 @@ struct BudgetView: View {
             }
         }
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous)
                 .fill(Color(UIColor.secondarySystemGroupedBackground))
                 .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 2)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous))
     }
     
     // MARK: - 饼状图视图
     private var pieChartView: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: AppSpacing.lg) {
             // 饼图
             Chart(categoryItems, id: \.category) { item in
                 SectorMark(
@@ -346,7 +346,7 @@ struct BudgetView: View {
                 .cornerRadius(4)
                 .opacity(selectedPieAngle == nil || selectedPieCategory == item.category ? 1 : 0.4)
             }
-            .chartLegend(position: .bottom, alignment: .center, spacing: 12)
+            .chartLegend(position: .bottom, alignment: .center, spacing: AppSpacing.md)
             .chartAngleSelection(value: $selectedPieAngle)
             .onChange(of: selectedPieAngle) { _, newAngle in
                 HapticManager.shared.selectionChanged()
@@ -366,17 +366,17 @@ struct BudgetView: View {
                             .appNumericTransition(value: amount)
                     }
                     .transition(.scale(scale: 0.85).combined(with: .opacity))
-                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: cat)
+                    .appAnimation(AppMotion.quick, value: cat)
                 }
             }
-            .frame(height: 240)
-            .padding(.horizontal, 8)
-            .animation(.easeInOut(duration: 0.2), value: selectedPieCategory)
+            .frame(height: AppLayout.chartHeightRegular + 50)
+            .padding(.horizontal, AppSpacing.sm)
+            .appAnimation(AppMotion.quick, value: selectedPieCategory)
             
             // 分类金额列表
             VStack(spacing: 1) {
                 ForEach(Array(categoryItems.enumerated()), id: \.element.category) { index, item in
-                    HStack(spacing: 12) {
+                    HStack(spacing: AppSpacing.md) {
                         // 颜色指示
                         Circle()
                             .fill(colorForCategory(item.category))
@@ -398,8 +398,8 @@ struct BudgetView: View {
                             .foregroundStyle(.secondary)
                             .frame(width: 40, alignment: .trailing)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
+                    .padding(.horizontal, AppSpacing.lg)
+                    .padding(.vertical, AppSpacing.md)
                     .contentShape(Rectangle())
                     .background(
                         selectedPieCategory == item.category
@@ -408,7 +408,7 @@ struct BudgetView: View {
                     )
                     .onTapGesture {
                         HapticManager.shared.selectionChanged()
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
+                        withAnimation(AppMotion.quick) {
                             if selectedPieCategory == item.category {
                                 selectedPieCategory = nil
                                 selectedPieAngle = nil
@@ -426,13 +426,13 @@ struct BudgetView: View {
                     }
                 }
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, AppSpacing.sm)
             .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous)
                     .fill(Color(UIColor.secondarySystemGroupedBackground))
             )
         }
-        .padding(.horizontal, 4)
+        .padding(.horizontal, AppSpacing.xs)
     }
     
     /// 根据角度解析对应的分类（饼图扇区）
@@ -468,7 +468,7 @@ struct BudgetView: View {
     
     // MARK: - 空状态
     private var emptyState: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: AppSpacing.md) {
             Image(systemName: "tray")
                 .font(.system(size: 36, weight: .light))
                 .foregroundStyle(.tertiary)
@@ -490,7 +490,7 @@ struct BudgetView: View {
         NavigationStack {
             VStack(spacing: 0) {
                 // 当前预算显示
-                VStack(spacing: 8) {
+                VStack(spacing: AppSpacing.sm) {
                     Text("budget.current_monthly")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
@@ -498,17 +498,17 @@ struct BudgetView: View {
                         .font(.system(size: 48, weight: .bold, design: .rounded))
                         .foregroundStyle(.primary)
                 }
-                .padding(.top, 32)
+                .padding(.top, AppSpacing.section)
                 .padding(.bottom, 40)
                 
                 // 输入区域
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: AppSpacing.md) {
                     Text("budget.new_amount")
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundStyle(.secondary)
                     
-                    HStack(spacing: 8) {
+                    HStack(spacing: AppSpacing.sm) {
                         Text("¥")
                             .font(.system(size: 24, weight: .medium))
                             .foregroundStyle(.secondary)
@@ -519,15 +519,15 @@ struct BudgetView: View {
                             .focused($isBudgetFieldFocused)
                             .multilineTextAlignment(.leading)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 16)
+                    .padding(.horizontal, AppSpacing.xl)
+                    .padding(.vertical, AppSpacing.lg)
                     .background(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        RoundedRectangle(cornerRadius: AppRadius.row, style: .continuous)
                             .fill(Color(UIColor.secondarySystemGroupedBackground))
                     )
                     
                     // 快捷金额按钮
-                    VStack(spacing: 10) {
+                    VStack(spacing: AppSpacing.md) {
                         Text("budget.quick_set")
                             .font(.caption)
                             .foregroundStyle(.tertiary)
@@ -537,7 +537,7 @@ struct BudgetView: View {
                             GridItem(.flexible()),
                             GridItem(.flexible()),
                             GridItem(.flexible())
-                        ], spacing: 10) {
+                        ], spacing: AppSpacing.md) {
                             quickAmountButton(1000)
                             quickAmountButton(3000)
                             quickAmountButton(5000)
@@ -546,9 +546,9 @@ struct BudgetView: View {
                             quickAmountButton(15000)
                         }
                     }
-                    .padding(.top, 12)
+                    .padding(.top, AppSpacing.md)
                 }
-                .padding(.horizontal, 20)
+                .padding(.horizontal, AppSpacing.xl)
                 
                 Spacer()
                 
@@ -557,18 +557,18 @@ struct BudgetView: View {
                     saveBudget()
                 } label: {
                     Text("common.save")
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(AppTypography.body.weight(.semibold))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 52)
                         .background(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            RoundedRectangle(cornerRadius: AppRadius.row, style: .continuous)
                                 .fill(isValidInput ? Color.blue : Color.gray.opacity(0.3))
                         )
                 }
                 .disabled(!isValidInput)
-                .padding(.horizontal, 20)
-                .padding(.bottom, 20)
+                .padding(.horizontal, AppSpacing.xl)
+                .padding(.bottom, AppSpacing.xl)
             }
             .background(Color(UIColor.systemGroupedBackground))
             .navigationTitle("budget.adjust")
@@ -597,9 +597,9 @@ struct BudgetView: View {
                 .font(.system(size: 14, weight: .medium, design: .rounded))
                 .foregroundStyle(.primary)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
+                .padding(.vertical, AppSpacing.md)
                 .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    RoundedRectangle(cornerRadius: AppRadius.control, style: .continuous)
                         .fill(Color(UIColor.tertiarySystemGroupedBackground))
                 )
         }
@@ -617,7 +617,7 @@ struct BudgetView: View {
     private func saveBudget() {
         guard let newValue = Double(budgetInput), newValue > 0 else { return }
         
-        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+        withAnimation(AppMotion.standard) {
             authManager.updateMonthlyBudget(newValue)
         }
         
@@ -675,7 +675,7 @@ struct CategoryRowView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 12) {
+            HStack(spacing: AppSpacing.md) {
                 
                 // 图标圆圈
                 ZStack {
@@ -683,15 +683,15 @@ struct CategoryRowView: View {
                         .fill(barColor.opacity(0.12))
                         .frame(width: 38, height: 38)
                     Image(systemName: category.icon)
-                        .font(.system(size: 15, weight: .medium))
+                        .font(AppTypography.secondary.weight(.medium))
                         .foregroundStyle(barColor)
                 }
                 
                 // 中间：分类名 + 进度条
-                VStack(alignment: .leading, spacing: 5) {
+                VStack(alignment: .leading, spacing: AppSpacing.sm) {
                     HStack(alignment: .firstTextBaseline) {
                         Text(category.localizedDisplayName)
-                            .font(.system(size: 15, weight: .medium))
+                            .font(AppTypography.secondary.weight(.medium))
                             .foregroundStyle(.primary)
                         Spacer()
                         Text(formatAmount(amount))
@@ -699,7 +699,7 @@ struct CategoryRowView: View {
                             .foregroundStyle(.primary)
                     }
                     
-                    HStack(spacing: 8) {
+                    HStack(spacing: AppSpacing.sm) {
                         // 进度条
                         GeometryReader { geo in
                             ZStack(alignment: .leading) {
@@ -709,7 +709,7 @@ struct CategoryRowView: View {
                                 Capsule()
                                     .fill(barColor)
                                     .frame(width: geo.size.width * CGFloat(percentage), height: 4)
-                                    .animation(.spring(response: 0.5, dampingFraction: 0.75), value: percentage)
+                                    .appAnimation(AppMotion.standard, value: percentage)
                             }
                         }
                         .frame(height: 4)
@@ -722,8 +722,8 @@ struct CategoryRowView: View {
                     }
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 13)
+            .padding(.horizontal, AppSpacing.lg)
+            .padding(.vertical, AppSpacing.lg)
             
             // 分隔线（最后一行不显示）
             if !isLast {
