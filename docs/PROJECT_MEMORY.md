@@ -1,33 +1,28 @@
 # iFinance 项目记忆
 
-> 生成依据：工作区 HEAD `fd6b1fb`（`main` 分支，工作区存在未提交改动）。所有结论均来自源码实测，关键位置附带路径与行号。
+> 生成依据：`fd6b1fb`（初始勘察基线）→ 适配与 SwiftData 版落地于 `codex/platform-18-27` 分支。所有结论均来自源码实测，关键位置附带路径与行号。
 > 配套文档：[AGENTS.md](../AGENTS.md)（Agent 速用记忆）、[docs/api/README.md](api/README.md)（接口文档索引）。
 
 ## 1. 项目定位
 
 iFinance 是一套 **Apple 全平台个人记账应用**，同一仓库内包含三个可独立运行的目标：
 
-| 目标 | 目录 | 平台 | Bundle ID | 部署目标 | 版本 |
+| 目标 | 目录 | 平台 | Bundle ID | 部署目标（下限） | 版本 |
 |------|------|------|-----------|----------|------|
-| iFinance | `iFinance/` | iOS / iPadOS | `cn.liube.iFinance` | iOS 17.6 | 1.1 (2) |
-| MaciFinance | `MaciFinance/` | macOS | `cn.liube.MaciFinance` | macOS 26.2 | 1.1 (2) |
-| WatchiFinance Watch App | `WatchiFinance Watch App/` | watchOS | `cn.liube.iFinance.watchkitapp` | watchOS 26.0 | 1.1 (2) |
+| iFinance | `iFinance/` | iOS / iPadOS | `cn.liube.iFinance` | iOS 18.0 | 1.1 (2) |
+| iFinanceSwiftData | `iFinanceSwiftData/` | iOS / iPadOS（SwiftData 版） | `cn.liube.iFinance.swiftdata` | iOS 18.0 | 1.1 (2) |
+| MaciFinance | `MaciFinance/` | macOS | `cn.liube.MaciFinance` | macOS 15.0 | 1.1 (2) |
+| WatchiFinance Watch App | `WatchiFinance Watch App/` | watchOS | `cn.liube.iFinance.watchkitapp` | watchOS 11.0 | 1.1 (2) |
 
-来源：`iFinance.xcodeproj/project.pbxproj:726`（iOS）、`:1182`（macOS）、`:1029`（watchOS）。
-开发环境：Xcode 27.0（`swift 6.x` 工具链），工程 `SWIFT_VERSION = 5.0`（Swift 5 语言模式）。
+版本上限：各平台 27.x（构建 SDK 为 Xcode 27 的 iOS 27 / macOS 27 / watchOS 27）。iOS 17 自本轮起不再支持。
+开发环境：Xcode 27.0（Swift 6.x 工具链），工程 `SWIFT_VERSION = 5.0`（Swift 5 语言模式）。
 外部依赖：**无**（无 SPM / CocoaPods / Carthage 依赖，全部自研）。
 
-### ⚠️ README 与工程实际配置的偏差
+### ⚠️ 工程形态要点
 
-`README.md` 中的以下信息已过期，**以工程配置为准**：
-
-| README 描述 | 实际情况 |
-|-------------|----------|
-| watchOS 最低 10.0 | `WATCHOS_DEPLOYMENT_TARGET = 26.0`（`project.pbxproj:1029`） |
-| macOS 15+ | `MACOSX_DEPLOYMENT_TARGET = 26.2`（`project.pbxproj:1182`） |
-| 「应用内实时切换，无需重启」 | iOS 语言切换走 `exit(0)` 重启进程（`iFinance/Helper/LocalizationHelper.swift:185`） |
-| README 目录树列出的 `Models/NetworkMonitor.swift` | 当前源码中**不存在**该文件 |
-| README 列出的 `Setting/Language/LanguageSettingView.swift` | iOS 的 `LanguageSettingView` 实际定义在 `iFinance/Helper/LocalizationHelper.swift:106` |
+- 工程使用 **文件系统同步分组**（`PBXFileSystemSynchronizedRootGroup`）：每个 target 对应一个顶层文件夹，文件夹内的文件自动归属该 target；新增 Swift 文件不需要改 `project.pbxproj`。
+- SwiftData 版共享 iOS 版的本地化与名言 JSON（以 target membership 引用 `iFinance/Resources/...`），不复制副本。
+- 语言切换仍是「选择后由程序主动退出并重启」（`iFinance/Helper/LocalizationHelper.swift:185`），README 已同步更正。
 
 ## 2. 目录与模块地图
 
@@ -43,6 +38,13 @@ iFinance 是一套 **Apple 全平台个人记账应用**，同一仓库内包含
 │   ├── Helper/                   # L10n + AppLanguage + LanguageSettingView + HapticManager
 │   ├── Views/                    # Home / Transaction(Bills,Budget) / Tendency / Profile / Setting / Auth
 │   └── Resources/                # Localization(4 语言) + EconomicQuotes.json（100 条）
+├── iFinanceSwiftData/            # 🧪 iOS SwiftData 版（独立 target，约 1 900 行 Swift）
+│   ├── App/iFinanceSwiftDataApp.swift  # 入口：认证路由 + 生物锁遮罩（不激活 Watch）
+│   ├── Data/                     # @Model Bill / UserProfile + SwiftData 版 PersistenceController
+│   ├── Manager/                  # SwiftData 版 AuthManager + 生物锁 + 两个 stub
+│   ├── Views/                    # 由 iOS 版复制改造的视图层（@Query / FetchDescriptor）
+│   └── Resources/                # Info.plist + Assets（本地化与名言 JSON 共享 iOS 版）
+├── iFinanceSwiftDataTests/       # Swift Testing：CRUD / 账号隔离 / 预算聚合 / 密码哈希
 ├── MaciFinance/                  # macOS 应用（约 2 500 行 Swift）
 │   ├── MaciFinanceApp.swift      # NavigationSplitView 侧边栏入口
 │   ├── Persistence.swift         # 独立 Core Data 栈（模型名 MaciFinance）
@@ -102,6 +104,7 @@ xcodebuild test -project iFinance.xcodeproj -scheme MaciFinance -destination 'pl
 |----------|------|------|----------|
 | `iFinanceTests` | XCTest（`@MainActor final class`） | 38 用例 | Core Data 容器、Bill 增删改、密码哈希、分类枚举、时间范围过滤、趋势聚合 |
 | `MaciFinanceTests` | Swift Testing（`import Testing` + `@Test`） | 20+ 用例 | Persistence、Bill 模型、Dashboard 计算、Statistics 聚合、筛选与分组 |
+| `iFinanceSwiftDataTests` | Swift Testing | 10 用例 | SwiftData CRUD、按 `createdBy` 的账号隔离、按删除谓词批量删除、本月/今日聚合、密码哈希一致性 |
 | `WatchiFinance Watch AppTests` | Swift Testing | 1 个占位 `example()` | 无实际断言 |
 | `iFinanceUITests` / `MaciFinanceUITests` | XCTest | 模板 | 无实际断言 |
 
@@ -177,6 +180,27 @@ description.shouldInferMappingModelAutomatically = true
 - 表头：`date,type,category,amount,note`；日期为 ISO8601，导入时回退解析 `yyyy-MM-dd HH:mm:ss`（`en_US_POSIX`）。
 - 导入仅接受 `type ∈ {income, expenditure, transfer}`；导入的账单**不写 `createdAt/createdBy/updatedAt/updatedBy`**，因此这些记录不会出现在按 `createdBy` 过滤的列表中（已知缺陷，见 §10）。
 - macOS 端 SettingsView 中标注 `// TODO: implement CSV/JSON export`（`MaciFinance/Views/SettingsView.swift:158`），功能未实现。
+
+### 4.7 SwiftData 版数据层（`iFinanceSwiftData/`）
+
+同一工程内的独立 iOS target（Bundle ID `cn.liube.iFinance.swiftdata`，显示名「iFinance SD」），与 Core Data 版**并存安装、数据互不影响**。
+
+| 组成 | 实现 | 位置 |
+|------|------|------|
+| 模型 | `@Model final class Bill` / `UserProfile`，字段与 Core Data 版一一对应（`id`/`amount`/`type`/`category`/`note`/`date`/`createdAt`/`updatedAt`/`createdBy`/`updatedBy`） | `iFinanceSwiftData/Data/Bill.swift`、`UserProfile.swift` |
+| 容器 | `PersistenceController` + `ModelContainer(for: [Bill.self, UserProfile.self])`，内存容器用于预览/测试 | `iFinanceSwiftData/Data/Persistence.swift` |
+| 隔离 | `PersistenceController.billUserPredicate`（`#Predicate` 版本）与 `billPredicate(for:)` | 同上 |
+| 认证 | SwiftData 版 `AuthManager`（API 与 Core Data 版完全一致） | `iFinanceSwiftData/Manager/AuthManager.swift` |
+| 视图 | 由 iOS 版复制改造：`@FetchRequest`→`@Query`、`NSFetchRequest`→`FetchDescriptor`、`NSBatchDeleteRequest`→`delete(model:where:)` | `iFinanceSwiftData/Views/**` |
+| 资源 | 以 target membership 引用 `iFinance/Resources/Localization/*.lproj` 与 `EconomicQuotes.json` | 工程配置 |
+| 测试 | `iFinanceSwiftDataTests`（Swift Testing，内存容器） | `iFinanceSwiftDataTests/SwiftDataCoreTests.swift` |
+
+**同名 API 兼容层**（关键设计，改代码前必读）：
+
+- 视图层沿用 Core Data 版的写法，靠三个兼容点保持零改动复制：`PersistenceController.currentUserIdentifier` / `billUserPredicate`、`ModelContainer.viewContext` 扩展（内部即 `mainContext`）、`Bill.amountDouble` / `amountString` 计算属性（替代 `amount?.doubleValue` / `amount?.stringValue`）。
+- 因此**两版视图代码是两份文件**，改一处不会自动同步另一处；共同的字符串资源是唯一真正共享的部分。
+- SwiftData 版不注册 `WCSession`（不联动 Watch）、不启用 CloudKit 与本地通知，数据从空库开始（不迁移 Core Data 历史数据）。
+- SwiftData 版的 CSV 导入会写入 `createdBy`/`updatedBy` 与审计字段，并修正了 Core Data 版的 `en_US_POSX` locale 拼写问题（Core Data 版保持原样）。
 
 ## 5. 认证与账号体系（iOS）
 
@@ -307,6 +331,11 @@ macOS 端有独立副本：`MaciFinance/Views/Common/AppVisualStyle.swift`（130
 8. **两份 Core Data 模型与两份 AuthManager 手动同步**：iOS 与 macOS 各自实现，字段演进而未同步时会出现平台间行为不一致（模型当前字段一致，实现细节不同）。
 9. **遗留 scheme `Copy of iFinance`** 无对应 `.xcscheme` 文件，建议从工程中清理。
 10. **测试覆盖偏工具层**：UI 层与 Watch 端几乎无自动化测试（`WatchiFinance Watch AppTests` 仅模板用例）。
+11. **UI 测试在 Xcode 27 下崩溃**：`iFinanceUITestsLaunchTests` 在克隆模拟器上会触发 XCTest ↔ Swift Testing 互操作递归（栈深 900+）后 SIGSEGV，崩溃日志为 `~/Library/Logs/DiagnosticReports/iFinance-*.ips`；普通启动不受影响，日常验证请用 `-only-testing:iFinanceTests` 之类参数跳过 UI 测试。
+12. **上界运行时不可用**：本机 Xcode 27 的 `xcodebuild -downloadPlatform iOS|watchOS` 返回 “not available for download”，iOS 27 / watchOS 27 无法在本机模拟器验证，只能编译级验证（需真机确认）。
+13. **下界不可运行**：macOS 15 / watchOS 11 无法在本机运行，采用「编译 + API 可用性审查」验证；若需真机结论需自行安装对应系统。
+14. **SwiftData 版与 Core Data 版视图代码双份维护**：同名 API 兼容层让复制成本很低，但视图改动需要同步两处（见 §4.7）。
+15. **测试必须串行执行**：同时运行多个 `xcodebuild test`（尤其含 UI 测试的 scheme）会出现测试宿主互相干扰，表现为 `Early unexpected exit` 与 UI 测试超时；验证时请一次只跑一个 scheme，并用 `-only-testing:` 限定单元测试。
 
 ## 11. 高频任务操作指引
 

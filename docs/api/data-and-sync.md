@@ -7,6 +7,9 @@
 
 ## 一、Core Data 模型
 
+> 版本矩阵（本轮适配后）：iOS 18.0 – 27.x、macOS 15.0 – 27.x、watchOS 11.0 – 27.x，SDK 为 Xcode 27。
+> SwiftData 版（`iFinanceSwiftData`，仅 iOS）以 `@Model` 复刻本文第 1.2/1.3 节的字段契约，但**数据不互通**；差异见 [swiftdata.md](swiftdata.md)。
+
 ### 1.1 两套独立模型
 
 | 平台 | 模型文件 | 容器名 / 存储文件 | 栈实现 |
@@ -250,6 +253,7 @@ Watch 记账                iPhone
 | 导出范围 | **全部用户的账单**（未按 `createdBy` 过滤，`SettingView.swift:597`），按 `date` 升序 |
 | 导入校验 | `type ∈ {income, expenditure, transfer}`，行字段数 ≥ 5，金额用 `Decimal(string:)` |
 | 已知缺陷 | 导入未写 `createdBy/createdAt/updatedAt/updatedBy`（`:641`），记录会因隔离 predicate 而查不到；locale 字符串误写为 `en_US_POSX`（`:637`） |
+| SwiftData 版 | 已修正：导入写入 `createdBy/updatedBy` 与审计字段，并修正 locale 为 `en_US_POSIX`（`iFinanceSwiftData/Views/Setting/SettingView.swift`） |
 | macOS | 未实现（`MaciFinance/Views/SettingsView.swift:158` 为 TODO） |
 
 ---

@@ -3,7 +3,7 @@
   <img src="https://img.shields.io/badge/platform-iOS%20%7C%20macOS%20%7C%20watchOS-blue.svg?style=flat-square" alt="Platform" />
   <img src="https://img.shields.io/badge/Xcode-16+-blue.svg?style=flat-square" alt="Xcode" />
   <img src="https://img.shields.io/badge/min%20iOS-17.6-green.svg?style=flat-square" alt="iOS" />
-  <img src="https://img.shields.io/badge/min%20watchOS-10.0-green.svg?style=flat-square" alt="watchOS" />
+  <img src="https://img.shields.io/badge/min%20watchOS-11.0-green.svg?style=flat-square" alt="watchOS" />
   <img src="https://img.shields.io/badge/version-1.1-lightgrey.svg?style=flat-square" alt="Version" />
   <img src="https://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat-square" alt="License" />
 </p>
@@ -43,6 +43,16 @@
 - **实时同步**：通过 `WatchConnectivity` 的 `transferUserInfo` 可靠传输至 iPhone
 - **完整本地化**：Watch 端独立 `Localizable.strings`，支持 4 种语言
 
+### 🧪 SwiftData 版（仅 iOS）
+
+与主 iOS 版并列的独立 App（`iFinanceSwiftData` target，Bundle ID `cn.liube.iFinance.swiftdata`，显示名「iFinance SD」），用于验证 SwiftData 方案：
+
+- **数据层**：`@Model` 的 `Bill` / `UserProfile` + `ModelContainer`，字段与 Core Data 版一一对应（含 `createdBy` 账号隔离键与审计字段）
+- **功能对齐**：账号体系（多账号 / 密码 / 生物锁）、首页今日结余与每日一句、记账（数字键盘 + 25/11 分类）、账本（搜索 / 筛选 / 编辑 / 删除）、预算、趋势与热力图、设置（主题 / 语言 / CSV 导入导出）
+- **与 Core Data 版的差异**：不注册 WatchConnectivity（不联动 Apple Watch）、不启用 CloudKit / 本地通知，数据从空库开始（不迁移历史数据）
+- **资源复用**：共享 iOS 版的 4 语言 `.lproj` 与 `EconomicQuotes.json`（以 target membership 方式引用，非复制）
+- **实现方式**：视图层由 iOS 版复制改造（`@FetchRequest` → `@Query`、`NSFetchRequest` → `FetchDescriptor`、`NSBatchDeleteRequest` → `ModelContext.delete(model:where:)`），核心类型沿用同名 API（`PersistenceController` / `AuthManager` / `Bill` / `UserProfile`），便于两版对照
+
 ### 💻 macOS 应用
 
 - **登录体系**：邮箱 / 手机号 / Sign in with Apple 三种方式注册登录（与 iOS 一致）
@@ -67,7 +77,7 @@
 
 ### 🌍 国际化
 
-支持 **4 种语言**，应用内实时切换，无需重启，三端（iOS / macOS / watchOS）全覆盖：
+支持 **4 种语言**，应用内切换（选择后重启 App 生效；iOS/watchOS 端由程序主动退出后重新拉起），三端全覆盖：
 
 | 语言 | 标识 |
 |------|------|
@@ -102,7 +112,7 @@ iFinance/
 │   │   ├── IncomeCategory.swift       # 11 个收入分类枚举
 │   │   ├── ThemeMode.swift            # 主题模式（light/dark/system）
 │   │   ├── DailySentence.swift        # 每日一句数据结构
-│   │   └── NetworkMonitor.swift       # 网络状态监控（NWPathMonitor）
+│   │   └── DailySentence.swift        # 每日一句数据结构
 │   ├── Protocol/
 │   │   └── TransactionCategory.swift  # 分类协议（icon + localizedDisplayName）
 │   ├── Manager/
@@ -138,13 +148,20 @@ iFinance/
 │   │   ├── Profile/ProfileView.swift  # 👤 个人中心（头像/昵称/密码）
 │   │   ├── Setting/
 │   │   │   ├── SettingView.swift      # ⚙️ 设置（主题/语言/生物锁/CSV 导入导出）
-│   │   │   └── Language/LanguageSettingView.swift  # 语言切换页
+│   │   │   └── LanguageSettingView.swift  # 语言切换页（定义在 Helper/LocalizationHelper.swift）
 │   │   └── Auth/LoginView.swift       # 🔑 登录/注册/Apple 登录
 │   ├── Resources/
 │   │   ├── Localization/              # 4 语言 .strings 资源
 │   │   └── EconomicQuotes.json        # 经济名言数据集
 │   └── Persistence.swift              # CoreData 控制器 + 用户标识符
 │
+├── iFinanceSwiftData/                 # 🧪 iOS SwiftData 版（独立 target）
+│   ├── App/iFinanceSwiftDataApp.swift # 入口：认证路由 + 生物锁 + 主题/语言注入（不激活 Watch）
+│   ├── Data/                          # @Model Bill / UserProfile + SwiftData 版 PersistenceController
+│   ├── Manager/AuthManager.swift      # SwiftData 版认证管理器（API 与 Core Data 版一致）
+│   ├── Views/                         # 由 iOS 版复制改造的视图层
+│   └── Resources/                     # Info.plist + Assets（本地化与名言 JSON 共享 iOS 版）
+├── iFinanceSwiftDataTests/            # Swift Testing：增删改查 / 账号隔离 / 预算聚合 / 密码哈希
 ├── MaciFinance/                       # 💻 macOS 应用
 │   ├── MaciFinanceApp.swift           # 入口（NavigationSplitView 侧边栏）
 │   ├── MaciFinance.entitlements       # App Sandbox 授权
@@ -200,16 +217,18 @@ iFinance/
 
 | Target | Bundle Identifier | 最低系统版本 | 营销版本 |
 |--------|------------------|------------|---------|
-| iOS | `cn.liube.iFinance` | iOS 17.6 | 1.1 |
-| macOS | `cn.liube.MaciFinance` | macOS 15+ | 1.1 |
-| watchOS | `cn.liube.iFinance.watchkitapp` | watchOS 10+ | 1.1 |
+| iOS | `cn.liube.iFinance` | iOS 18.0 – 27.x | 1.1 |
+| iOS（SwiftData 版） | `cn.liube.iFinance.swiftdata` | iOS 18.0 – 27.x | 1.1 |
+| macOS | `cn.liube.MaciFinance` | macOS 15.0 – 27.x | 1.1 |
+| watchOS | `cn.liube.iFinance.watchkitapp` | watchOS 11.0 – 27.x | 1.1 |
 
 ---
 
 ## ⚙️ 构建要求
 
-- **Xcode** 16+
+- **Xcode** 27（SDK：iOS 27 / macOS 27 / watchOS 27）
 - **Swift** 5.0
+- **最低系统版本**：iOS 18.0 / macOS 15.0 / watchOS 11.0（上限为各自 27.x）
 - **外部依赖**：无（图片加载使用内置 `ImageCache` / `ImageLoader` / `ImageDownsampler`）
 
 ## 🚀 快速开始
@@ -218,9 +237,12 @@ iFinance/
 2. 用 Xcode 打开 `iFinance.xcodeproj`
 3. 选择目标 Scheme 并编译：
    - `iFinance` → iOS 应用
+   - `iFinanceSwiftData` → iOS SwiftData 版
    - `MaciFinance` → macOS 应用
    - `WatchiFinance Watch App` → watchOS 应用
 4. **Cmd + R** 运行
+
+> 两个 iOS 应用 Bundle ID 不同，可同时安装在同一台设备 / 模拟器上对比。
 
 ## 🧪 开发辅助脚本
 
@@ -229,6 +251,8 @@ iFinance/
 ---
 
 ## 📊 数据模型
+
+> 下表为 Core Data 版（iOS + macOS）与 SwiftData 版共用的字段契约；SwiftData 版以 `@Model` 类实现同名实体，并额外提供 `amountDouble` / `amountString` 计算属性以兼容 Core Data 版的读取写法。
 
 **`Bill` 实体：**
 
@@ -252,6 +276,20 @@ iFinance/
 | `provider` / `providerID` | String? | 第三方登录（Apple） |
 | `nickname` / `avatarData` | String? / Data? | 个人资料 |
 | `monthlyBudget` | Double | 月度预算 |
+
+---
+
+## 📚 开发文档
+
+| 文档 | 内容 |
+|------|------|
+| [AGENTS.md](AGENTS.md) | Agent 速用记忆：版本矩阵、构建命令、不可违反的约定、已知坑 |
+| [docs/PROJECT_MEMORY.md](docs/PROJECT_MEMORY.md) | 深度项目记忆：架构、数据层、认证、跨端协议、国际化、技术债 |
+| [docs/api/README.md](docs/api/README.md) | 接口文档索引与全局约定 |
+| [docs/api/ios-core.md](docs/api/ios-core.md) · [ios-ui.md](docs/api/ios-ui.md) | iOS 核心层与视图层接口 |
+| [docs/api/macos.md](docs/api/macos.md) · [watchos.md](docs/api/watchos.md) | macOS / watchOS 接口 |
+| [docs/api/swiftdata.md](docs/api/swiftdata.md) | SwiftData 版数据层与视图层接口 |
+| [docs/api/data-and-sync.md](docs/api/data-and-sync.md) | Core Data 模型、Watch 同步协议、CSV 格式 |
 
 ---
 
