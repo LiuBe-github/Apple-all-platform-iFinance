@@ -2,6 +2,8 @@
 //  MainContentView.swift
 //  MaciFinance
 //
+//  macOS 主内容视图（侧边栏导航）
+//
 
 import SwiftUI
 
@@ -43,7 +45,14 @@ struct MainContentView: View {
                 HStack(spacing: 10) {
                     Image(systemName: "yensign.circle.fill")
                         .font(.system(size: 26))
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [.blue, .purple],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .shadow(color: Color.blue.opacity(0.3), radius: 4, x: 0, y: 2)
                     Text("iFinance")
                         .font(.system(size: 20, weight: .bold))
                         .foregroundStyle(.primary)
@@ -54,33 +63,92 @@ struct MainContentView: View {
 
                 Divider()
 
-                // Navigation Items (仅数据展示，不含增删改)
-                List(NavigationItem.allCases, selection: $selectedItem) { item in
-                    Label(item.titleKey, systemImage: item.icon)
-                        .font(.system(size: 13, weight: .medium))
-                        .tag(item)
+                // Navigation Items（自定义行样式 + 选中高亮）
+                VStack(spacing: 4) {
+                    ForEach(NavigationItem.allCases) { item in
+                        SidebarItemRow(
+                            item: item,
+                            isSelected: selectedItem == item
+                        ) {
+                            HapticManager.shared.selectionChanged()
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                                selectedItem = item
+                            }
+                        }
+                    }
                 }
-                .listStyle(.sidebar)
-                .scrollDisabled(true)
+                .padding(.horizontal, 10)
+                .padding(.top, 12)
 
                 Spacer()
             }
         } detail: {
-            Group {
-                switch selectedItem {
-                case .dashboard:
-                    DashboardView()
-                        .navigationTitle(L10n.string("mac.nav.dashboard_title"))
-                case .bills:
-                    BillListView()
-                        .navigationTitle(L10n.string("mac.nav.bills_title"))
-                case .statistics:
-                    StatisticsView()
-                        .navigationTitle(L10n.string("mac.nav.statistics_title"))
-                case .settings:
-                    SettingsView()
-                        .navigationTitle(L10n.string("mac.nav.settings_title"))
+            ZStack {
+                AppBackgroundView()
+
+                Group {
+                    switch selectedItem {
+                    case .dashboard:
+                        DashboardView()
+                            .navigationTitle(L10n.string("mac.nav.dashboard_title"))
+                    case .bills:
+                        BillListView()
+                            .navigationTitle(L10n.string("mac.nav.bills_title"))
+                    case .statistics:
+                        StatisticsView()
+                            .navigationTitle(L10n.string("mac.nav.statistics_title"))
+                    case .settings:
+                        SettingsView()
+                            .navigationTitle(L10n.string("mac.nav.settings_title"))
+                    }
                 }
+                .transition(.opacity.combined(with: .scale(scale: 0.99)))
+            }
+            .animation(.easeInOut(duration: 0.22), value: selectedItem)
+        }
+    }
+}
+
+// MARK: - 侧边栏行
+
+private struct SidebarItemRow: View {
+    let item: NavigationItem
+    let isSelected: Bool
+    let action: () -> Void
+
+    @State private var isHovering = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                Image(systemName: item.icon)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(isSelected ? Color.accentColor : .secondary)
+                    .frame(width: 22)
+                    .symbolEffect(.bounce, value: isSelected)
+
+                Text(item.titleKey)
+                    .font(.system(size: 13, weight: isSelected ? .semibold : .medium))
+                    .foregroundStyle(isSelected ? .primary : .secondary)
+
+                Spacer()
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(
+                        isSelected
+                        ? Color.accentColor.opacity(0.16)
+                        : (isHovering ? Color.primary.opacity(0.06) : Color.clear)
+                    )
+            )
+            .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering in
+            withAnimation(.easeOut(duration: 0.15)) {
+                isHovering = hovering
             }
         }
     }

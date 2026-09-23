@@ -20,20 +20,47 @@ struct ProfileView: View {
                                 matching: .images,
                                 photoLibrary: .shared()
                             ) {
-                                if let avatarImage = avatarImage {
-                                    avatarImage
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fill)
-                                        .frame(width: 80, height: 80)
+                                ZStack(alignment: .bottomTrailing) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(
+                                                LinearGradient(
+                                                    colors: [Color.blue.opacity(0.3), Color.purple.opacity(0.22)],
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                )
+                                            )
+                                            .frame(width: 92, height: 92)
+                                        Group {
+                                            if let avatarImage = avatarImage {
+                                                avatarImage
+                                                    .resizable()
+                                                    .aspectRatio(contentMode: .fill)
+                                            } else {
+                                                Image(systemName: "person.fill")
+                                                    .resizable()
+                                                    .aspectRatio(contentMode: .fit)
+                                                    .foregroundStyle(.secondary)
+                                                    .padding(24)
+                                            }
+                                        }
+                                        .frame(width: 84, height: 84)
                                         .clipShape(Circle())
-                                        .overlay(Circle().stroke(Color.gray.opacity(0.3), lineWidth: 1))
-                                } else {
-                                    Image(systemName: "person.circle.fill")
-                                        .font(.system(size: 80))
-                                        .foregroundColor(.gray)
+                                    }
+                                    // 相机角标
+                                    ZStack {
+                                        Circle()
+                                            .fill(Color.blue)
+                                            .frame(width: 28, height: 28)
+                                            .overlay(Circle().strokeBorder(.white.opacity(0.8), lineWidth: 1.5))
+                                        Image(systemName: "camera.fill")
+                                            .font(.system(size: 11, weight: .semibold))
+                                            .foregroundStyle(.white)
+                                    }
+                                    .offset(x: -2, y: -2)
                                 }
                             }
-                            .buttonStyle(PlainButtonStyle())
+                            .buttonStyle(ScaleButtonStyle(pressedScale: 0.92))
 
                             Text(authManager.nickname)
                                 .font(.title2)

@@ -12,6 +12,8 @@ struct SentenceCardView: View {
     let sentence: DailySentence
 
     @StateObject private var loader = ImageLoader()
+    @State private var imageVisible = false
+    @State private var contentVisible = false
 
     /// 卡片的目标显示尺寸（用于图片降采样）
     var displaySize: CGSize = CGSize(width: 375, height: 520)
@@ -54,17 +56,24 @@ struct SentenceCardView: View {
                             .scaledToFill()
                             .frame(width: w, height: h)
                             .clipped()
-                            .transition(.opacity.animation(.easeIn(duration: 0.25)))
+                            .scaleEffect(imageVisible ? 1 : 1.07)
+                            .opacity(imageVisible ? 1 : 0)
+                            .onAppear {
+                                withAnimation(.easeOut(duration: 0.7)) {
+                                    imageVisible = true
+                                }
+                            }
                     } else if !loader.isLoaded {
-                        // 骨架屏
+                        // 骨架屏（微光扫过）
                         ZStack {
                             Color(UIColor.systemGray5)
-                            ProgressView().tint(Color(UIColor.systemGray2))
+                            ShimmerView()
                         }
                         .frame(width: w, height: h)
                     } else {
                         fallbackGradient
                             .frame(width: w, height: h)
+                            .transition(.opacity)
                     }
                 }
 
@@ -80,6 +89,7 @@ struct SentenceCardView: View {
                     endPoint: .bottom
                 )
                 .frame(height: h)
+                .opacity(imageVisible ? 1 : 0)
 
                 // ── 文字 ──
                 VStack(alignment: .leading, spacing: 10) {
@@ -107,12 +117,26 @@ struct SentenceCardView: View {
                 .padding(.horizontal, 24)
                 .padding(.bottom, 28)
                 .padding(.top, 160)
+                .opacity(contentVisible ? 1 : 0)
+                .offset(y: contentVisible ? 0 : 10)
+                .onAppear {
+                    withAnimation(.easeOut(duration: 0.55).delay(0.15)) {
+                        contentVisible = true
+                    }
+                }
             }
         }
         .aspectRatio(imageAspectRatio, contentMode: .fit)
         .onAppear {
             guard let url = imageURL else { return }
             loader.load(url: url, targetSize: displaySize)
+        }
+        .onChange(of: sentence.id) { _, _ in
+            // 切换句子时重置入场状态
+            imageVisible = false
+            contentVisible = false
+            withAnimation(.easeOut(duration: 0.7)) { imageVisible = true }
+            withAnimation(.easeOut(duration: 0.55).delay(0.15)) { contentVisible = true }
         }
     }
 }

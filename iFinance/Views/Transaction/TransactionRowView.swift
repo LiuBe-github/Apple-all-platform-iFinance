@@ -111,15 +111,11 @@ struct TransactionRowView: View {
     var body: some View {
         HStack(spacing: 12) {
             
-            // 图标圆圈
-            ZStack {
-                Circle()
-                    .fill(iconColor.opacity(0.12))
-                    .frame(width: 40, height: 40)
-                Image(systemName: icon)
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundStyle(iconColor)
-            }
+            // 图标圆圈（渐变底）
+            Image(systemName: icon)
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(iconColor)
+                .appIconTile(iconColor)
             
             // 分类名 + 时间
             VStack(alignment: .leading, spacing: 3) {
@@ -141,6 +137,11 @@ struct TransactionRowView: View {
             Text(amountText)
                 .font(.system(size: 15, weight: .semibold, design: .rounded))
                 .foregroundStyle(amountColor)
+                .appNumericTransition(value: amount)
+            
+            Image(systemName: "chevron.right")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(.quaternary)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)

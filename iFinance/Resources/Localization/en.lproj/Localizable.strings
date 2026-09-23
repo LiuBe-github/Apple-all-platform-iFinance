@@ -205,7 +205,9 @@
 "tendency.span_6month" = "6M";
 "tendency.span_year" = "Year";
 "tendency.one_year" = "365 days";
-
+"tendency.heatmap_less" = "Less";
+"tendency.heatmap_more" = "More";
+"tendency.heatmap_bills" = "entries";
 "transaction.empty" = "No bills yet. Add your first bill.";
 
 "iFinance" = "iFinance";

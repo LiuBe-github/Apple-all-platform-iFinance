@@ -254,7 +254,9 @@
 "settings.icloud_section" = "iCloud";
 
 "tendency.one_year" = "365 天";
-
+"tendency.heatmap_less" = "少";
+"tendency.heatmap_more" = "多";
+"tendency.heatmap_bills" = "笔";
 "transaction.empty" = "当前还没有账单哦，记一笔吧！😄";
 "auth.apple_frontend_only" = "Apple 登录暂仅保留界面展示，未接入真实鉴权。";
 "auth.apple_failed" = "Apple 登录失败，请重试。";

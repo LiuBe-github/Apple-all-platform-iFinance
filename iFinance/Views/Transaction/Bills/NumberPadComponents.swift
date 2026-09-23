@@ -29,20 +29,20 @@ struct NumberButton: View {
                 
                 if let systemImage = systemImage {
                     Image(systemName: systemImage)
+                        .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.primary)
                 } else {
-                    if value == "." {
-                        Text(value)
-                            .font(.title2)
-                            .fontWeight(.semibold)
-                    } else {
-                        Text(value)
-                            .font(.title3)
-                            .fontWeight(.semibold)
-                    }
+                    Text(value)
+                        .font(.system(size: value == "." ? 24 : 20, weight: .semibold, design: .rounded))
+                        .foregroundColor(.primary)
                 }
             }
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(Color.primary.opacity(0.05), lineWidth: 1)
+            )
         }
+        .buttonStyle(ScaleButtonStyle(pressedScale: 0.9))
         .frame(maxWidth: .infinity)
     }
 }
@@ -58,15 +58,19 @@ struct OperationButton: View {
         Button(action: action) {
             ZStack {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color(UIColor.secondarySystemFill))
+                    .fill(color.opacity(0.12))
                     .frame(height: 54)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .strokeBorder(color.opacity(0.25), lineWidth: 1)
+                    )
                 
                 Text(symbol)
-                    .font(.title3)
-                    .fontWeight(.bold)
-                    .foregroundColor(.primary)
+                    .font(.system(size: 19, weight: .bold))
+                    .foregroundStyle(color)
             }
         }
+        .buttonStyle(ScaleButtonStyle(pressedScale: 0.9))
         .frame(maxWidth: .infinity)
     }
 }
@@ -79,7 +83,7 @@ struct DatePickerView: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack {
                 DatePicker("bill.select_datetime", selection: $selectedDate, displayedComponents: [.date, .hourAndMinute])
                     .datePickerStyle(GraphicalDatePickerStyle())
@@ -88,15 +92,21 @@ struct DatePickerView: View {
                 Spacer()
             }
             .navigationBarTitle("bill.select_time", displayMode: .inline)
-            .navigationBarItems(
-                leading: Button("auth.cancel") {
-                    dismiss()
-                },
-                trailing: Button("common.confirm") {
-                    onConfirm()
-                    dismiss()
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("auth.cancel") {
+                        dismiss()
+                    }
                 }
-            )
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("common.confirm") {
+                        HapticManager.shared.medium()
+                        onConfirm()
+                        dismiss()
+                    }
+                    .fontWeight(.semibold)
+                }
+            }
         }
     }
 }

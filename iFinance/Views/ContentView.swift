@@ -49,6 +49,7 @@ struct ContentView: View {
         .onChange(of: selection) { _, _ in
             HapticManager.shared.selectionChanged()
         }
+        .sensoryFeedback(.selection, trigger: selection)
     }
 }
 

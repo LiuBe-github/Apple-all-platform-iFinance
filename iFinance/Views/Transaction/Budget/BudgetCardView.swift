@@ -111,7 +111,7 @@ struct BudgetCardView: View {
         NavigationLink(destination: BudgetView().toolbar(.hidden, for: .tabBar)) {
             cardContent
         }
-        .buttonStyle(.plain)
+        .buttonStyle(ScaleButtonStyle(pressedScale: 0.98))
     }
     
     // MARK: 卡片内容
@@ -135,6 +135,7 @@ struct BudgetCardView: View {
                     .foregroundStyle(.primary)
                     .minimumScaleFactor(0.6)
                     .lineLimit(1)
+                    .appNumericTransition(value: monthlyBudget)
                 
                 Text("budget.monthly_limit")
                     .font(.caption2)
@@ -181,6 +182,7 @@ struct BudgetCardView: View {
                     Text("\(Int(progress * 100))%")
                         .font(.system(size: 16, weight: .bold, design: .rounded))
                         .foregroundStyle(.primary)
+                        .appNumericTransition(value: progress * 100)
                     Text("budget.used")
                         .font(.system(size: 9, weight: .medium))
                         .foregroundStyle(.secondary)
@@ -233,6 +235,8 @@ struct BudgetCardView: View {
                     .font(.caption2)
                     .fontWeight(.medium)
                     .foregroundStyle(.red)
+                    .symbolEffect(.pulse, options: .repeating, value: isOverBudget)
+                    .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
     }

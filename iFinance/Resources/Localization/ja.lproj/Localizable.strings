@@ -205,7 +205,9 @@
 "tendency.span_6month" = "6か月";
 "tendency.span_year" = "年";
 "tendency.one_year" = "365日";
-
+"tendency.heatmap_less" = "少";
+"tendency.heatmap_more" = "多";
+"tendency.heatmap_bills" = "件";
 "transaction.empty" = "明細がありません。最初の1件を追加しましょう。";
 
 "iFinance" = "iFinance";

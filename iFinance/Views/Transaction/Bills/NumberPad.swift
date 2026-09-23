@@ -38,6 +38,8 @@ struct NumberPad: View {
                             case .transfer: return .orange
                             }
                         }())
+                        .contentTransition(.numericText())
+                        .animation(.snappy(duration: 0.25), value: displayText)
 
                     Spacer()
                 }
@@ -47,45 +49,61 @@ struct NumberPad: View {
 
                 HStack {
                     Button(action: {
+                        HapticManager.shared.light()
                         showDatePicker = true
                     }) {
                         HStack(spacing: 6) {
-                            Image(systemName: "clock")
+                            Image(systemName: "calendar")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                             Text(getFormattedDateString(selectedDate))
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(
+                            Capsule()
+                                .fill(Color.primary.opacity(0.06))
+                        )
                     }
+                    .buttonStyle(ScaleButtonStyle(pressedScale: 0.92))
 
                     Spacer()
 
-                    ZStack(alignment: .leading) {
-                        if note.isEmpty && !isEditingNote {
-                            Text("bill.note_add")
-                                .foregroundColor(.gray)
+                    HStack(spacing: 6) {
+                        Image(systemName: "square.and.pencil")
+                            .font(.caption2)
+                            .foregroundColor(note.isEmpty ? .secondary : .blue)
+
+                        ZStack(alignment: .leading) {
+                            if note.isEmpty && !isEditingNote {
+                                Text("bill.note_add")
+                                    .foregroundColor(.gray)
+                                    .font(.caption)
+                            }
+
+                            TextField("", text: $note)
                                 .font(.caption)
+                                .foregroundColor(.primary)
+                                .focused($isNoteFocused)
+                                .onTapGesture {
+                                    isEditingNote = true
+                                    isNoteFocused = true
+                                }
+                                .onSubmit {
+                                    isEditingNote = false
+                                    isNoteFocused = false
+                                }
                         }
-
-                        TextField("", text: $note)
-                            .font(.caption)
-                            .foregroundColor(.primary)
-                            .focused($isNoteFocused)
-                            .onTapGesture {
-                                isEditingNote = true
-                                isNoteFocused = true
-                            }
-                            .onSubmit {
-                                isEditingNote = false
-                                isNoteFocused = false
-                            }
+                        .frame(maxWidth: 140, alignment: .trailing)
                     }
-                    .frame(maxWidth: 140, alignment: .trailing)
-
-                    Image(systemName: "chevron.up")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill(Color.primary.opacity(0.06))
+                    )
                 }
             }
             .padding(.horizontal, 14)
@@ -169,17 +187,32 @@ struct NumberPad: View {
                         HapticManager.shared.heavy() // 重要操作
                         onSave?()
                     }) {
-                        Text("common.done")
-                            .font(.title3)
-                            .fontWeight(.bold)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 50)
-                            .background(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(Color(red: 0.95, green: 0.43, blue: 0.35))
-                            )
+                        HStack(spacing: 6) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 17, weight: .semibold))
+                            Text("common.done")
+                                .font(.title3)
+                                .fontWeight(.bold)
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            Color(red: 1.0, green: 0.55, blue: 0.45),
+                                            Color(red: 0.95, green: 0.38, blue: 0.30)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .shadow(color: Color(red: 0.95, green: 0.43, blue: 0.35).opacity(0.35), radius: 6, x: 0, y: 3)
+                        )
                     }
+                    .buttonStyle(ScaleButtonStyle(pressedScale: 0.94))
                 }
             }
             .padding(.horizontal, 4)

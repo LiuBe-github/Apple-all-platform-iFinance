@@ -164,24 +164,41 @@ private struct CategoryChip: View {
     let isSelected: Bool
     let action: () -> Void
 
+    @State private var isHovering = false
+
     var body: some View {
         Button(action: action) {
             VStack(spacing: 6) {
                 Image(systemName: icon)
                     .font(.system(size: 18))
+                    .symbolEffect(.bounce, value: isSelected)
                 Text(name)
-                    .font(.system(size: 11))
+                    .font(.system(size: 11, weight: isSelected ? .semibold : .regular))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
             .frame(height: 64)
             .frame(maxWidth: .infinity)
-            .background(isSelected ? Color.blue.opacity(0.12) : Color(nsColor: .controlBackgroundColor))
+            .background(
+                isSelected
+                ? AnyShapeStyle(LinearGradient(
+                    colors: [Color.blue.opacity(0.18), Color.blue.opacity(0.08)],
+                    startPoint: .topLeading, endPoint: .bottomTrailing))
+                : AnyShapeStyle(isHovering ? Color.primary.opacity(0.06) : Color(nsColor: .controlBackgroundColor))
+            )
             .foregroundStyle(isSelected ? .blue : .primary)
             .cornerRadius(10)
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
                     .strokeBorder(isSelected ? Color.blue.opacity(0.5) : Color(nsColor: .separatorColor), lineWidth: isSelected ? 1.2 : 0.5)
             )
+            .shadow(color: isSelected ? Color.blue.opacity(0.2) : .clear, radius: 4, x: 0, y: 2)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(ScaleButtonStyle(pressedScale: 0.94))
+        .onHover { hovering in
+            withAnimation(.easeOut(duration: 0.15)) {
+                isHovering = hovering
+            }
+        }
     }
 }

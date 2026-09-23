@@ -205,7 +205,9 @@
 "tendency.span_6month" = "6個月";
 "tendency.span_year" = "年";
 "tendency.one_year" = "365 天";
-
+"tendency.heatmap_less" = "少";
+"tendency.heatmap_more" = "多";
+"tendency.heatmap_bills" = "筆";
 "transaction.empty" = "當前還沒有帳單，記一筆吧！";
 
 "iFinance" = "iFinance";

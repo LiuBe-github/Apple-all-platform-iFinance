@@ -95,13 +95,18 @@ struct BillsCardView: View {
             timeRangePicker
             
             // 账单列表
-            if groupedBills.isEmpty {
-                emptyState
-            } else {
-                ForEach(groupedBills, id: \.date) { group in
-                    DayGroupCard(date: group.date, bills: group.bills)
+            Group {
+                if groupedBills.isEmpty {
+                    emptyState
+                } else {
+                    ForEach(groupedBills, id: \.date) { group in
+                        DayGroupCard(date: group.date, bills: group.bills)
+                    }
                 }
             }
+            .id(selectedTimeRange)
+            .transition(.opacity.combined(with: .move(edge: .bottom)))
+            .animation(.spring(response: 0.45, dampingFraction: 0.85), value: selectedTimeRange)
         }
     }
     
@@ -115,6 +120,9 @@ struct BillsCardView: View {
         .pickerStyle(.segmented)
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
+        .onChange(of: selectedTimeRange) { _, _ in
+            HapticManager.shared.selectionChanged()
+        }
     }
     
     private var emptyState: some View {
@@ -122,12 +130,14 @@ struct BillsCardView: View {
             Image(systemName: "tray")
                 .font(.system(size: 32, weight: .light))
                 .foregroundStyle(.tertiary)
+                .symbolEffect(.bounce, value: selectedTimeRange)
             Text("bill.empty")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 48)
+        .appGlassCard(cornerRadius: 16)
     }
 }
 
@@ -135,6 +145,8 @@ struct BillsCardView: View {
 private struct DayGroupCard: View, Equatable {
     let date:  Date
     let bills: [Bill]
+
+    @State private var appeared = false
 
     private static let amountFormatter: NumberFormatter = {
         let f = NumberFormatter()
@@ -224,12 +236,14 @@ private struct DayGroupCard: View, Equatable {
                 }
             }
         }
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
-                .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 2)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .appGlassCard(cornerRadius: 16)
+        .opacity(appeared ? 1 : 0)
+        .offset(y: appeared ? 0 : 10)
+        .onAppear {
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
+                appeared = true
+            }
+        }
     }
     
     // MARK: 日期格式

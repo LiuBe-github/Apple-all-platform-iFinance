@@ -18,6 +18,7 @@ struct LoginView: View {
     @State private var confirmPassword = ""
     @State private var errorMessage: String?
     @State private var showResetSheet = false
+    @State private var logoPulse = false
 
     var body: some View {
         NavigationStack {
@@ -37,11 +38,13 @@ struct LoginView: View {
                                 .font(.footnote)
                                 .foregroundStyle(.red)
                                 .frame(maxWidth: .infinity, alignment: .leading)
+                                .transition(.opacity.combined(with: .move(edge: .top)))
                         }
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 30)
                     .padding(.bottom, 24)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.8), value: errorMessage)
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
@@ -56,10 +59,34 @@ struct LoginView: View {
     }
 
     private var header: some View {
-        VStack(spacing: 8) {
-            Image(systemName: "lock.shield")
-                .font(.system(size: 42, weight: .semibold))
-                .foregroundStyle(.blue)
+        VStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.blue.opacity(0.25), Color.purple.opacity(0.2)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 88, height: 88)
+                    .overlay(
+                        Circle()
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [Color.blue.opacity(0.6), Color.purple.opacity(0.5)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1.5
+                            )
+                    )
+                Image(systemName: "yensign.circle.fill")
+                    .font(.system(size: 48, weight: .semibold))
+                    .foregroundStyle(.blue)
+                    .symbolEffect(.pulse, options: .speed(0.7), value: logoPulse)
+            }
+            .shadow(color: Color.blue.opacity(0.25), radius: 14, x: 0, y: 6)
 
             Text(authMode == .login ? "auth.login" : "auth.register")
                 .font(.title2)
@@ -68,6 +95,9 @@ struct LoginView: View {
             Text(authMode == .login ? "auth.login_hint" : "auth.register_hint")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+        }
+        .onAppear {
+            logoPulse = true
         }
     }
 
@@ -122,10 +152,19 @@ struct LoginView: View {
                 Text(authMode == .login ? "auth.login" : "auth.register_now")
                     .fontWeight(.semibold)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 44)
-                    .background(Color.blue, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .frame(height: 48)
+                    .background(
+                        LinearGradient(
+                            colors: [Color.blue, Color.blue.opacity(0.8)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    )
                     .foregroundStyle(.white)
+                    .shadow(color: Color.blue.opacity(0.35), radius: 8, x: 0, y: 4)
             }
+            .buttonStyle(ScaleButtonStyle(pressedScale: 0.97))
             .padding(.top, 4)
 
             if authMode == .login {
@@ -187,8 +226,17 @@ struct LoginView: View {
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
             .frame(height: 42)
-            .background(color, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .background(
+                LinearGradient(
+                    colors: [color, color.opacity(0.82)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ),
+                in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+            )
+            .shadow(color: color.opacity(0.25), radius: 5, x: 0, y: 2)
         }
+        .buttonStyle(ScaleButtonStyle(pressedScale: 0.95))
     }
 
     private func submit() {

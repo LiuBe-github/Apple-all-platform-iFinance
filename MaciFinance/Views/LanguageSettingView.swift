@@ -47,9 +47,37 @@ struct MacLanguageSettingView: View {
     }
 
     private func languageRow(for language: AppLanguage) -> some View {
-        Button {
+        LanguageRowView(
+            language: language,
+            isCurrent: currentLanguage == language
+        ) {
             selectLanguage(language)
-        } label: {
+        }
+    }
+
+    private func selectLanguage(_ language: AppLanguage) {
+        guard language != currentLanguage else { return }
+        pendingLanguage = language
+        showRestartAlert = true
+    }
+
+    /// 重启 App
+    private func restartApp() {
+        NSApplication.shared.terminate(nil)
+    }
+}
+
+// MARK: - 语言行
+
+private struct LanguageRowView: View {
+    let language: AppLanguage
+    let isCurrent: Bool
+    let action: () -> Void
+
+    @State private var isHovering = false
+
+    var body: some View {
+        Button(action: action) {
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(language.displayName)
@@ -65,33 +93,32 @@ struct MacLanguageSettingView: View {
 
                 Spacer()
 
-                if currentLanguage == language {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 12, weight: .semibold))
+                if isCurrent {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(.blue)
+                        .symbolEffect(.bounce, value: isCurrent)
                 }
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
             .background(
-                currentLanguage == language ?
-                Color.accentColor.opacity(0.1) :
-                Color(nsColor: .controlBackgroundColor)
+                isCurrent
+                ? Color.accentColor.opacity(0.12)
+                : (isHovering ? Color.primary.opacity(0.06) : Color(nsColor: .controlBackgroundColor))
             )
             .cornerRadius(8)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .strokeBorder(isCurrent ? Color.accentColor.opacity(0.4) : Color.clear, lineWidth: 1)
+            )
         }
-        .buttonStyle(.plain)
-    }
-
-    private func selectLanguage(_ language: AppLanguage) {
-        guard language != currentLanguage else { return }
-        pendingLanguage = language
-        showRestartAlert = true
-    }
-
-    /// 重启 App
-    private func restartApp() {
-        NSApplication.shared.terminate(nil)
+        .buttonStyle(ScaleButtonStyle(pressedScale: 0.97))
+        .onHover { hovering in
+            withAnimation(.easeOut(duration: 0.15)) {
+                isHovering = hovering
+            }
+        }
     }
 }
 

@@ -85,7 +85,6 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "9A8B0C4A2F0EA158003ECE8B"
             BuildableName = "WatchiFinance Watch App.app"
-            BlueprintName = "WatchiFinance Watch App"
             ReferencedContainer = "container:iFinance.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -102,7 +101,6 @@
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "9A8B0C4A2F0EA158003ECE8B"
             BuildableName = "WatchiFinance Watch App.app"
-            BlueprintName = "WatchiFinance Watch App"
             ReferencedContainer = "container:iFinance.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

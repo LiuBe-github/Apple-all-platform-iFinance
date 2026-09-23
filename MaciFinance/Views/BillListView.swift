@@ -133,6 +133,7 @@ struct BillListView: View {
                     Image(systemName: "list.bullet.clipboard")
                         .font(.system(size: 40))
                         .foregroundStyle(.quaternary)
+                        .symbolEffect(.bounce, value: selectedType)
                     Text(L10n.string("mac.bill.no_data"))
                         .font(.system(size: 15))
                         .foregroundStyle(.secondary)
@@ -163,6 +164,9 @@ struct BillListView: View {
                     .padding(.top, 12)
                     .padding(.bottom, 24)
                 }
+                .id(selectedType.rawValue + searchText)
+                .transition(.opacity)
+                .animation(.easeInOut(duration: 0.2), value: selectedType)
             }
         }
     }
@@ -205,6 +209,8 @@ private struct SectionHeader: View {
 private struct BillDetailRow: View {
     let bill: Bill
 
+    @State private var isHovering = false
+
     private var isExpense: Bool {
         bill.type == "expenditure" || bill.type == "transfer"
     }
@@ -218,8 +224,21 @@ private struct BillDetailRow: View {
         HStack(spacing: 14) {
             ZStack {
                 RoundedRectangle(cornerRadius: 9, style: .continuous)
-                    .fill(isExpense ? Color.red.opacity(0.08) : Color.green.opacity(0.08))
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                (isExpense ? Color.red : Color.green).opacity(0.16),
+                                (isExpense ? Color.red : Color.green).opacity(0.06)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
                     .frame(width: 40, height: 40)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 9, style: .continuous)
+                            .strokeBorder((isExpense ? Color.red : Color.green).opacity(0.2), lineWidth: 0.8)
+                    )
 
                 Image(systemName: categoryIcon)
                     .font(.system(size: 16, weight: .medium))
@@ -252,8 +271,20 @@ private struct BillDetailRow: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
-        .background(Color(nsColor: .controlBackgroundColor))
-        .cornerRadius(10)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(isHovering ? Color.primary.opacity(0.05) : Color(nsColor: .controlBackgroundColor))
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .strokeBorder(isHovering ? Color.accentColor.opacity(0.35) : Color.clear, lineWidth: 1)
+        )
+        .onHover { hovering in
+            withAnimation(.easeOut(duration: 0.15)) {
+                isHovering = hovering
+            }
+        }
     }
 
     private var categoryIcon: String {

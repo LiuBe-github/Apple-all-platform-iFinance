@@ -43,12 +43,16 @@ struct TransactionView: View {
                             .padding(.horizontal)
                             .padding(.bottom)
                     } else {
-                        // 没有账单时显示提示文字
-                        VStack {
+                        // 没有账单时显示提示
+                        VStack(spacing: 12) {
                             Spacer()
+                            Image(systemName: "text.badge.plus")
+                                .font(.system(size: 40, weight: .light))
+                                .foregroundStyle(.blue.opacity(0.8))
+                                .symbolEffect(.pulse, options: .repeating)
                             Text("transaction.empty")
                                 .font(.subheadline)
-                                .foregroundColor(.gray)
+                                .foregroundColor(.secondary)
                                 .multilineTextAlignment(.center)
                             Spacer()
                         }

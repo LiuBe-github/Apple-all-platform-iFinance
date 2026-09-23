@@ -40,7 +40,9 @@ struct HomeView: View {
     @State private var isRefreshing = false
     @State private var cardOpacity: Double = 1
     @State private var cardScale: Double = 1
-    @State private var rotationAngle: Double = 0
+    @State private var refreshAngle: Double = 0
+    @State private var shareBounceTrigger = 0
+    @State private var contentVisible = false
 
     // 分享相关
     @State private var sharePayload: SharePayload?
@@ -89,6 +91,7 @@ struct HomeView: View {
                                 billCount: todayBills.count
                             )
                             .padding(.horizontal, 20)
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
 
                             Spacer(minLength: 16)
 
@@ -112,7 +115,7 @@ struct HomeView: View {
                                 } label: {
                                     Image(systemName: "arrow.clockwise")
                                         .font(.system(size: 17, weight: .medium))
-                                        .rotationEffect(.degrees(rotationAngle))
+                                        .rotationEffect(.degrees(refreshAngle))
                                         .frame(width: 50, height: 50)
                                         .background(.ultraThinMaterial, in: Circle())
                                         .overlay(Circle().stroke(.white.opacity(0.5), lineWidth: 0.8))
@@ -120,9 +123,11 @@ struct HomeView: View {
                                 }
                                 .foregroundStyle(.primary)
                                 .disabled(isRefreshing)
+                                .buttonStyle(ScaleButtonStyle())
 
                                 Button {
                                     HapticManager.shared.light()
+                                    shareBounceTrigger += 1
                                     renderAndShare(s)
                                 } label: {
                                     Image(systemName: "square.and.arrow.up")
@@ -131,12 +136,17 @@ struct HomeView: View {
                                         .background(.ultraThinMaterial, in: Circle())
                                         .overlay(Circle().stroke(.white.opacity(0.5), lineWidth: 0.8))
                                         .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: 2)
+                                        .symbolEffect(.bounce, value: shareBounceTrigger)
                                 }
                                 .foregroundStyle(.primary)
+                                .buttonStyle(ScaleButtonStyle())
                             }
                             .padding(.bottom, 20)
+                            .opacity(cardOpacity)
                         }
                     }
+                    .opacity(contentVisible ? 1 : 0)
+                    .offset(y: contentVisible ? 0 : 18)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -210,6 +220,13 @@ struct HomeView: View {
         currentSentence = list.randomElement()
         isInitialLoading = false
 
+        // 首次加载完成后的入场动画
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.85)) {
+                contentVisible = true
+            }
+        }
+
         // 首次加载后立即预加载下一条
         Task { await prepareNext() }
     }
@@ -233,15 +250,15 @@ struct HomeView: View {
         isRefreshing = true
 
         // 刷新按钮转一圈
-        withAnimation(.linear(duration: 0.45)) { rotationAngle += 360 }
+        withAnimation(.easeInOut(duration: 0.5)) { refreshAngle += 360 }
 
         // 卡片淡出缩小
-        withAnimation(.easeIn(duration: 0.20)) {
+        withAnimation(.easeIn(duration: 0.18)) {
             cardOpacity = 0
-            cardScale = 0.95
+            cardScale = 0.94
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.20) {
             // 切换到已预加载的下一条（图片已在缓存中）
             if let next = nextSentence {
                 currentSentence = next
@@ -252,7 +269,7 @@ struct HomeView: View {
             nextSentence = nil
 
             // 卡片弹入
-            withAnimation(.spring(response: 0.36, dampingFraction: 0.80)) {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.78)) {
                 cardOpacity = 1
                 cardScale = 1
             }

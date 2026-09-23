@@ -77,6 +77,9 @@ struct TendencyChartView: View {
                 }
                 .pickerStyle(.segmented)
                 .frame(width: TendencyConstants.chartTypePickerWidth)
+                .onChange(of: chartType) { _, _ in
+                    HapticManager.shared.selectionChanged()
+                }
             }
             
             // 数据提示
@@ -139,10 +142,11 @@ struct TendencyChartView: View {
                 .frame(height: TendencyConstants.chartHeight)
                 .blur(radius: 12)
             
-            VStack(spacing: 8) {
+            VStack(spacing: 10) {
                 Image(systemName: "chart.line.uptrend.xyaxis")
                     .font(.system(size: 32))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(accent.opacity(0.6))
+                    .symbolEffect(.bounce, options: .speed(0.6).repeat(2), value: chartType)
                 Text("tendency.no_data")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -157,6 +161,20 @@ struct TendencyChartView: View {
     private var lineChartView: some View {
         Chart {
             ForEach(series) { point in
+                // 渐变面积填充（增强层次感）
+                AreaMark(
+                    x: .value("date", point.date),
+                    y: .value("amount", point.value)
+                )
+                .interpolationMethod(.linear)
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [accent.opacity(0.22), accent.opacity(0.01)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                
                 LineMark(
                     x: .value("date", point.date),
                     y: .value("amount", point.value)
@@ -175,10 +193,11 @@ struct TendencyChartView: View {
                     x: .value("focus-date", focus.date),
                     y: .value("focus-value", focus.value)
                 )
-                .symbolSize(64)
-                .foregroundStyle(accent)
+                .symbolSize(120)
+                .foregroundStyle(accent.opacity(0.95))
                 .annotation(position: .top, alignment: .center) {
                     annotationLabel(value: focus.value)
+                        .transition(.scale(scale: 0.6).combined(with: .opacity))
                 }
             }
         }
@@ -197,6 +216,7 @@ struct TendencyChartView: View {
                     .fill(accent.opacity(0.06))
             )
         }
+        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: selectedDate)
         .padding(.horizontal, TendencyConstants.chartHorizontalPadding)
     }
     
@@ -212,6 +232,24 @@ struct TendencyChartView: View {
                 )
                 .foregroundStyle(accent.gradient)
                 .cornerRadius(4)
+                .opacity(barOpacity(for: point))
+            }
+            
+            if let focus = selectedPoint {
+                RuleMark(x: .value("focus", focus.date))
+                    .foregroundStyle(.secondary.opacity(0.35))
+                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
+                
+                PointMark(
+                    x: .value("focus-date", focus.date),
+                    y: .value("focus-value", focus.value)
+                )
+                .symbolSize(90)
+                .foregroundStyle(accent)
+                .annotation(position: .top, alignment: .center) {
+                    annotationLabel(value: focus.value)
+                        .transition(.scale(scale: 0.6).combined(with: .opacity))
+                }
             }
         }
         .chartScrollableAxes(.horizontal)
@@ -220,12 +258,16 @@ struct TendencyChartView: View {
         .chartXScale(domain: viewDateRange)
         .chartXAxis { axisMarksContent }
         .chartYAxis { yAxisMarksContent }
+        .chartOverlay { proxy in
+            chartGestureOverlay(proxy: proxy)
+        }
         .chartPlotStyle { plot in
             plot.background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .fill(accent.opacity(0.06))
             )
         }
+        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: selectedDate)
         .padding(.horizontal, TendencyConstants.chartHorizontalPadding)
     }
     
@@ -371,15 +413,25 @@ struct TendencyChartView: View {
             .padding(.horizontal, 8)
             .background(
                 Capsule()
-                    .fill(colorScheme == .dark ? Color.black.opacity(0.72) : Color.white.opacity(0.95))
+                    .fill(colorScheme == .dark ? Color.black.opacity(0.78) : Color.white.opacity(0.95))
             )
             .overlay(
                 Capsule()
                     .strokeBorder(.white.opacity(colorScheme == .dark ? 0.25 : 0.75), lineWidth: 0.8)
             )
+            .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
     }
     
     // MARK: - 数据处理
+    
+    /// 柱状图非选中柱的淡化处理（小时视图按小时精确对比）
+    private func barOpacity(for point: DailyAmount) -> Double {
+        guard let selected = selectedDate else { return 1 }
+        if isHourly {
+            return point.date == selected ? 1 : 0.45
+        }
+        return Calendar.current.isDate(point.date, inSameDayAs: selected) ? 1 : 0.45
+    }
     
     private func selectedText(for point: DailyAmount) -> String {
         let dateText = point.date.formatted(date: .abbreviated, time: .omitted)

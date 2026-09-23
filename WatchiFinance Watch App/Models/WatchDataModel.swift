@@ -7,7 +7,7 @@
 
 import Foundation
 import Combine
-import WatchConnectivity
+@preconcurrency import WatchConnectivity
 import os.log
 
 private let logger = Logger(subsystem: "com.liube.ifinance.watch", category: "WatchDataModel")
@@ -115,19 +115,12 @@ final class WatchDataModel: NSObject, ObservableObject, WCSessionDelegate {
         }
 
         let payload = bill.toPayload()
-        do {
-            // 使用 transferUserInfo 替代 updateApplicationContext
-            // transferUserInfo 会可靠地排队发送，不会覆盖消息
-            try WCSession.default.transferUserInfo(["action": "addBill", "bill": payload])
-            logger.info("账单已发送到 iPhone: \(bill.category) ¥\(bill.amount)")
-            addLocalBill(bill)
-            return true
-        } catch {
-            logger.error("发送失败: \(error.localizedDescription)")
-            cacheBill(bill)
-            addLocalBill(bill)
-            return false
-        }
+        // 使用 transferUserInfo 替代 updateApplicationContext
+        // transferUserInfo 会可靠地排队发送，不会覆盖消息
+        WCSession.default.transferUserInfo(["action": "addBill", "bill": payload])
+        logger.info("账单已发送到 iPhone: \(bill.category) ¥\(bill.amount)")
+        addLocalBill(bill)
+        return true
     }
 
     /// 刷新今日数据（请求 iPhone 同步，使用 transferUserInfo 确保可靠）
@@ -136,13 +129,9 @@ final class WatchDataModel: NSObject, ObservableObject, WCSessionDelegate {
             logger.info("iPhone 未连接，使用本地缓存")
             return
         }
-        do {
-            // 使用 transferUserInfo 替代 updateApplicationContext
-            try WCSession.default.transferUserInfo(["action": "requestTodayBills"])
-            logger.info("已请求同步今日数据")
-        } catch {
-            logger.error("同步请求失败: \(error)")
-        }
+        // 使用 transferUserInfo 替代 updateApplicationContext
+        WCSession.default.transferUserInfo(["action": "requestTodayBills"])
+        logger.info("已请求同步今日数据")
     }
 
     // MARK: - WCSessionDelegate
@@ -167,6 +156,9 @@ final class WatchDataModel: NSObject, ObservableObject, WCSessionDelegate {
             }
         }
     }
+
+    // watchOS 26 SDK 的 WCSessionDelegate 将这两个方法标注为 watchOS 不可用，
+    // 因此在 watchOS 上不需要（也不允许）实现。
 
     nonisolated func session(_ session: WCSession, didReceiveUserInfo userInfo: [String: Any] = [:]) {
         DispatchQueue.main.async {

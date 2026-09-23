@@ -122,12 +122,8 @@ final class WatchSessionManager: NSObject {
             return dict
         }
 
-        do {
-            try session.transferUserInfo(["action": "todayBills", "bills": billsArray])
-            logger.info("已推送 \(bills.count) 条今日账单到 Watch")
-        } catch {
-            logger.error("推送今日账单失败：\(error.localizedDescription)")
-        }
+        session.transferUserInfo(["action": "todayBills", "bills": billsArray])
+        logger.info("已推送 \(bills.count) 条今日账单到 Watch")
     }
 }
 

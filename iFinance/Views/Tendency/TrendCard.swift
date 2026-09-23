@@ -85,6 +85,7 @@ struct TrendCard: View {
             .pickerStyle(.segmented)
             .onChange(of: span) { _, newSpan in
                 // 切换时间段时重置状态
+                HapticManager.shared.selectionChanged()
                 scrollPosition = Date().startOfDay
                 selectedDate = nil
             }
@@ -102,6 +103,8 @@ struct TrendCard: View {
                 scrollPosition: $scrollPosition,
                 chartType: $chartType
             )
+            .animation(.spring(response: 0.5, dampingFraction: 0.85), value: span)
+            .animation(.spring(response: 0.5, dampingFraction: 0.85), value: chartType)
         }
         .padding(TendencyConstants.cardPadding)
         .appGlassCard(cornerRadius: TendencyConstants.cardCornerRadius)
@@ -117,28 +120,44 @@ struct TrendCard: View {
         let avg = nonZero.isEmpty ? 0 : nonZero.reduce(0, +) / Double(nonZero.count)
         
         HStack(spacing: 10) {
-            statPill(titleKey: "tendency.avg", value: "¥\(formatAmount(avg))", accent: accent)
-            statPill(titleKey: "tendency.total", value: "¥\(formatAmount(total))", accent: accent.opacity(0.85))
+            statPill(icon: "arrow.up.right.circle.fill", titleKey: "tendency.avg", value: "¥\(formatAmount(avg))", accent: accent)
+            statPill(icon: "chart.bar.fill", titleKey: "tendency.total", value: "¥\(formatAmount(total))", accent: accent.opacity(0.85))
         }
     }
     
     @ViewBuilder
-    private func statPill(titleKey: LocalizedStringKey, value: String, accent: Color) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(titleKey)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+    private func statPill(icon: String, titleKey: LocalizedStringKey, value: String, accent: Color) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 5) {
+                Image(systemName: icon)
+                    .font(.caption2.weight(.semibold))
+                Text(titleKey)
+                    .font(.caption)
+            }
+            .foregroundStyle(.secondary)
             Text(value)
                 .font(.headline)
                 .fontWeight(.semibold)
                 .foregroundStyle(accent)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 10)
         .padding(.horizontal, 12)
         .background {
             RoundedRectangle(cornerRadius: TendencyConstants.statPillCornerRadius, style: .continuous)
-                .fill(accent.opacity(0.1))
+                .fill(
+                    LinearGradient(
+                        colors: [accent.opacity(0.16), accent.opacity(0.07)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: TendencyConstants.statPillCornerRadius, style: .continuous)
+                        .strokeBorder(accent.opacity(0.2), lineWidth: 0.8)
+                )
         }
     }
     

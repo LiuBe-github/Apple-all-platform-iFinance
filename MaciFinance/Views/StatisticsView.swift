@@ -149,6 +149,9 @@ struct StatisticsView: View {
                 }
                 .pickerStyle(.segmented)
                 .frame(width: 300)
+                .onChange(of: selectedPeriod) { _, _ in
+                    HapticManager.shared.selectionChanged()
+                }
 
                 // Summary cards
                 HStack(spacing: 16) {
@@ -156,6 +159,7 @@ struct StatisticsView: View {
                     StatCard(title: L10n.string("mac.stat.total_expense"), value: totalExpense, icon: "arrow.down.circle.fill", color: .red)
                     StatCard(title: L10n.string("mac.stat.balance"), value: totalIncome - totalExpense, icon: "equal.circle.fill", color: totalIncome >= totalExpense ? .blue : .orange)
                 }
+                .animation(.spring(response: 0.5, dampingFraction: 0.85), value: selectedPeriod)
 
                 // Line chart
                 trendChartSection
@@ -165,7 +169,6 @@ struct StatisticsView: View {
             }
             .padding(24)
         }
-        .background(Color(nsColor: .windowBackgroundColor))
     }
 
     // MARK: Trend Chart Section
@@ -197,9 +200,7 @@ struct StatisticsView: View {
             }
         }
         .padding(20)
-        .background(Color(nsColor: .controlBackgroundColor))
-        .cornerRadius(16)
-        .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Color(nsColor: .separatorColor), lineWidth: 0.5))
+        .macCard(cornerRadius: 16)
     }
 
     @ViewBuilder
@@ -221,7 +222,7 @@ struct StatisticsView: View {
                     x: .value(L10n.string("mac.stat.date"), point.date),
                     y: .value(L10n.string("mac.stat.expense"), point.expense)
                 )
-                .interpolationMethod(.linear)
+                .interpolationMethod(.monotone)
                 .lineStyle(StrokeStyle(lineWidth: 2.5))
                 .foregroundStyle(.red)
 
@@ -229,7 +230,7 @@ struct StatisticsView: View {
                     x: .value(L10n.string("mac.stat.date"), point.date),
                     y: .value(L10n.string("mac.stat.income"), point.income)
                 )
-                .interpolationMethod(.linear)
+                .interpolationMethod(.monotone)
                 .lineStyle(StrokeStyle(lineWidth: 2.5))
                 .foregroundStyle(.green)
             }
@@ -244,6 +245,7 @@ struct StatisticsView: View {
             plot.background(Color(nsColor: .controlBackgroundColor).cornerRadius(14))
         }
         .frame(height: 260)
+        .animation(.spring(response: 0.5, dampingFraction: 0.85), value: selectedPeriod)
     }
 
     // MARK: Bar Chart
@@ -281,6 +283,7 @@ struct StatisticsView: View {
             plot.background(Color(nsColor: .controlBackgroundColor).cornerRadius(14))
         }
         .frame(height: 260)
+        .animation(.spring(response: 0.5, dampingFraction: 0.85), value: selectedPeriod)
     }
 
     // MARK: Category Breakdown Section
@@ -304,9 +307,7 @@ struct StatisticsView: View {
             }
         }
         .padding(20)
-        .background(Color(nsColor: .controlBackgroundColor))
-        .cornerRadius(16)
-        .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Color(nsColor: .separatorColor), lineWidth: 0.5))
+        .macCard(cornerRadius: 16)
     }
 }
 
@@ -316,17 +317,25 @@ private struct CategoryRow: View {
     let stat: StatisticsView.CategoryStat
     let maxAmount: Double
 
+    @State private var isHovering = false
+    @State private var barAppeared = false
+
     private var barWidth: Double {
         guard maxAmount > 0 else { return 0 }
         return min(stat.amount / maxAmount * 1.0, 1.0)
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Image(systemName: stat.icon)
                     .font(.system(size: 13))
                     .foregroundStyle(.red)
+                    .frame(width: 24, height: 24)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .fill(Color.red.opacity(0.12))
+                    )
 
                 Text(L10n.string(stat.name))
                     .font(.system(size: 13, weight: .medium))
@@ -335,18 +344,47 @@ private struct CategoryRow: View {
 
                 Text(formatCurrency(stat.amount))
                     .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                    .appNumericTransition(value: stat.amount)
 
                 Text(String(format: L10n.string("mac.stat.count_bills"), stat.count))
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
+                    .frame(width: 64, alignment: .trailing)
             }
 
             GeometryReader { geo in
-                RoundedRectangle(cornerRadius: 4, style: .continuous)
-                    .fill(Color.red.gradient)
-                    .frame(width: geo.size.width * barWidth, height: 6)
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(Color.secondary.opacity(0.1))
+                        .frame(height: 6)
+                    Capsule()
+                        .fill(Color.red.gradient)
+                        .frame(width: barAppeared ? geo.size.width * barWidth : 0, height: 6)
+                }
             }
             .frame(height: 6)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(isHovering ? Color.primary.opacity(0.05) : Color.clear)
+        )
+        .onHover { hovering in
+            withAnimation(.easeOut(duration: 0.15)) {
+                isHovering = hovering
+            }
+        }
+        .onAppear {
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.85)) {
+                barAppeared = true
+            }
+        }
+        .onChange(of: stat.amount) { _, _ in
+            barAppeared = false
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.85)) {
+                barAppeared = true
+            }
         }
     }
 }

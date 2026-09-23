@@ -86,7 +86,17 @@ struct SettingsRow: View {
             HStack(spacing: 12) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(iconColor.opacity(0.15))
+                        .fill(
+                            LinearGradient(
+                                colors: [iconColor.opacity(0.22), iconColor.opacity(0.10)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .strokeBorder(iconColor.opacity(0.2), lineWidth: 0.8)
+                        )
                         .frame(width: 32, height: 32)
                     Image(systemName: icon)
                         .font(.system(size: 14, weight: .medium))
@@ -112,7 +122,7 @@ struct SettingsRow: View {
             .padding(.vertical, 12)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(ScaleButtonStyle(pressedScale: 0.97))
     }
 }
 
@@ -438,12 +448,39 @@ struct SettingView: View {
 
     private var profileHeader: some View {
         HStack(spacing: 16) {
-            if let data = authManager.avatarData,
-               let uiImage = UIImage(data: data) {
-                Image(uiImage: uiImage).resizable().aspectRatio(contentMode: .fill)
-                    .frame(width: 64, height: 64).clipShape(Circle())
-            } else {
-                Image(systemName: "person.circle.fill").font(.system(size: 64)).foregroundStyle(.secondary)
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.blue.opacity(0.35), Color.purple.opacity(0.25), Color.pink.opacity(0.2)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 72, height: 72)
+                    .overlay(
+                        Circle()
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [Color.blue.opacity(0.8), Color.purple.opacity(0.7)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 2
+                            )
+                    )
+                if let data = authManager.avatarData,
+                   let uiImage = UIImage(data: data) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 66, height: 66)
+                        .clipShape(Circle())
+                } else {
+                    Image(systemName: "person.crop.circle.fill")
+                        .font(.system(size: 66))
+                        .foregroundStyle(.secondary)
+                }
             }
             VStack(alignment: .leading, spacing: 4) {
                 Text("iFinance").font(.title2.weight(.bold))
@@ -455,6 +492,8 @@ struct SettingView: View {
 
     // MARK: - 主题选择器
 
+    @Namespace private var themeNamespace
+
     private var themeSelector: some View {
         HStack(spacing: 0) {
             ForEach(ThemeMode.allCases, id: \.self) { theme in
@@ -464,15 +503,34 @@ struct SettingView: View {
                 } label: {
                     VStack(spacing: 6) {
                         ZStack {
-                            Circle().fill(themeColor(theme).opacity(0.15)).frame(width: 44, height: 44)
-                            Image(systemName: themeIcon(theme)).font(.system(size: 18, weight: .medium)).foregroundStyle(themeColor(theme))
+                            if selectedTheme == theme {
+                                Circle()
+                                    .fill(themeColor(theme).opacity(0.16))
+                                    .frame(width: 46, height: 46)
+                                    .matchedGeometryEffect(id: "themeSelection", in: themeNamespace)
+                                    .overlay(
+                                        Circle()
+                                            .strokeBorder(themeColor(theme).opacity(0.45), lineWidth: 1.2)
+                                            .matchedGeometryEffect(id: "themeSelectionRing", in: themeNamespace)
+                                    )
+                            } else {
+                                Circle().fill(Color.primary.opacity(0.05)).frame(width: 46, height: 46)
+                            }
+                            Image(systemName: themeIcon(theme))
+                                .font(.system(size: 18, weight: .medium))
+                                .foregroundStyle(themeColor(theme))
+                                .symbolEffect(.bounce, value: selectedTheme == theme)
                         }
                         Text(themeTitle(theme)).font(.caption2.weight(.medium))
                             .foregroundStyle(selectedTheme == theme ? themeColor(theme) : .secondary)
                     }
-                }.buttonStyle(.plain).frame(maxWidth: .infinity)
+                }
+                .buttonStyle(ScaleButtonStyle(pressedScale: 0.9))
+                .frame(maxWidth: .infinity)
             }
-        }.padding(.horizontal, 16).padding(.vertical, 14)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
     }
 
     private func themeColor(_ t: ThemeMode) -> Color {
@@ -515,10 +573,21 @@ struct SettingView: View {
 
     private var logoutButton: some View {
         Button { HapticManager.shared.medium(); authManager.logout() } label: {
-            Text(String(localized: "profile.logout")).font(.body.weight(.medium)).foregroundStyle(.red)
-                .frame(maxWidth: .infinity).padding(.vertical, 14)
-                .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color(UIColor.secondarySystemGroupedBackground)))
-        }.padding(.horizontal, 20)
+            HStack(spacing: 6) {
+                Image(systemName: "rectangle.portrait.and.arrow.right")
+                    .font(.system(size: 14, weight: .medium))
+                Text(String(localized: "profile.logout")).font(.body.weight(.medium))
+            }
+            .foregroundStyle(.red)
+            .frame(maxWidth: .infinity).padding(.vertical, 14)
+            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color(UIColor.secondarySystemGroupedBackground)))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .strokeBorder(Color.red.opacity(0.18), lineWidth: 0.8)
+            )
+        }
+        .buttonStyle(ScaleButtonStyle(pressedScale: 0.97))
+        .padding(.horizontal, 20)
     }
 
     // MARK: - 导出/导入逻辑

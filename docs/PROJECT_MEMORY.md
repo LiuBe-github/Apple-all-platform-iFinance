@@ -1,0 +1,336 @@
+# iFinance 项目记忆
+
+> 生成依据：工作区 HEAD `fd6b1fb`（`main` 分支，工作区存在未提交改动）。所有结论均来自源码实测，关键位置附带路径与行号。
+> 配套文档：[AGENTS.md](../AGENTS.md)（Agent 速用记忆）、[docs/api/README.md](api/README.md)（接口文档索引）。
+
+## 1. 项目定位
+
+iFinance 是一套 **Apple 全平台个人记账应用**，同一仓库内包含三个可独立运行的目标：
+
+| 目标 | 目录 | 平台 | Bundle ID | 部署目标 | 版本 |
+|------|------|------|-----------|----------|------|
+| iFinance | `iFinance/` | iOS / iPadOS | `cn.liube.iFinance` | iOS 17.6 | 1.1 (2) |
+| MaciFinance | `MaciFinance/` | macOS | `cn.liube.MaciFinance` | macOS 26.2 | 1.1 (2) |
+| WatchiFinance Watch App | `WatchiFinance Watch App/` | watchOS | `cn.liube.iFinance.watchkitapp` | watchOS 26.0 | 1.1 (2) |
+
+来源：`iFinance.xcodeproj/project.pbxproj:726`（iOS）、`:1182`（macOS）、`:1029`（watchOS）。
+开发环境：Xcode 27.0（`swift 6.x` 工具链），工程 `SWIFT_VERSION = 5.0`（Swift 5 语言模式）。
+外部依赖：**无**（无 SPM / CocoaPods / Carthage 依赖，全部自研）。
+
+### ⚠️ README 与工程实际配置的偏差
+
+`README.md` 中的以下信息已过期，**以工程配置为准**：
+
+| README 描述 | 实际情况 |
+|-------------|----------|
+| watchOS 最低 10.0 | `WATCHOS_DEPLOYMENT_TARGET = 26.0`（`project.pbxproj:1029`） |
+| macOS 15+ | `MACOSX_DEPLOYMENT_TARGET = 26.2`（`project.pbxproj:1182`） |
+| 「应用内实时切换，无需重启」 | iOS 语言切换走 `exit(0)` 重启进程（`iFinance/Helper/LocalizationHelper.swift:185`） |
+| README 目录树列出的 `Models/NetworkMonitor.swift` | 当前源码中**不存在**该文件 |
+| README 列出的 `Setting/Language/LanguageSettingView.swift` | iOS 的 `LanguageSettingView` 实际定义在 `iFinance/Helper/LocalizationHelper.swift:106` |
+
+## 2. 目录与模块地图
+
+```
+.
+├── iFinance/                     # iOS 主应用（约 9 400 行 Swift）
+│   ├── App/iFinanceApp.swift     # 入口：认证路由 + 生物锁遮罩 + 主题/语言注入 + Watch 激活
+│   ├── Persistence.swift         # Core Data 栈 + 用户隔离 predicate + 调试重置钩子
+│   ├── Manager/                  # AuthManager / BiometricLockManager / WatchSessionManager
+│   │                             # + CloudKitSyncManager、NotificationManager（两个 stub）
+│   ├── Models/                   # 支出 25 类、收入 11 类、ThemeMode、DailySentence
+│   ├── Protocol/TransactionCategory.swift
+│   ├── Helper/                   # L10n + AppLanguage + LanguageSettingView + HapticManager
+│   ├── Views/                    # Home / Transaction(Bills,Budget) / Tendency / Profile / Setting / Auth
+│   └── Resources/                # Localization(4 语言) + EconomicQuotes.json（100 条）
+├── MaciFinance/                  # macOS 应用（约 2 500 行 Swift）
+│   ├── MaciFinanceApp.swift      # NavigationSplitView 侧边栏入口
+│   ├── Persistence.swift         # 独立 Core Data 栈（模型名 MaciFinance）
+│   ├── Manager/                  # AuthManager + CloudKitSyncManager（stub）
+│   ├── Views/                    # DashboardView / BillListView / AddBillSheet / StatisticsView / SettingsView ...
+│   └── Resources/Localization/   # 4 语言
+├── WatchiFinance Watch App/      # watchOS 应用（约 800 行 Swift）
+│   ├── ContentView.swift         # 三 Tab：概览 / 快速记账 / 当日历史
+│   ├── Models/WatchDataModel.swift  # WCSession Delegate + 本地缓存
+│   └── Resources/Localization/   # 4 语言（key 前缀独立）
+├── iFinanceTests/                # XCTest，38 个用例（632 行）
+├── MaciFinanceTests/             # Swift Testing（@Test），579 行
+├── WatchiFinance Watch AppTests/ # 仅模板占位用例（17 行）
+├── *UITests/                     # 模板 UI 测试，无实际断言
+├── reset_ifinance_data.sh        # 清理模拟器账号/账单数据（见 §4 已知缺陷）
+└── README.md
+```
+
+## 3. 构建、运行与测试
+
+### 3.1 Scheme
+
+`xcodebuild -list` 输出的 4 个 scheme：
+
+| Scheme | 目标 |
+|--------|------|
+| `iFinance` | iOS 应用 |
+| `MaciFinance` | macOS 应用 |
+| `WatchiFinance Watch App` | watchOS 应用 |
+| `Copy of iFinance` | 遗留副本 scheme（仓库中无对应 `.xcscheme` 文件，建议清理） |
+
+注意：`iFinance.xcodeproj/xcshareddata/xcschemes/` 下只有两个文件——`iFinance.xcscheme` 与 `WatchiFinance Watch App.xcscheme`；`MaciFinance` scheme 由 Xcode 自动生成。
+
+### 3.2 常用命令
+
+```bash
+# 列出可用 scheme / 目标
+xcodebuild -list -project iFinance.xcodeproj
+
+# iOS 构建（模拟器）
+xcodebuild build -project iFinance.xcodeproj -scheme iFinance \
+  -destination 'generic/platform=iOS Simulator'
+
+# iOS 测试
+xcodebuild test -project iFinance.xcodeproj -scheme iFinance \
+  -destination 'platform=iOS Simulator,name=iPhone 16'
+
+# macOS 测试
+xcodebuild test -project iFinance.xcodeproj -scheme MaciFinance -destination 'platform=macOS'
+```
+
+模拟器设备名以 `xcrun simctl list devices available` 实际输出为准。
+
+### 3.3 测试现状
+
+| 测试目标 | 框架 | 规模 | 覆盖内容 |
+|----------|------|------|----------|
+| `iFinanceTests` | XCTest（`@MainActor final class`） | 38 用例 | Core Data 容器、Bill 增删改、密码哈希、分类枚举、时间范围过滤、趋势聚合 |
+| `MaciFinanceTests` | Swift Testing（`import Testing` + `@Test`） | 20+ 用例 | Persistence、Bill 模型、Dashboard 计算、Statistics 聚合、筛选与分组 |
+| `WatchiFinance Watch AppTests` | Swift Testing | 1 个占位 `example()` | 无实际断言 |
+| `iFinanceUITests` / `MaciFinanceUITests` | XCTest | 模板 | 无实际断言 |
+
+测试均在 `inMemory: true` 的 `PersistenceController` 上运行（`iFinanceTests/iFinanceTests.swift:22`），不触碰磁盘数据。
+
+## 4. 数据层
+
+### 4.1 两个互相独立的 Core Data 栈
+
+| 平台 | 模型文件 | 容器名 | Sqlite |
+|------|----------|--------|--------|
+| iOS | `iFinance/iFinance.xcdatamodeld` | `iFinance` | `.../Application Support/iFinance.sqlite` |
+| macOS | `MaciFinance/MaciFinance.xcdatamodeld` | `MaciFinance` | `.../Application Support/MaciFinance.sqlite` |
+
+两端**各自维护一份模型副本**，字段定义目前一致，但**没有任何代码共享**——改一处必须手动同步另一处，否则数据模型漂移。
+两端栈实现见 `iFinance/Persistence.swift:63` 与 `MaciFinance/Persistence.swift:54`。
+
+两端均使用普通 `NSPersistentContainer`（**不是** `NSPersistentCloudKitContainer`），并开启自动轻量迁移：
+
+```swift
+description.shouldMigrateStoreAutomatically = true
+description.shouldInferMappingModelAutomatically = true
+```
+
+`model.contents` 中仍保留 `usedWithCloudKit="YES"` 字段，属于历史遗留，不影响运行。
+
+### 4.2 实体：`Bill`
+
+| 字段 | 模型类型 | 源码中的用法 | 说明 |
+|------|----------|--------------|------|
+| `id` | UUID（optional） | `bill.id?.uuidString` | 幂等键；Watch 端写入时按 `id` 去重 |
+| `amount` | Decimal（默认 0） | `NSDecimalNumber` 赋值，读取时按可选使用（`bill.amount?.doubleValue`） | 金额 |
+| `type` | String（默认「支出」） | 运行时实际值：`"expenditure"` / `"income"` / `"transfer"` | 类型 |
+| `category` | String（默认「餐饮」） | 存**枚举 rawValue**（中文），可为 nil | 分类 |
+| `note` | String?（默认「无备注」） | 可为 nil | 备注 |
+| `date` | Date? | 影响分组/筛选 | 记账日期 |
+| `createdAt` / `updatedAt` | Date | — | 审计字段 |
+| `createdBy` / `updatedBy` | String（默认 `user`） | **数据隔离键**，等于 `UserProfile.userIdentifier` | 账号归属 |
+
+模型定义：`iFinance/iFinance.xcdatamodeld/iFinance.xcdatamodel/contents`。
+⚠️ 模型默认值（如 `type = "支出"`）与代码实际写入值（`"expenditure"`）**不一致**，只靠代码保证正确性；新增数据路径时务必显式赋值。
+
+### 4.3 实体：`UserProfile`
+
+| 字段 | 模型类型 | 说明 |
+|------|----------|------|
+| `id` | UUID? | 主键 |
+| `userIdentifier` | String（默认 `anonymous`） | 登录标识：邮箱 / 手机号 / Apple user id |
+| `email` / `phone` | String? | 账号凭证 |
+| `passwordHash` / `passwordSalt` | String? | SHA256 哈希与盐（第三方登录账号为空） |
+| `provider` / `providerID` | String? | `wechat` / `qq` / `apple` |
+| `nickname` | String? | 默认 `用户123`，注册时随机 `用户NNN` |
+| `avatarData` | Binary?（`allowsExternalBinaryDataStorage`） | 头像 |
+| `monthlyBudget` | Double（默认 3000） | 月度预算 |
+| `createdAt` / `updatedAt` | Date? | 审计字段 |
+
+### 4.4 多账号数据隔离
+
+- 隔离键：`PersistenceController.currentUserIdentifier`，读取 `UserDefaults["AuthUserIdentifier"]`，缺省 `"anonymous"`（`iFinance/Persistence.swift:126`）。
+- 查询助手：`PersistenceController.billUserPredicate`（`iFinance/Persistence.swift:131`）。
+- 约定：**所有账单查询都必须带 `createdBy == currentUserIdentifier` 过滤**，否则会串号；iOS 的 `AuthManager` 在登录/登出时同步该 key（`syncUserIdentifierToDefaults()`，`iFinance/Manager/AuthManager.swift:549`）。
+- 删除账号：`AuthManager.deleteAccount()` 批量删除该用户账单后删除 `UserProfile`（`iFinance/Manager/AuthManager.swift:345`）。
+
+### 4.5 调试辅助
+
+- `PersistenceController.scheduleResetAllData()`：打标 `UserDefaults["_DevResetAllData"]`，下次启动时批量清空 `Bill` + `UserProfile` 并打印日志（`iFinance/Persistence.swift:100`、`:104`）。
+- `AuthManager.deleteAllAccounts()`：立即清空所有账号与账单（`iFinance/Manager/AuthManager.swift:368`）。
+- `PersistenceController.preview`：内存容器 + 预置样例账单，供 `#Preview` 使用。
+
+### 4.6 CSV 导入导出（仅 iOS）
+
+- 实现位置：`iFinance/Views/Setting/SettingView.swift:595`（导出）、`:613`（导入）、`:658`/`:662`（转义与解析）。
+- 表头：`date,type,category,amount,note`；日期为 ISO8601，导入时回退解析 `yyyy-MM-dd HH:mm:ss`（`en_US_POSIX`）。
+- 导入仅接受 `type ∈ {income, expenditure, transfer}`；导入的账单**不写 `createdAt/createdBy/updatedAt/updatedBy`**，因此这些记录不会出现在按 `createdBy` 过滤的列表中（已知缺陷，见 §10）。
+- macOS 端 SettingsView 中标注 `// TODO: implement CSV/JSON export`（`MaciFinance/Views/SettingsView.swift:158`），功能未实现。
+
+## 5. 认证与账号体系（iOS）
+
+核心类：`AuthManager`（`@MainActor final class ... ObservableObject`，单例 `shared`，`iFinance/Manager/AuthManager.swift:16`）。
+
+### 5.1 状态机
+
+```
+未登录(LoginView) --register/login/loginWithProvider/handleSignInWithApple--> isAuthenticated = true --> ContentView
+ContentView --logout/deleteAccount/会话过期(7 天)--> isAuthenticated = false --> LoginView
+```
+
+- 会话有效期：`sessionLifetime = 7 * 24 * 60 * 60`，`bootstrap()` 中比较 `AuthLastActiveAt`（`AuthManager.swift:64`、`:136`）。
+- 启动流程：`iFinanceApp.onAppear` → `authManager.bootstrap()`（`iFinance/App/iFinanceApp.swift:63`）。
+- 前后台：`scenePhase` 变化时调用 `handleAppWillResignActive()` / `handleAppDidBecomeActive()` 刷新活跃时间（`iFinance/App/iFinanceApp.swift:74`）。
+
+### 5.2 密码存储
+
+```swift
+static func hashPassword(password: String, salt: String) -> String {
+    let payload = "\(salt)|\(password)"
+    let digest = SHA256.hash(data: Data(payload.utf8))
+    return digest.map { String(format: "%02x", $0) }.joined()
+}
+```
+
+（`iFinance/Manager/AuthManager.swift:621`）盐值 = `UUID().uuidString`；密码强度仅要求长度 ≥ 6；手机号规则 `^1[3-9]\d{9}$`，邮箱为常规正则（`AuthManager.swift:605`、`:610`）。
+⚠️ 未加迭代次数（非 PBKDF2/Argon2），仅适合演示用途。
+
+### 5.3 UserDefaults key 全表（iOS）
+
+| Key | 写入方 | 含义 |
+|-----|--------|------|
+| `AuthLastLoginIdentifier` | AuthManager | 上次登录的 `userIdentifier` |
+| `AuthIsLoggedIn` | AuthManager | 登录标记（Bool） |
+| `AuthLastActiveAt` | AuthManager | 最近活跃时间（Date，用于 7 天会话） |
+| `AuthUserIdentifier` | AuthManager / PersistenceController | **数据隔离正在使用的用户标识** |
+| `AuthEmail` `AuthPhone` `AuthPasswordHash` `AuthPasswordSalt` `AuthProvider` `AuthProviderID` `UserProfileNickname` | 旧版本迁移 | 仅用于迁移到 Core Data 后即删除哈希/盐（`AuthManager.swift:559`） |
+| `selectedTheme` | `@AppStorage` | 主题（`light` / `dark` / `system`） |
+| `app_language` | `@AppStorage` | 语言（`system` / `zh-Hans` / `zh-Hant` / `en` / `ja`） |
+| `BiometricLockEnabled` | `@AppStorage` | 生物识别锁开关 |
+| `iCloudSyncEnabled` | CloudKitSyncManager | iCloud 同步开关（当前恒为 false） |
+| `WatchBillsCache` | watchOS WatchDataModel | Watch 侧今日账单 JSON 缓存（**仅 Watch 端**） |
+| `_DevResetAllData` | PersistenceController | 一次性重置数据标记 |
+
+## 6. 跨端数据流：iPhone ↔ Apple Watch
+
+两端唯一通道是 `WatchConnectivity`，**不使用** CloudKit 或 App Group。
+
+### 6.1 消息协议（字典 payload）
+
+| 方向 | action | 附带字段 | 发送方式 |
+|------|--------|----------|----------|
+| Watch → iPhone | `addBill` | `bill: [String: Any]` | `transferUserInfo`（可靠排队） |
+| Watch → iPhone | `requestTodayBills` | — | `transferUserInfo` |
+| iPhone → Watch | `todayBills` | `bills: [[String: Any]]` | `transferUserInfo` |
+
+`bill` / `bills[]` 字段：`id`(String, UUID 字符串) / `amount`(Double) / `type`(String) / `category`(String) / `note`(String?) / `date`(ISO8601 String) / `userIdentifier`(String，仅 Watch→iPhone 时携带)。
+
+两端实现：
+- iPhone 端：`iFinance/Manager/WatchSessionManager.swift`（接收 → 写 Core Data，`saveBillFromWatch` 在 `:39`；回推今日账单 `sendTodayBillsToWatch` 在 `:97`）。
+- Watch 端：`WatchiFinance Watch App/Models/WatchDataModel.swift`（`sendBill` 在 `:109`、`requestSync` 在 `:127`、`didReceiveUserInfo` 在 `:163`）。
+
+### 6.2 关键行为
+
+1. **幂等写入**：iPhone 端按 `id` 查询，已存在则跳过（`WatchSessionManager.swift:68`）。
+2. **用户归属兜底**：若 Watch 传来的 `userIdentifier` 为 nil 或 `"anonymous"`，改用当前登录用户 `PersistenceController.currentUserIdentifier`（`WatchSessionManager.swift:60`）。Watch 端的默认值是 `UserDefaults["AuthUserIdentifier"] ?? "anonymous"`（`WatchDataModel.swift:43`）——Watch 与 iPhone 不共享 UserDefaults，因此该兜底是常态路径。
+3. **离线降级**：Watch 侧 `isReachable == false` 时 `sendBill` 只写本地缓存并返回 `false`（`WatchDataModel.swift:110`），**没有补发队列**，账单不会自动重传，需要用户重试。
+4. **今日账单口径**：iPhone 端按 `createdBy == 当前用户` 且 `date ∈ [今日0点, 明日0点)` 查询（`WatchSessionManager.swift:99`）。
+5. **Watch 端 delegate 限制**：watchOS 不允许实现 `sessionDidBecomeInactive` / `sessionDidDeactivate`（源码注释：`WatchDataModel.swift:134`）。
+
+### 6.3 激活时机
+
+- iPhone：`iFinanceApp.onAppear` → `WatchSessionManager.shared.activate()`（`iFinance/App/iFinanceApp.swift:68`）。
+- Watch：`WatchDataModel.shared` 在 `init` 中激活 `WCSession`（`WatchDataModel.swift:95`），App 入口文件 `WatchiFinance Watch App/WatchiFinanceApp.swift` 仅 16 行。
+
+## 7. 国际化
+
+三端各自持有一套 `.lproj`（互不共享）：`iFinance/Resources/Localization/`、`MaciFinance/Resources/Localization/`、`WatchiFinance Watch App/Resources/Localization/`，各含 `zh-Hans` / `zh-Hant` / `en` / `ja`。
+
+规模（zh-Hans）：iOS 446 行、macOS 418 行、Watch 45 行。iOS 端 key 前缀分布：`mac.*` 87、`settings.*` 57、`bill.*` 42、`cat.*` 36、`auth.*` 36、`icloud.*` 23、`budget.*` 23、`tendency.*` 17、`home.*` 16、`notification.*` 13、`profile.*` 11、`lock.*` 10、`search.*` 9、`common.*` 8、`tab.*` 4。
+Watch 端前缀独立：`add.*`、`category.*`、`summary.*`、`history.*`、`tab.*`、`status.*`。
+
+查找机制（iOS/macOS/Watch 三份 `L10n` 实现思路一致）：
+
+1. 用户在设置中选择固定语言 → 从对应 `.lproj` bundle 读取；
+2. 选择「跟随系统」→ 依次尝试 `lang_region`、`lang`、`en`，跳过与 key 相同的返回值；
+3. 全部失败 → 返回 key 本身。
+
+实现见 `iFinance/Helper/LocalizationHelper.swift:15`；Apple 语言标识归一化函数 `normalizeLanguageIdentifier` 在 `:52`（`zh`→`zh-Hans`、`zh-HK`→`zh-Hant` 等）。
+
+⚠️ 项目内三种本地化调用方式**并存**，改文案时要一起检查：`L10n.string("...")`、`String(localized: "...")`、`Text("key")`（`LocalizedStringKey`）、以及少量 `NSLocalizedString`。
+⚠️ 语言切换后走 `exit(0)` 主动退出进程（`LocalizationHelper.swift:185`），是刻意行为。
+
+## 8. 视觉与交互规范
+
+| 能力 | 实现 | 位置 |
+|------|------|------|
+| 渐变背景 + 呼吸光斑 | `AppBackgroundView`（`TimelineView(.animation(minimumInterval: 1/30))` + 3 个漂移球体） | `iFinance/Views/Common/AppVisualStyle.swift:5` |
+| 毛玻璃卡片 | `appGlassCard` 系列 modifier | 同上（iOS 与 macOS 各一份 #if 分支实现） |
+| 按压缩放 | `ScaleButtonStyle` | 同上 |
+| 触觉反馈 | `HapticManager.shared`：`light/medium/heavy/soft/rigid/success/warning/error/selectionChanged` 共 9 个方法 | `iFinance/Helper/HapticManager.swift:16-110` |
+| 数字动画 | `.contentTransition(.numericText())` | 卡片金额展示处 |
+| 图标动效 | `.symbolEffect(...)` | 刷新/分享/选中/超支等场景 |
+
+macOS 端有独立副本：`MaciFinance/Views/Common/AppVisualStyle.swift`（130 行）与 `MaciFinance/Helpers/HapticManager.swift`（46 行，桌面端为空实现/降级）。
+
+## 9. 代码约定（从现有代码归纳）
+
+1. **文件头注释**：`// 文件名` + `// 目标名` + `// Created by 刘不易 on 日期`（部分新文件用 `WorkBuddy`）。
+2. **MARK 分节**：`// MARK: - 分类名` 贯穿全部文件，节顺序大致为「Published 状态 → 私有属性 → 初始化 → Public API → 私有辅助」。
+3. **单例 + ObservableObject**：所有 Manager 使用 `static let shared` + `private init`，`@MainActor` 修饰类。
+4. **import 写法**：`internal import CoreData`（项目显式关闭 CoreData 的跨模块导出）、`@preconcurrency import WatchConnectivity`、框架调用被禁用时保留注释行（`// import CloudKit`）。
+5. **`#Preview`**：几乎每个 View 文件末尾都有；预览依赖 `PersistenceController.preview`。
+6. **视图访问 Core Data**：通过 `@Environment(\.managedObjectContext)` 或 `PersistenceController.shared.container.viewContext` 直接取用；`@FetchRequest` 与手动 `NSFetchRequest` 混用。
+7. **分类枚举**：`ExpenditureCategory`（25）/`IncomeCategory`（11）遵循 `TransactionCategory` 协议，提供 `icon`（SF Symbol）与 `localizedDisplayName`（走 `L10n`）。
+8. **平台分支**：`#if os(macOS)` / `#if os(watchOS)` 用于差异 UI，公共层不做跨端抽象（存在重复代码，是当前架构的既定取舍）。
+
+## 10. 已知问题与技术债
+
+1. **`reset_ifinance_data.sh` 的 Bundle ID 前缀错误**：脚本使用 `com.liube.iFinance`（`reset_ifinance_data.sh:20`、`:41`），工程实际为 `cn.liube.iFinance`（`project.pbxproj:732`）。`xcrun simctl get_app_container` 会取不到容器，`defaults delete` 也全部命中不存在的域（脚本以 `|| true` 静默跳过），实际清理效果不可靠。
+2. **CSV 导入缺少账号字段**：导入的 `Bill` 未写 `createdBy`，会被 `billUserPredicate` 过滤掉（`iFinance/Views/Setting/SettingView.swift:641`）。
+3. **CSV 解析的小数 locale 拼写错误**：`Locale(identifier: "en_US_POSX")`（`SettingView.swift:637`），应为 `en_US_POSIX`。
+4. **CloudKit 同步与本地通知为禁用 stub**：`CloudKitSyncManager` / `NotificationManager` 所有系统调用被注释，接口返回固定值或空实现（需付费开发者账号）；UI 入口仍存在（`iCloudSyncView`）。
+5. **Watch 端离线账单不会补传**：`sendBill` 在不可达时仅本地缓存（`WatchDataModel.swift:100`），无重试队列。
+6. **`Notification.Name.didRequestAddBill` / `didRequestBudgetView` 无任何发送方或订阅方**（`iFinance/Manager/NotificationManager.swift:97`），属于遗留扩展点。
+7. **macOS 端功能缺口**：CSV/JSON 导出为 TODO（`MaciFinance/Views/SettingsView.swift:158`）；无生物锁、无 Watch 联动、无本地通知。
+8. **两份 Core Data 模型与两份 AuthManager 手动同步**：iOS 与 macOS 各自实现，字段演进而未同步时会出现平台间行为不一致（模型当前字段一致，实现细节不同）。
+9. **遗留 scheme `Copy of iFinance`** 无对应 `.xcscheme` 文件，建议从工程中清理。
+10. **测试覆盖偏工具层**：UI 层与 Watch 端几乎无自动化测试（`WatchiFinance Watch AppTests` 仅模板用例）。
+
+## 11. 高频任务操作指引
+
+| 任务 | 需要改动的文件 |
+|------|----------------|
+| 新增一个支出分类 | `iFinance/Models/ExpenditureCategory.swift`（+ `MaciFinance/Models/ExpenditureCategory.swift`）；补 4 语言 `cat.*` key；确认 `ExpenditureCategoryItemView`/饼图/筛选列表自动生效 |
+| 新增一条界面文案 | 三端各自的 `Resources/Localization/*.lproj/Localizable.strings`（若该文案属于对应端） |
+| 修改 `Bill` 字段 | 两个 `.xcdatamodeld/contents` 都要改；只能做「新增字段/新增实体」这类轻量迁移；改类型或删字段需要 Mapping Model（`iFinance/Persistence.swift:76` 注释） |
+| 新增一个 iOS 页面 | 放到 `iFinance/Views/<模块>/`，末尾加 `#Preview`；如需参与 Tab，改 `iFinance/Views/ContentView.swift` 的 `Tab` 枚举 |
+| 修改 Watch 传输字段 | 同步改 `WatchDataModel.toPayload()`/`from()`、`WatchSessionManager.saveBillFromWatch()`，并注意 `id` 幂等与 `userIdentifier` 兜底 |
+| 排查「账单不显示」 | 先查 `createdBy` 是否等于 `UserDefaults["AuthUserIdentifier"]`（`billUserPredicate`），再查 `date` 是否落在筛选区间 |
+| 重置本地数据 | 优先用 `AuthManager.deleteAllAccounts()`（App 内）或 `PersistenceController.scheduleResetAllData()`；`reset_ifinance_data.sh` 存在 Bundle ID 缺陷（§10.1） |
+
+## 12. 文档地图
+
+| 文档 | 内容 |
+|------|------|
+| [docs/api/README.md](api/README.md) | 接口文档索引与通用约定 |
+| [docs/api/ios-core.md](api/ios-core.md) | iOS 核心层：入口、Persistence、Manager、Model、Helper |
+| [docs/api/ios-ui.md](api/ios-ui.md) | iOS 视图层：Home / Transaction / Tendency / Profile / Setting / Auth / Common |
+| [docs/api/macos.md](api/macos.md) | macOS 端全部接口 |
+| [docs/api/watchos.md](api/watchos.md) | watchOS 端全部接口 |
+| [docs/api/data-and-sync.md](api/data-and-sync.md) | 数据模型与 WatchConnectivity 协议细则 |
+
+---
+
+_本文件由代码勘察生成（HEAD `fd6b1fb`）。修改代码后请同步更新对应章节；新增公开接口时请同步接口文档。_

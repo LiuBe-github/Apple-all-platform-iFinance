@@ -48,58 +48,34 @@ struct AddBillView: View {
                 // 主要内容区域（可滚动）
                 ScrollView {
                     VStack(alignment: .leading) {
-                        if transactionType == .expenditure {
-                            LazyVGrid(columns: columns, spacing: 35) {
-                                ForEach(ExpenditureCategory.allCases, id: \.self) { category in
-                                    ExpenditureCategoryItemView(category: category, selectedCategory:  $selectedExpenditureCategory)
-                                        .onTapGesture {
-                                            HapticManager.shared.light()
-                                        }
+                        Group {
+                            if transactionType == .expenditure {
+                                LazyVGrid(columns: columns, spacing: 20) {
+                                    ForEach(ExpenditureCategory.allCases, id: \.self) { category in
+                                        ExpenditureCategoryItemView(category: category, selectedCategory:  $selectedExpenditureCategory)
+                                            .onTapGesture {
+                                                HapticManager.shared.light()
+                                            }
+                                    }
                                 }
+                                .padding(.horizontal, 12)
+                            } else if transactionType == .income {
+                                LazyVGrid(columns: columns, spacing: 20) {
+                                    ForEach(IncomeCategory.allCases, id: \.self) { category in
+                                        IncomeCategoryItemView(category: category, selectedCategory:  $selectedIncomeCategory)
+                                            .onTapGesture {
+                                                HapticManager.shared.light()
+                                            }
+                                    }
+                                }
+                                .padding(.horizontal, 12)
+                            } else {
+                                transferForm
                             }
-                            .padding(.horizontal, 8)
-                            .padding(.top, -10)
-                        } else if transactionType == .income {
-                            LazyVGrid(columns: columns, spacing: 35) {
-                                ForEach(IncomeCategory.allCases, id: \.self) { category in
-                                    IncomeCategoryItemView(category: category, selectedCategory:  $selectedIncomeCategory)
-                                        .onTapGesture {
-                                            HapticManager.shared.light()
-                                        }
-                                }
-                            }
-                            .padding(.horizontal, 8)
-                            .padding(.top, -10)
-                        } else {
-                            VStack(alignment: .leading, spacing: 16) {
-                                Text("bill.transfer_hint")
-                                    .font(.footnote)
-                                    .foregroundStyle(.secondary)
-
-                                VStack(spacing: 12) {
-                                    transferField(
-                                        titleKey: "bill.transfer_from",
-                                        text: $transferFrom,
-                                        systemImage: "arrow.up.right"
-                                    )
-
-                                    transferField(
-                                        titleKey: "bill.transfer_to",
-                                        text: $transferTo,
-                                        systemImage: "arrow.down.left"
-                                    )
-                                }
-
-                                Button {
-                                    swap(&transferFrom, &transferTo)
-                                } label: {
-                                    Label("bill.transfer_swap", systemImage: "arrow.left.arrow.right")
-                                }
-                                .buttonStyle(.bordered)
-                                .tint(.blue)
-                            }
-                            .padding(.horizontal)
                         }
+                        .id(transactionType)
+                        .transition(.opacity.combined(with: .move(edge: .bottom)))
+                        .animation(.spring(response: 0.4, dampingFraction: 0.85), value: transactionType)
                         
                         // 占位符，确保内容不会被底部键盘遮挡
                         Color.clear
@@ -152,6 +128,41 @@ struct AddBillView: View {
             Button("common.ok", role: .cancel){ }
         }
         
+    }
+    
+    // MARK: - 转账表单
+    private var transferForm: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("bill.transfer_hint")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+
+            VStack(spacing: 12) {
+                transferField(
+                    titleKey: "bill.transfer_from",
+                    text: $transferFrom,
+                    systemImage: "arrow.up.right"
+                )
+
+                transferField(
+                    titleKey: "bill.transfer_to",
+                    text: $transferTo,
+                    systemImage: "arrow.down.left"
+                )
+            }
+
+            Button {
+                HapticManager.shared.medium()
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                    swap(&transferFrom, &transferTo)
+                }
+            } label: {
+                Label("bill.transfer_swap", systemImage: "arrow.left.arrow.right")
+            }
+            .buttonStyle(.bordered)
+            .tint(.blue)
+        }
+        .padding(.horizontal)
     }
     
     private func saveBill() {

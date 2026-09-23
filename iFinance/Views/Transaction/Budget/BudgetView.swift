@@ -37,6 +37,9 @@ struct BudgetView: View {
     
     // 图表切换状态
     @State private var chartType: CategoryChartType = .list
+    // 饼图选中角度（chartAngleSelection）与选中分类
+    @State private var selectedPieAngle: Double?
+    @State private var selectedPieCategory: ExpenditureCategory?
     
     enum CategoryChartType: String, CaseIterable {
         case list = "列表"
@@ -341,10 +344,34 @@ struct BudgetView: View {
                 )
                 .foregroundStyle(by: .value(L10n.string("bill.category_legend"), item.category.localizedDisplayName))
                 .cornerRadius(4)
+                .opacity(selectedPieAngle == nil || selectedPieCategory == item.category ? 1 : 0.4)
             }
             .chartLegend(position: .bottom, alignment: .center, spacing: 12)
+            .chartAngleSelection(value: $selectedPieAngle)
+            .onChange(of: selectedPieAngle) { _, newAngle in
+                HapticManager.shared.selectionChanged()
+                selectedPieCategory = newAngle.map { pieCategory(at: $0) } ?? nil
+            }
+            .chartBackground { proxy in
+                // 中心选中提示
+                if let cat = selectedPieCategory,
+                   let amount = categoryItems.first(where: { $0.category == cat })?.amount {
+                    VStack(spacing: 2) {
+                        Text(cat.localizedDisplayName)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text(formatAmount(amount))
+                            .font(.system(size: 15, weight: .bold, design: .rounded))
+                            .foregroundStyle(.primary)
+                            .appNumericTransition(value: amount)
+                    }
+                    .transition(.scale(scale: 0.85).combined(with: .opacity))
+                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: cat)
+                }
+            }
             .frame(height: 240)
             .padding(.horizontal, 8)
+            .animation(.easeInOut(duration: 0.2), value: selectedPieCategory)
             
             // 分类金额列表
             VStack(spacing: 1) {
@@ -364,6 +391,7 @@ struct BudgetView: View {
                         Text(formatAmount(item.amount))
                             .font(.system(size: 14, weight: .semibold, design: .rounded))
                             .foregroundStyle(.primary)
+                            .appNumericTransition(value: item.amount)
                         
                         Text("\(Int(item.amount / totalExpenditure * 100))%")
                             .font(.system(size: 12))
@@ -372,6 +400,23 @@ struct BudgetView: View {
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 10)
+                    .contentShape(Rectangle())
+                    .background(
+                        selectedPieCategory == item.category
+                        ? Color.blue.opacity(0.06)
+                        : Color.clear
+                    )
+                    .onTapGesture {
+                        HapticManager.shared.selectionChanged()
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
+                            if selectedPieCategory == item.category {
+                                selectedPieCategory = nil
+                                selectedPieAngle = nil
+                            } else {
+                                selectedPieCategory = item.category
+                            }
+                        }
+                    }
                     
                     if index < categoryItems.count - 1 {
                         Rectangle()
@@ -388,6 +433,20 @@ struct BudgetView: View {
             )
         }
         .padding(.horizontal, 4)
+    }
+    
+    /// 根据角度解析对应的分类（饼图扇区）
+    private func pieCategory(at angle: Double) -> ExpenditureCategory? {
+        let total = categoryItems.reduce(0.0) { $0 + $1.amount }
+        guard total > 0 else { return nil }
+        var accumulated: Double = 0
+        for item in categoryItems {
+            accumulated += item.amount
+            if angle <= accumulated / total * 360 {
+                return item.category
+            }
+        }
+        return nil
     }
     
     // 分类颜色

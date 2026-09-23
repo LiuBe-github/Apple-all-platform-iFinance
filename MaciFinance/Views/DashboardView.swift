@@ -113,6 +113,7 @@ struct DashboardView: View {
                     StatCard(title: L10n.string("mac.dashboard.total_balance"), value: balance, icon: "yensign.circle.fill", color: .blue)
                     StatCard(title: L10n.string("mac.dashboard.bill_count"), count: billCount, icon: "list.bullet", color: .orange)
                 }
+                .animation(.spring(response: 0.5, dampingFraction: 0.85), value: billCount)
 
                 // MARK: Overview Section
                 LazyVGrid(columns: [
@@ -123,15 +124,17 @@ struct DashboardView: View {
                         title: L10n.string("mac.dashboard.total_income"),
                         value: totalIncome,
                         subtitle: L10n.string("mac.dashboard.total_income_cumulative"),
-                        icon: "wallet.pass",
-                        color: Color.green.opacity(0.12)
+                        icon: "arrow.down.left.circle.fill",
+                        color: Color.green.opacity(0.12),
+                        accent: .green
                     )
                     OverviewCard(
                         title: L10n.string("mac.dashboard.total_expense"),
                         value: totalExpense,
                         subtitle: L10n.string("mac.dashboard.total_expense_cumulative"),
-                        icon: "creditcard",
-                        color: Color.red.opacity(0.12)
+                        icon: "arrow.up.right.circle.fill",
+                        color: Color.red.opacity(0.12),
+                        accent: .red
                     )
                 }
 
@@ -143,7 +146,6 @@ struct DashboardView: View {
             }
             .padding(24)
         }
-        .background(Color(nsColor: .windowBackgroundColor))
     }
 
     // MARK: Recent Transactions Section
@@ -161,7 +163,7 @@ struct DashboardView: View {
                     .padding(.vertical, 40)
             } else {
                 VStack(spacing: 2) {
-                    ForEach(allBills.prefix(8)) { bill in
+                    ForEach(Array(allBills.prefix(8).enumerated()), id: \.element.objectID) { index, bill in
                         BillRow(bill: bill)
                             .background(Color.clear)
                     }
@@ -174,12 +176,7 @@ struct DashboardView: View {
             }
         }
         .padding(20)
-        .background(Color(nsColor: .controlBackgroundColor))
-        .cornerRadius(16)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .strokeBorder(Color(nsColor: .separatorColor), lineWidth: 0.5)
-        )
+        .macCard(cornerRadius: 16)
     }
 }
 
@@ -192,6 +189,8 @@ struct StatCard: View {
     let icon: String
     let color: Color
 
+    @State private var isHovering = false
+
     private var displayValue: String {
         if let c = count {
             return "\(c)"
@@ -203,13 +202,34 @@ struct StatCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Image(systemName: icon)
-                .font(.system(size: 22))
-                .foregroundStyle(color)
+            HStack {
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(color)
+                    .frame(width: 34, height: 34)
+                    .background(
+                        RoundedRectangle(cornerRadius: 9, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [color.opacity(0.22), color.opacity(0.10)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                                    .strokeBorder(color.opacity(0.25), lineWidth: 0.8)
+                            )
+                    )
+                Spacer()
+            }
 
             Text(displayValue)
                 .font(.system(size: 22, weight: .bold, design: .rounded))
                 .foregroundStyle(.primary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .appNumericTransition(value: value ?? Double(count ?? 0))
 
             Text(title)
                 .font(.system(size: 11))
@@ -217,12 +237,9 @@ struct StatCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(18)
-        .background(Color(nsColor: .controlBackgroundColor))
-        .cornerRadius(14)
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .strokeBorder(Color(nsColor: .separatorColor), lineWidth: 0.5)
-        )
+        .macCard(cornerRadius: 14)
+        .macHoverLift(isHovering)
+        .onHover { isHovering = $0 }
     }
 }
 
@@ -232,19 +249,25 @@ private struct OverviewCard: View {
     let subtitle: String
     let icon: String
     let color: Color
+    let accent: Color
+
+    @State private var isHovering = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 8) {
                 Image(systemName: icon)
                     .font(.system(size: 24))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(accent)
                 Spacer()
             }
 
             Text(formatCurrency(value))
                 .font(.system(size: 28, weight: .heavy, design: .rounded))
                 .foregroundStyle(.primary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .appNumericTransition(value: value)
 
             Text(subtitle)
                 .font(.system(size: 13))
@@ -257,7 +280,13 @@ private struct OverviewCard: View {
         }
         .padding(22)
         .background(color)
-        .cornerRadius(16)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(accent.opacity(0.2), lineWidth: 0.8)
+        )
+        .macHoverLift(isHovering)
+        .onHover { isHovering = $0 }
     }
 }
 
@@ -283,6 +312,7 @@ private struct ChartSection: View {
                         )
                         .foregroundStyle(Color.red.gradient)
                         .cornerRadius(3, style: .continuous)
+                        .position(by: .value(L10n.string("mac.bill.filter_type"), L10n.string("mac.stat.expense")))
 
                         BarMark(
                             x: .value(L10n.string("mac.stat.date"), point.date, unit: .day),
@@ -290,8 +320,14 @@ private struct ChartSection: View {
                         )
                         .foregroundStyle(Color.green.gradient)
                         .cornerRadius(3, style: .continuous)
+                        .position(by: .value(L10n.string("mac.bill.filter_type"), L10n.string("mac.stat.income")))
                     }
                 }
+                .chartForegroundStyleScale([
+                    L10n.string("mac.stat.expense"): Color.red,
+                    L10n.string("mac.stat.income"): Color.green
+                ])
+                .chartLegend(position: .top, alignment: .trailing)
                 .chartYAxis {
                     AxisMarks(position: .leading) { _ in
                         AxisValueLabel()
@@ -310,20 +346,18 @@ private struct ChartSection: View {
                     plot.background(Color(nsColor: .controlBackgroundColor).cornerRadius(12))
                 }
                 .frame(height: 220)
+                .animation(.spring(response: 0.5, dampingFraction: 0.85), value: dataPoints.count)
             }
         }
         .padding(20)
-        .background(Color(nsColor: .controlBackgroundColor))
-        .cornerRadius(16)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .strokeBorder(Color(nsColor: .separatorColor), lineWidth: 0.5)
-        )
+        .macCard(cornerRadius: 16)
     }
 }
 
 private struct BillRow: View {
     let bill: Bill
+
+    @State private var isHovering = false
 
     private var isExpense: Bool { bill.type == "expenditure" || bill.type == "transfer" }
     private var amountText: String {
@@ -341,8 +375,21 @@ private struct BillRow: View {
         HStack(spacing: 12) {
             ZStack {
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(isExpense ? Color.red.opacity(0.08) : Color.green.opacity(0.08))
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                (isExpense ? Color.red : Color.green).opacity(0.16),
+                                (isExpense ? Color.red : Color.green).opacity(0.06)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
                     .frame(width: 36, height: 36)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .strokeBorder((isExpense ? Color.red : Color.green).opacity(0.2), lineWidth: 0.8)
+                    )
 
                 Image(systemName: categoryIcon)
                     .font(.system(size: 14, weight: .medium))
@@ -373,6 +420,15 @@ private struct BillRow: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(isHovering ? Color.primary.opacity(0.05) : Color.clear)
+        )
+        .onHover { hovering in
+            withAnimation(.easeOut(duration: 0.15)) {
+                isHovering = hovering
+            }
+        }
     }
 
     private var categoryIcon: String {

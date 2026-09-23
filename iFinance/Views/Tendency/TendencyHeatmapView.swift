@@ -2,6 +2,8 @@
 //  TendencyHeatmapView.swift
 //  iFinance
 //
+//  GitHub 风格热力图（增强交互版）
+//
 
 import SwiftUI
 
@@ -9,6 +11,11 @@ import SwiftUI
 struct TendencyHeatmapView: View {
     /// 每日账单计数（用于计算热力等级）
     let dailyBillCounts: [Date: Int]
+    
+    // MARK: - 交互状态
+    
+    @State private var selectedCellDate: Date?
+    @State private var cellsAppeared = false
     
     // MARK: - 私有计算属性
     
@@ -34,45 +41,106 @@ struct TendencyHeatmapView: View {
             }
             
             heatmapGrid
+            
+            legendRow
         }
         .padding(TendencyConstants.cardPadding)
         .appGlassCard(cornerRadius: TendencyConstants.cardCornerRadius)
+    }
+    
+    // MARK: - 图例
+    
+    private var legendRow: some View {
+        HStack(spacing: 6) {
+            Spacer()
+            Text(L10n.string("tendency.heatmap_less"))
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+            ForEach(0..<5) { level in
+                RoundedRectangle(cornerRadius: 3, style: .continuous)
+                    .fill(heatColor(level: level))
+                    .frame(width: 12, height: 12)
+            }
+            Text(L10n.string("tendency.heatmap_more"))
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+        }
     }
     
     // MARK: - 子视图
     
     @ViewBuilder
     private var heatmapGrid: some View {
-        GeometryReader { geo in
-            ScrollViewReader { proxy in
-                ScrollView(.horizontal, showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        // 月份标签（放在 ScrollView 内部，跟随滚动）
-                        monthLabelsView
-                        
-                        // 热力图网格
-                        HStack(alignment: .top, spacing: 4) {
-                            ForEach(weeks.indices, id: \.self) { weekIndex in
-                                VStack(spacing: 4) {
-                                    ForEach(weeks[weekIndex].indices, id: \.self) { dayIndex in
-                                        heatCell(for: weeks[weekIndex][dayIndex])
-                                    }
-                                }
-                                .id(weekIndex)
-                            }
-                        }
-                        .padding(.vertical, 4)
+        VStack(alignment: .leading, spacing: 6) {
+            // 选中提示条
+            ZStack {
+                if let selected = selectedCellDate {
+                    HStack(spacing: 6) {
+                        Image(systemName: "calendar")
+                            .font(.caption2)
+                        Text(selected.formatted(.dateTime.month().day().weekday(.abbreviated)))
+                            .font(.caption.weight(.medium))
+                        Text("·")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                        Text("\(dailyBillCounts[selected.startOfDay, default: 0])")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(.blue)
+                        Text(L10n.string("tendency.heatmap_bills"))
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
                     }
-                    .frame(width: totalHeatmapWidth, alignment: .leading)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 5)
+                    .background(
+                        Capsule()
+                            .fill(.ultraThinMaterial)
+                    )
+                    .overlay(
+                        Capsule()
+                            .strokeBorder(Color.blue.opacity(0.3), lineWidth: 0.8)
+                    )
+                    .transition(.scale(scale: 0.8).combined(with: .opacity))
                 }
-                .onAppear {
-                    if let lastIndex = weeks.indices.last {
-                        proxy.scrollTo(lastIndex, anchor: .trailing)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 26)
+            .animation(.spring(response: 0.35, dampingFraction: 0.75), value: selectedCellDate)
+            
+            GeometryReader { geo in
+                ScrollViewReader { proxy in
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            // 月份标签（放在 ScrollView 内部，跟随滚动）
+                            monthLabelsView
+                            
+                            // 热力图网格
+                            HStack(alignment: .top, spacing: 4) {
+                                ForEach(weeks.indices, id: \.self) { weekIndex in
+                                    VStack(spacing: 4) {
+                                        ForEach(weeks[weekIndex].indices, id: \.self) { dayIndex in
+                                            heatCell(for: weeks[weekIndex][dayIndex], index: weekIndex * 7 + dayIndex)
+                                        }
+                                    }
+                                    .id(weekIndex)
+                                }
+                            }
+                            .padding(.vertical, 4)
+                        }
+                        .frame(width: totalHeatmapWidth, alignment: .leading)
+                    }
+                    .onAppear {
+                        if let lastIndex = weeks.indices.last {
+                            proxy.scrollTo(lastIndex, anchor: .trailing)
+                        }
+                        withAnimation(.easeOut(duration: 0.5)) {
+                            cellsAppeared = true
+                        }
                     }
                 }
             }
+            .frame(height: 7 * 12 + 40) // 7天 × 12px + 月份标签高度
         }
-        .frame(height: 7 * 12 + 40) // 7天 × 12px + 月份标签高度
     }
     
     /// 月份标签视图（跟随热力图滚动）
@@ -94,13 +162,29 @@ struct TendencyHeatmapView: View {
     }
     
     @ViewBuilder
-    private func heatCell(for date: Date) -> some View {
+    private func heatCell(for date: Date, index: Int) -> some View {
         let level = heatLevel(for: date)
         let color = heatColor(level: level, date: date)
+        let isSelected = selectedCellDate?.startOfDay == date.startOfDay
         
         RoundedRectangle(cornerRadius: 3, style: .continuous)
             .fill(color)
             .frame(width: TendencyConstants.heatmapCellSize, height: TendencyConstants.heatmapCellSize)
+            .overlay(
+                RoundedRectangle(cornerRadius: 3, style: .continuous)
+                    .strokeBorder(isSelected ? Color.blue : Color.clear, lineWidth: 1.6)
+            )
+            .scaleEffect(isSelected ? 1.22 : 1)
+            .opacity(cellsAppeared ? 1 : 0)
+            .animation(.spring(response: 0.4, dampingFraction: 0.8).delay(Double(index) * 0.003), value: cellsAppeared)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                HapticManager.shared.selectionChanged()
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                    selectedCellDate = selectedCellDate?.startOfDay == date.startOfDay ? nil : date
+                }
+            }
     }
     
     // MARK: - 数据处理
@@ -178,6 +262,17 @@ struct TendencyHeatmapView: View {
         
         // 未来日期显示为半透明
         return date.startOfDay > Date().startOfDay ? base.opacity(0.35) : base
+    }
+    
+    /// 图例用纯色（不含未来日期透明处理）
+    private func heatColor(level: Int) -> Color {
+        switch level {
+        case 0: return Color(UIColor.systemGray5)
+        case 1: return Color(red: 0.79, green: 0.88, blue: 1.0)
+        case 2: return Color(red: 0.56, green: 0.75, blue: 0.98)
+        case 3: return Color(red: 0.31, green: 0.56, blue: 0.95)
+        default: return Color(red: 0.15, green: 0.42, blue: 0.86)
+        }
     }
     
     private func monthName(for month: Int) -> String {

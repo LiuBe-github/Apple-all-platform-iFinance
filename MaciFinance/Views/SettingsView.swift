@@ -124,7 +124,6 @@ struct SettingsView: View {
             }
             .padding(24)
         }
-        .background(Color(nsColor: .windowBackgroundColor))
     }
 
     // MARK: - Group Helper
@@ -143,12 +142,7 @@ struct SettingsView: View {
                 content()
             }
             .padding(14)
-            .background(Color(nsColor: .controlBackgroundColor))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .strokeBorder(Color(nsColor: .separatorColor), lineWidth: 0.5)
-            )
+            .macCard(cornerRadius: 12)
 
             if !footer.isEmpty {
                 Text(footer)
