@@ -105,7 +105,7 @@ struct TransactionView: View {
                         showProfile = true
                     } label: {
                         Group {
-                            if let data = authManager.avatarData, let img = UIImage(data: data) {
+                            if let img = AvatarImageCache.shared.image(for: authManager.avatarData) {
                                 Image(uiImage: img)
                                     .resizable()
                                     .aspectRatio(contentMode: .fill)

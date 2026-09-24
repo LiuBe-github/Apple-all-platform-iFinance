@@ -148,8 +148,7 @@ struct ProfileView: View {
     }
 
     private func loadAvatar() {
-        if let imageData = authManager.avatarData,
-           let uiImage = UIImage(data: imageData) {
+        if let uiImage = AvatarImageCache.shared.image(for: authManager.avatarData) {
             avatarImage = Image(uiImage: uiImage)
         } else {
             avatarImage = nil

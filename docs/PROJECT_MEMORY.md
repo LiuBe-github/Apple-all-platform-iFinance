@@ -313,6 +313,8 @@ Watch 端前缀独立：`add.*`、`category.*`、`summary.*`、`history.*`、`ta
 | 设计/动画 token | `Views/Common/AppDesignTokens.swift`（`AppSpacing`/`AppRadius`/`AppLayout`/`AppTypography`）与 `AppMotion.swift`（`quick`/`standard`/`emphasized`/`numeric` + Reduce Motion 降级） | 2026-09 起新增 UI 一律用 token，禁止再写魔法数字 |
 | 后台隐私保护 | 进入 `.inactive`/`.background` 时 `BiometricLockManager.activatePrivacyShield()`（仅 `isLockEnabled` 时生效）→ `.appPrivacyShield(true)` 对整页做 20pt 高斯模糊 + 材质覆盖；回到前台且无需锁定时解除，解锁成功后也会清除 | `iFinance/Views/Common/AppPrivacyShield.swift`、`BiometricLockManager.swift` |
 | 概况页构成 | 三层结构：今日概况大卡（主视觉）→ 周期概况卡（本月 / 上月 / 本年 三行明细）→ 每日一言卡（毛玻璃卡 + 右上角「换一句」）；底部仅保留分享按钮。图片能力已整体移除（`ImageLoader`/`ImageCache`/`ImageDownsampler` 与 `DailySentence.picture2` 均已删除，运行时不再联网取图） | `iFinance/Views/Home/`、`iFinance/Models/PeriodSummary.swift` |
+| 开屏与头像 | 冷启动开屏 `AppSplashView`（1.8s，Reduce Motion 降级 0.8s，仅 iOS）；头像选择后经 `AvatarCropView` 圆形遮罩裁剪（拖动/缩放）再写入 300×300 JPEG | `iFinance/Views/Common/AppSplashView.swift`、`iFinance/Views/Profile/AvatarCropView.swift` |
+| 性能约定 | 背景动画统一走 `AppBackgroundView` + 全局 `AppBackgroundClock`（10fps、非活跃暂停、Reduce Motion 静态、RadialGradient 代替 blur）；头像解码走 `AvatarImageCache`；Formatter 全部 `static let`；`AddBillView` 的分类网格拆成 Equatable 子视图避免输入时重建 | `iFinance/Views/Common/`、`AddBillView.swift` |
 | 本地化自查 | `*LocalizationRegressionTests` 会校验四种语言的关键 key 都能解析出译文（`common.cancel` 曾缺失导致对话框直接显示原始 key） | `iFinanceTests`、`MaciFinanceTests` |
 
 macOS 端有独立副本：`MaciFinance/Views/Common/AppVisualStyle.swift`（130 行）与 `MaciFinance/Helpers/HapticManager.swift`（46 行，桌面端为空实现/降级）。

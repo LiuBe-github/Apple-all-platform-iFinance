@@ -17,13 +17,6 @@ struct AddBillView: View {
     }
     
     // 网格视图的行数和列数
-    private let columns = [
-        GridItem(.flexible(), spacing: AppSpacing.xs),
-        GridItem(.flexible(), spacing: AppSpacing.xs),
-        GridItem(.flexible(), spacing: AppSpacing.xs),
-        GridItem(.flexible(), spacing: AppSpacing.xs),
-        GridItem(.flexible(), spacing: AppSpacing.xs),
-    ]
     
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var viewContext
@@ -50,25 +43,11 @@ struct AddBillView: View {
                     VStack(alignment: .leading) {
                         Group {
                             if transactionType == .expenditure {
-                                LazyVGrid(columns: columns, spacing: AppSpacing.xl) {
-                                    ForEach(ExpenditureCategory.allCases, id: \.self) { category in
-                                        ExpenditureCategoryItemView(category: category, selectedCategory:  $selectedExpenditureCategory)
-                                            .onTapGesture {
-                                                HapticManager.shared.light()
-                                            }
-                                    }
-                                }
-                                .padding(.horizontal, AppSpacing.md)
+                                ExpenditureCategoryGrid(selection: $selectedExpenditureCategory)
+                                    .equatable()
                             } else if transactionType == .income {
-                                LazyVGrid(columns: columns, spacing: AppSpacing.xl) {
-                                    ForEach(IncomeCategory.allCases, id: \.self) { category in
-                                        IncomeCategoryItemView(category: category, selectedCategory:  $selectedIncomeCategory)
-                                            .onTapGesture {
-                                                HapticManager.shared.light()
-                                            }
-                                    }
-                                }
-                                .padding(.horizontal, AppSpacing.md)
+                                IncomeCategoryGrid(selection: $selectedIncomeCategory)
+                                    .equatable()
                             } else {
                                 transferForm
                             }
@@ -339,4 +318,46 @@ struct AddBillView: View {
 #Preview {
     AddBillView()
         .environment(\.modelContext, PersistenceController.preview.container.viewContext)
+}
+
+// MARK: - 分类网格（独立 Equatable 子视图：输入金额时不会重建整片格子）
+
+private struct ExpenditureCategoryGrid: View, Equatable {
+    @Binding var selection: ExpenditureCategory?
+
+    private static let columns = Array(repeating: GridItem(.flexible(), spacing: AppSpacing.xs), count: 5)
+
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.selection == rhs.selection
+    }
+
+    var body: some View {
+        LazyVGrid(columns: Self.columns, spacing: AppSpacing.xl) {
+            ForEach(ExpenditureCategory.allCases, id: \.self) { category in
+                ExpenditureCategoryItemView(category: category, selectedCategory: $selection)
+                    .onTapGesture { HapticManager.shared.light() }
+            }
+        }
+        .padding(.horizontal, AppSpacing.md)
+    }
+}
+
+private struct IncomeCategoryGrid: View, Equatable {
+    @Binding var selection: IncomeCategory?
+
+    private static let columns = Array(repeating: GridItem(.flexible(), spacing: AppSpacing.xs), count: 5)
+
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.selection == rhs.selection
+    }
+
+    var body: some View {
+        LazyVGrid(columns: Self.columns, spacing: AppSpacing.xl) {
+            ForEach(IncomeCategory.allCases, id: \.self) { category in
+                IncomeCategoryItemView(category: category, selectedCategory: $selection)
+                    .onTapGesture { HapticManager.shared.light() }
+            }
+        }
+        .padding(.horizontal, AppSpacing.md)
+    }
 }

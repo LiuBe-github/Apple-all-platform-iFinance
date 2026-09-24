@@ -9,6 +9,15 @@ import SwiftUI
 
 /// GitHub 风格的热力图视图
 struct TendencyHeatmapView: View {
+
+    /// 月份标签格式化器（静态复用，避免每个格子新建）
+    private static let monthFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = .autoupdatingCurrent
+        f.dateFormat = "MMM"
+        return f
+    }()
+
     /// 每日账单计数（用于计算热力等级）
     let dailyBillCounts: [Date: Int]
     
@@ -280,9 +289,6 @@ struct TendencyHeatmapView: View {
         comps.month = month
         let date = Calendar.current.date(from: comps) ?? Date()
         
-        let formatter = DateFormatter()
-        formatter.locale = .autoupdatingCurrent
-        formatter.dateFormat = "MMM"
-        return formatter.string(from: date)
+        return Self.monthFormatter.string(from: date)
     }
 }

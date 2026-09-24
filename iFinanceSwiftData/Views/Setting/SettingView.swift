@@ -284,7 +284,7 @@ struct SettingView: View {
 
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 0) {
-                        profileHeader
+                        SettingsProfileHeaderView()
 
                         // 个人信息
                         SettingsGroup(title: L10n.string("settings.about_you"), icon: "person.fill", iconColor: .blue) {
@@ -336,7 +336,7 @@ struct SettingView: View {
 
                         // 外观
                         SettingsGroup(title: L10n.string("settings.appearance"), icon: "paintbrush.fill", iconColor: .purple) {
-                            themeSelector
+                            SettingsThemeSelectorView(selectedTheme: $selectedTheme)
                         }
 
                         // 通用
@@ -450,102 +450,10 @@ struct SettingView: View {
 
     // MARK: - 头像区域
 
-    private var profileHeader: some View {
-        HStack(spacing: AppSpacing.lg) {
-            ZStack {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [Color.blue.opacity(0.35), Color.purple.opacity(0.25), Color.pink.opacity(0.2)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 72, height: 72)
-                    .overlay(
-                        Circle()
-                            .strokeBorder(
-                                LinearGradient(
-                                    colors: [Color.blue.opacity(0.8), Color.purple.opacity(0.7)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 2
-                            )
-                    )
-                if let data = authManager.avatarData,
-                   let uiImage = UIImage(data: data) {
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: 66, height: 66)
-                        .clipShape(Circle())
-                } else {
-                    Image(systemName: "person.crop.circle.fill")
-                        .font(.system(size: 66))
-                        .foregroundStyle(.secondary)
-                }
-            }
-            VStack(alignment: .leading, spacing: AppSpacing.xs) {
-                Text(authManager.nickname).font(.title2.weight(.bold))
-                Text(L10n.string("settings.about_desc")).font(.subheadline).foregroundStyle(.secondary)
-            }
-            Spacer()
-        }.padding(AppSpacing.xxl).padding(.top, AppSpacing.sm)
-    }
 
     // MARK: - 主题选择器
 
-    @Namespace private var themeNamespace
 
-    private var themeSelector: some View {
-        HStack(spacing: 0) {
-            ForEach(ThemeMode.allCases, id: \.self) { theme in
-                Button {
-                    HapticManager.shared.selectionChanged()
-                    withAnimation(AppMotion.standard) { selectedTheme = theme }
-                } label: {
-                    VStack(spacing: AppSpacing.sm) {
-                        ZStack {
-                            if selectedTheme == theme {
-                                Circle()
-                                    .fill(themeColor(theme).opacity(0.16))
-                                    .frame(width: 46, height: 46)
-                                    .matchedGeometryEffect(id: "themeSelection", in: themeNamespace)
-                                    .overlay(
-                                        Circle()
-                                            .strokeBorder(themeColor(theme).opacity(0.45), lineWidth: 1.2)
-                                            .matchedGeometryEffect(id: "themeSelectionRing", in: themeNamespace)
-                                    )
-                            } else {
-                                Circle().fill(Color.primary.opacity(0.05)).frame(width: 46, height: 46)
-                            }
-                            Image(systemName: themeIcon(theme))
-                                .font(.system(size: 18, weight: .medium))
-                                .foregroundStyle(themeColor(theme))
-                                .symbolEffect(.bounce, value: selectedTheme == theme)
-                        }
-                        Text(themeTitle(theme)).font(.caption2.weight(.medium))
-                            .foregroundStyle(selectedTheme == theme ? themeColor(theme) : .secondary)
-                    }
-                }
-                .buttonStyle(ScaleButtonStyle(pressedScale: 0.9))
-                .frame(maxWidth: .infinity)
-            }
-        }
-        .padding(.horizontal, AppSpacing.lg)
-        .padding(.vertical, AppSpacing.lg)
-    }
-
-    private func themeColor(_ t: ThemeMode) -> Color {
-        switch t { case .light: return .orange; case .dark: return .indigo; case .system: return .blue }
-    }
-    private func themeIcon(_ t: ThemeMode) -> String {
-        switch t { case .light: return "sun.max.fill"; case .dark: return "moon.fill"; case .system: return "circle.lefthalf.filled" }
-    }
-    private func themeTitle(_ t: ThemeMode) -> String {
-        switch t { case .light: return L10n.string("settings.theme_light"); case .dark: return L10n.string("settings.theme_dark"); case .system: return L10n.string("settings.theme_system") }
-    }
 
     // MARK: - 生物识别锁辅助
 
@@ -711,4 +619,118 @@ struct SettingView: View {
 
 #Preview {
     SettingView()
+}
+
+
+// MARK: - 设置页子视图（拆分以减少整页重算）
+
+/// 头部：头像 + 昵称（只依赖 authManager，不受设置页其它状态影响）
+private struct SettingsProfileHeaderView: View {
+    @EnvironmentObject private var authManager: AuthManager
+
+    var body: some View {
+        HStack(spacing: AppSpacing.lg) {
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.blue.opacity(0.35), Color.purple.opacity(0.25), Color.pink.opacity(0.2)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 72, height: 72)
+                    .overlay(
+                        Circle()
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [Color.blue.opacity(0.8), Color.purple.opacity(0.7)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 2
+                            )
+                    )
+
+                if let uiImage = AvatarImageCache.shared.image(for: authManager.avatarData) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 66, height: 66)
+                        .clipShape(Circle())
+                } else {
+                    Image(systemName: "person.crop.circle.fill")
+                        .font(.system(size: 66))
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                Text(authManager.nickname).font(.title2.weight(.bold))
+                Text(L10n.string("settings.about_desc")).font(.subheadline).foregroundStyle(.secondary)
+            }
+            Spacer()
+        }
+        .padding(AppSpacing.xxl)
+        .padding(.top, AppSpacing.sm)
+    }
+}
+
+/// 主题选择器（只依赖主题绑定）
+private struct SettingsThemeSelectorView: View {
+    @Binding var selectedTheme: ThemeMode
+    @Namespace private var namespace
+
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(ThemeMode.allCases, id: \.self) { theme in
+                Button {
+                    HapticManager.shared.selectionChanged()
+                    withAnimation(AppMotion.standard) { selectedTheme = theme }
+                } label: {
+                    VStack(spacing: AppSpacing.sm) {
+                        ZStack {
+                            if selectedTheme == theme {
+                                Circle()
+                                    .fill(themeColor(theme).opacity(0.16))
+                                    .frame(width: 46, height: 46)
+                                    .matchedGeometryEffect(id: "themeSelection", in: namespace)
+                                    .overlay(
+                                        Circle()
+                                            .strokeBorder(themeColor(theme).opacity(0.45), lineWidth: 1.2)
+                                            .matchedGeometryEffect(id: "themeSelectionRing", in: namespace)
+                                    )
+                            } else {
+                                Circle().fill(Color.primary.opacity(0.05)).frame(width: 46, height: 46)
+                            }
+                            Image(systemName: themeIcon(theme))
+                                .font(.system(size: 18, weight: .medium))
+                                .foregroundStyle(themeColor(theme))
+                                .symbolEffect(.bounce, value: selectedTheme == theme)
+                        }
+                        Text(themeTitle(theme)).font(.caption2.weight(.medium))
+                            .foregroundStyle(selectedTheme == theme ? themeColor(theme) : .secondary)
+                    }
+                }
+                .buttonStyle(ScaleButtonStyle(pressedScale: 0.9))
+                .frame(maxWidth: .infinity)
+            }
+        }
+        .padding(.horizontal, AppSpacing.lg)
+        .padding(.vertical, AppSpacing.lg)
+    }
+
+    private func themeColor(_ t: ThemeMode) -> Color {
+        switch t { case .light: return .orange; case .dark: return .indigo; case .system: return .blue }
+    }
+    private func themeIcon(_ t: ThemeMode) -> String {
+        switch t { case .light: return "sun.max.fill"; case .dark: return "moon.fill"; case .system: return "circle.lefthalf.filled" }
+    }
+    private func themeTitle(_ t: ThemeMode) -> String {
+        switch t {
+        case .light: return L10n.string("settings.theme_light")
+        case .dark: return L10n.string("settings.theme_dark")
+        case .system: return L10n.string("settings.theme_system")
+        }
+    }
 }

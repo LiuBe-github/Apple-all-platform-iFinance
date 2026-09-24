@@ -37,6 +37,10 @@
 | `Views/Common/AppDesignTokens.swift` | `AppSpacing`、`AppRadius`、`AppLayout`、`AppTypography` | 布局/间距/圆角/字体 token（HIG 尺度） |
 | `Views/Common/AppMotion.swift` | `AppMotion` + `appAnimation` / `appEntrance` / `appPressable` | 动画节奏 token（含 Reduce Motion 降级） |
 | `Views/Common/AppPrivacyShield.swift` | `AppPrivacyShield` + `.appPrivacyShield(_:)` | 进入后台时的整页高斯模糊遮罩（仅开启应用锁时启用） |
+| `Views/Common/AppBackgroundClock.swift` | `AppBackgroundClock` | 全局共享背景时钟（10fps，非活跃暂停），替代每个页面各自的 30fps TimelineView |
+| `Views/Common/AppSplashView.swift` | `AppSplashView` | 冷启动开屏动画（渐变底 + 呼吸光晕 + 标题/副标题 + 加载指示，1.8s） |
+| `Views/Common/AvatarImageCache.swift` | `AvatarImageCache` | 头像解码缓存（按数据哈希复用 `UIImage`，避免每次渲染重新解码） |
+| `Views/Profile/AvatarCropView.swift` | `AvatarCropView` | 头像裁剪（圆形遮罩 + 拖动/缩放，输出 300×300 JPEG） |
 
 ## 2. 根容器：`ContentView`（`Views/ContentView.swift:11`）
 
@@ -61,6 +65,7 @@ enum Tab { case home, transaction, tendency, setting }
 | `AppLayout` | `cardPadding=16`、`cardPaddingCozy=20`、`contentMaxWidth=700`、`formMaxWidth=640`、`listRowMinHeight=44`、`chartHeightCompact/Regular`、`heatmapCell=12`、`privacyBlurRadius=20` | 卡片内边距、iPad 内容宽度、最小行高与图表尺寸 |
 | `AppTypography` | `screenTitle` / `sectionTitle` / `body` / `secondary` / `caption` / `tiny` / `amount(_:)` | 语义字体（跟随 Dynamic Type）；金额用 `.appAmountStyle(size:weight:)` |
 | `AppMotion` | `quick=0.18s easeOut`、`standard=spring(0.35, 0.85)`、`emphasized=spring(0.5, 0.82)`、`numeric=snappy(0.35)`、`press`、`shimmer`、`ambient` | 全部动画参数 |
+| `AppNumberFormat.percent(_:)` | `NumberFormatter`（`.percent`，最多两位小数、去尾零） | 「已用」等百分比展示 |
 | 修饰器 | `.appAmountStyle(size:weight:)`、`.appContentWidth(_:)`、`.appCardPadding(cozy:)`、`.appAnimation(_:value:)`、`.appEntrance(index:visible:)`、`.appPressable()` | 统一挂载点 |
 
 `appAnimation` / `appEntrance` 会自动读取 `\.accessibilityReduceMotion`：开启「减弱动态效果」时，标准/强调档降级为 `easeOut(0.15)`，位移类转场通过 `AppMotion.resolvedTransition(_:reduceMotion:)` 退化为纯淡入淡出。

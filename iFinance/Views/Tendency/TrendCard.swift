@@ -64,6 +64,10 @@ struct TrendCard: View {
     // MARK: - 视图
     
     var body: some View {
+        // 每帧只计算一次序列（displaySeries / metricsSeries 都会遍历账单，避免重复遍历）
+        let series = displaySeries
+        let metrics = metricsSeries
+
         VStack(alignment: .leading, spacing: AppSpacing.md) {
             // 标题行
             HStack {
@@ -91,11 +95,11 @@ struct TrendCard: View {
             }
             
             // 统计指标
-            metricsView
-            
+            metricsView(for: metrics)
+
             // 图表
             TendencyChartView(
-                series: displaySeries,
+                series: series,
                 accent: accent,
                 visibleDays: span.days,
                 isHourly: span.days == 1,
@@ -113,8 +117,8 @@ struct TrendCard: View {
     // MARK: - 子视图
     
     @ViewBuilder
-    private var metricsView: some View {
-        let values = metricsSeries.map(\.value)
+    private func metricsView(for series: [DailyAmount]) -> some View {
+        let values = series.map(\.value)
         let total = values.reduce(0, +)
         let nonZero = values.filter { $0 > 0 }
         let avg = nonZero.isEmpty ? 0 : nonZero.reduce(0, +) / Double(nonZero.count)

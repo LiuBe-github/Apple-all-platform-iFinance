@@ -17,12 +17,37 @@ struct ShareCardView: View {
     let billCount: Int          // 当日笔数
     let dateText: String        // 日期文字
 
-    private var formattedBalance: String {
+    // MARK: - 静态格式化器（避免每次渲染新建）
+
+    private static let balanceFormatter: NumberFormatter = {
         let f = NumberFormatter()
         f.numberStyle = .currency
         f.currencySymbol = "¥"
         f.maximumFractionDigits = 2
-        return f.string(from: NSDecimalNumber(decimal: dailyBalance)) ?? "¥0.00"
+        f.locale = .autoupdatingCurrent
+        return f
+    }()
+
+    private static let compactFormatter: NumberFormatter = {
+        let f = NumberFormatter()
+        f.numberStyle = .currency
+        f.currencySymbol = "¥"
+        f.maximumFractionDigits = 0
+        f.locale = .autoupdatingCurrent
+        return f
+    }()
+
+    private static let statFormatter: NumberFormatter = {
+        let f = NumberFormatter()
+        f.numberStyle = .currency
+        f.currencySymbol = "¥"
+        f.maximumFractionDigits = 1
+        f.locale = .autoupdatingCurrent
+        return f
+    }()
+
+    private var formattedBalance: String {
+        Self.balanceFormatter.string(from: NSDecimalNumber(decimal: dailyBalance)) ?? "¥0.00"
     }
 
     private var balanceColor: Color {
@@ -135,19 +160,11 @@ struct ShareCardView: View {
 
     /// 紧凑金额（用于周期摘要行）
     private func compactAmount(_ value: Decimal) -> String {
-        let f = NumberFormatter()
-        f.numberStyle = .currency
-        f.currencySymbol = "¥"
-        f.maximumFractionDigits = 0
-        return f.string(from: NSDecimalNumber(decimal: value)) ?? "¥0"
+        Self.compactFormatter.string(from: NSDecimalNumber(decimal: value)) ?? "¥0"
     }
 
     private func statColumn(title: LocalizedStringKey, value: Decimal, color: Color) -> some View {
-        let f = NumberFormatter()
-        f.numberStyle = .currency
-        f.currencySymbol = "¥"
-        f.maximumFractionDigits = 1
-        let v = f.string(from: NSDecimalNumber(decimal: value)) ?? "¥0"
+        let v = Self.statFormatter.string(from: NSDecimalNumber(decimal: value)) ?? "¥0"
         return statColumn(title: title, value: v, color: color)
     }
 }

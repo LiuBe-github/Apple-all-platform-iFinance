@@ -4,51 +4,31 @@ import SwiftUI
 
 struct AppBackgroundView: View {
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { context in
-            let t = context.date.timeIntervalSinceReferenceDate
-            ZStack {
-                baseGradient
-
-                // 光斑随时间缓慢漂移，营造"呼吸感"
-                floatingOrb(
-                    color: .blue,
-                    opacity: colorScheme == .dark ? 0.22 : 0.12,
-                    size: 260,
-                    baseOffset: CGPoint(x: -120, y: -300),
-                    drift: 14,
-                    speed: 0.18,
-                    phase: 0,
-                    time: t
-                )
-                floatingOrb(
-                    color: .cyan,
-                    opacity: colorScheme == .dark ? 0.16 : 0.10,
-                    size: 220,
-                    baseOffset: CGPoint(x: 130, y: -210),
-                    drift: 18,
-                    speed: 0.13,
-                    phase: 2.1,
-                    time: t
-                )
-                floatingOrb(
-                    color: .pink,
-                    opacity: colorScheme == .dark ? 0.14 : 0.08,
-                    size: 260,
-                    baseOffset: CGPoint(x: 100, y: 360),
-                    drift: 20,
-                    speed: 0.11,
-                    phase: 4.2,
-                    time: t
-                )
+        ZStack {
+            AppBackgroundGradient(colorScheme: colorScheme)
+            if reduceMotion {
+                AppBackgroundOrbs(colorScheme: colorScheme, time: 0)
+            } else {
+                AnimatedAppBackgroundOrbs(colorScheme: colorScheme)
             }
-            .ignoresSafeArea()
         }
+        .ignoresSafeArea()
         .allowsHitTesting(false)
     }
+}
 
-    private var baseGradient: LinearGradient {
+/// 背景渐变（浅色 / 深色两套）
+private struct AppBackgroundGradient: View {
+    let colorScheme: ColorScheme
+
+    var body: some View {
+        gradient
+    }
+
+    private var gradient: LinearGradient {
         if colorScheme == .dark {
             return LinearGradient(
                 colors: [
@@ -70,24 +50,73 @@ struct AppBackgroundView: View {
             endPoint: .bottomTrailing
         )
     }
+}
 
-    private func floatingOrb(
+/// 三颗呼吸光斑（time 驱动漂移；用 RadialGradient 代替 blur，GPU 开销更低）
+private struct AppBackgroundOrbs: View {
+    let colorScheme: ColorScheme
+    let time: Double
+
+    var body: some View {
+        ZStack {
+            orb(color: .blue,
+                opacity: colorScheme == .dark ? 0.22 : 0.12,
+                size: 260,
+                baseOffset: CGPoint(x: -120, y: -300),
+                drift: 14,
+                speed: 0.18,
+                phase: 0)
+            orb(color: .cyan,
+                opacity: colorScheme == .dark ? 0.16 : 0.10,
+                size: 220,
+                baseOffset: CGPoint(x: 130, y: -210),
+                drift: 18,
+                speed: 0.13,
+                phase: 2.1)
+            orb(color: .pink,
+                opacity: colorScheme == .dark ? 0.14 : 0.08,
+                size: 260,
+                baseOffset: CGPoint(x: 100, y: 360),
+                drift: 20,
+                speed: 0.11,
+                phase: 4.2)
+        }
+    }
+
+    private func orb(
         color: Color,
         opacity: Double,
         size: CGFloat,
         baseOffset: CGPoint,
         drift: CGFloat,
         speed: Double,
-        phase: Double,
-        time: Double
+        phase: Double
     ) -> some View {
         let dx = sin(time * speed + phase) * drift
         let dy = cos(time * speed * 0.8 + phase) * drift
         return Circle()
-            .fill(color.opacity(opacity))
+            .fill(
+                RadialGradient(
+                    colors: [color.opacity(opacity), color.opacity(opacity * 0.55), .clear],
+                    center: .center,
+                    startRadius: 0,
+                    endRadius: size / 2
+                )
+            )
             .frame(width: size, height: size)
-            .blur(radius: 36)
             .offset(x: baseOffset.x + dx, y: baseOffset.y + dy)
+    }
+}
+
+/// 订阅全局共享时钟（10fps），所有页面共用一份计时
+private struct AnimatedAppBackgroundOrbs: View {
+    let colorScheme: ColorScheme
+
+    @ObservedObject private var clock = AppBackgroundClock.shared
+
+    var body: some View {
+        AppBackgroundOrbs(colorScheme: colorScheme, time: clock.time)
+            .onAppear { clock.start() }
     }
 }
 

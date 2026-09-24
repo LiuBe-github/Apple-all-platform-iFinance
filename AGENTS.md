@@ -72,6 +72,7 @@ docs/                     项目记忆与接口文档（改动接口后同步更
 - 平台差异用 `#if os(macOS)` / `#if os(watchOS)` 就地分支；项目不做跨端抽象层（存在刻意保留的重复代码）。
 - 视觉统一走 `Views/Common/AppVisualStyle.swift` 的 `appGlassCard(cornerRadius:)` 与 `.scalePress`；触觉反馈走 `HapticManager.shared`（9 个方法），不要直接调 `UIImpactFeedbackGenerator`。
 - **新写 UI 一律用 token，不要再写魔法数字**：间距/圆角/宽度用 `AppDesignTokens.swift` 的 `AppSpacing` / `AppRadius` / `AppLayout`，字体用 `AppTypography`（语义字体，跟随 Dynamic Type；大号金额用 `.appAmountStyle(size:)`）；动画用 `AppMotion` 的 `quick` / `standard` / `emphasized` / `numeric`，并优先使用 `.appAnimation(_:value:)`、`.appEntrance(index:visible:)` 以自动遵循「减弱动态效果」。iPad 上的主内容用 `.appContentWidth()` 收敛宽度。
+- **性能约定**：背景动画只允许用 `AppBackgroundView`（内部走全局共享的 `AppBackgroundClock`，10fps、非活跃自动暂停），不要在新页面里再写 `TimelineView(.animation)`；头像解码统一走 `AvatarImageCache.shared.image(for:)`，不要在 body 里直接 `UIImage(data:)`；`NumberFormatter` / `DateFormatter` 一律声明为 `static let` 复用；百分比展示用 `AppNumberFormat.percent(_:)`（最多两位小数、去尾零）。
 
 ## 关键数据流
 
