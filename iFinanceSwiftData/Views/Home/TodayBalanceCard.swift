@@ -61,18 +61,12 @@ struct TodayBalanceCard: View {
                     .foregroundStyle(.quaternary)
             }
 
-            // ── 主视觉：今日结余 ──
-            HStack(alignment: .firstTextBaseline, spacing: AppSpacing.sm) {
-                Text(formatted(balance))
-                    .appAmountStyle(size: 40, weight: .heavy)
-                    .foregroundStyle(balanceColor)
-                    .appNumericTransition(value: NSDecimalNumber(decimal: balance).doubleValue)
-
-                Text(balance >= 0 ? String(localized: "home.surplus") : String(localized: "home.deficit"))
-                    .font(AppTypography.caption.weight(.semibold))
-                    .foregroundStyle(balanceColor.opacity(0.75))
-                    .transition(.opacity)
-            }
+            // ── 主视觉：今日结余（收入 − 支出，纯数字，不做文字描述） ──
+            Text(formatted(balance))
+                .appAmountStyle(size: 40, weight: .heavy)
+                .foregroundStyle(balanceColor)
+                .appNumericTransition(value: NSDecimalNumber(decimal: balance).doubleValue)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
             Divider().opacity(0.5)
 
@@ -139,4 +133,3 @@ struct TodayBalanceCard: View {
     )
     .padding()
 }
-
