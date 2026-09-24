@@ -289,6 +289,42 @@ struct PrivacyShieldTests {
 
 // MARK: - 个性签名校验（SwiftData 版同名实现）
 
+// MARK: - 数字键盘表达式逻辑（与 iOS 版同名实现）
+
+@MainActor
+@Suite(.serialized)
+struct NumberPadExpressionTests {
+
+    @Test
+    func digitsStillEnterableAfterOperatorWithDecimalAmount() {
+        var text = NumberPadExpression.placeholder
+        for input in ["1", "2", ".", "5"] {
+            text = NumberPadExpression.append(input, to: text)
+        }
+        text = NumberPadExpression.applyOperator(primary: "+", alternate: "×", to: text)
+        #expect(text == "12.5+")
+
+        text = NumberPadExpression.append("3", to: text)
+        #expect(text == "12.5+3")
+    }
+
+    @Test
+    func operatorTogglesOnSecondTap() {
+        var text = "8"
+        text = NumberPadExpression.applyOperator(primary: "+", alternate: "×", to: text)
+        #expect(text == "8+")
+        text = NumberPadExpression.applyOperator(primary: "+", alternate: "×", to: text)
+        #expect(text == "8×")
+    }
+
+    @Test
+    func expressionEvaluation() {
+        let view = AddBillView()
+        #expect(abs(view.parseExpression("12.5+30") - 42.5) < 0.001)
+        #expect(abs(view.parseExpression("10×3") - 30) < 0.001)
+    }
+}
+
 @MainActor
 @Suite(.serialized)
 struct SignatureValidationTests {

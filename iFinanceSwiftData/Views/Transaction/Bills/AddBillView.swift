@@ -28,7 +28,8 @@ struct AddBillView: View {
     @State private var selectedExpenditureCategory: ExpenditureCategory? = .foodAndBeverage
     @State private var selectedIncomeCategory: IncomeCategory? = .salary
     @State private var showNumberPad = true
-    @State private var currentOperator: String = "+"
+    /// 最近一次按下的运算符（由数字键盘回写；表达式本身以 displayText 为准）
+    @State private var currentOperator: String = ""
     @State private var selectedDate: Date = Date()
     @State private var showingAlert = false
     @State private var alertMessage = ""
@@ -238,7 +239,8 @@ struct AddBillView: View {
     }
     
     // 解析表达式并计算结果
-    private func parseExpression(_ expression: String) -> Double {
+    /// 解析并计算表达式（如 "12.5+30"）；对测试可见，便于覆盖四则运算
+    func parseExpression(_ expression: String) -> Double {
         // 移除所有操作符
         let numbersOnly = expression.replacingOccurrences(of: "[^0-9.]", with: " ", options: .regularExpression)
         let numberStrings = numbersOnly.components(separatedBy: " ").filter { !$0.isEmpty }

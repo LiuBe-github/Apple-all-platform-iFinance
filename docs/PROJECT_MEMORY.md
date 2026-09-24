@@ -316,6 +316,7 @@ Watch 端前缀独立：`add.*`、`category.*`、`summary.*`、`history.*`、`ta
 | 开屏与头像 | 冷启动开屏 `AppSplashView`（1.8s，Reduce Motion 降级 0.8s，仅 iOS）；头像选择后经 `AvatarCropView` 圆形遮罩裁剪（拖动/缩放）再写入 300×300 JPEG | `iFinance/Views/Common/AppSplashView.swift`、`iFinance/Views/Profile/AvatarCropView.swift` |
 | 个性签名 | `UserProfile.signature`（三份模型同步：iOS/macOS Core Data + SwiftData）；设置页头部用户名下方显示签名（为空时显示「点击设置个性签名」占位），点击头部或个人中心的「个性签名」入口打开 `EditSignatureView`（40 字上限） | `AuthManager.validateSignature/updateSignature`、`Views/Profile/EditSignatureView.swift` |
 | 性能约定 | 背景动画统一走 `AppBackgroundView` + 全局 `AppBackgroundClock`（10fps、非活跃暂停、Reduce Motion 静态、RadialGradient 代替 blur）；头像解码走 `AvatarImageCache`；Formatter 全部 `static let`；`AddBillView` 的分类网格拆成 Equatable 子视图避免输入时重建 | `iFinance/Views/Common/`、`AddBillView.swift` |
+| 记账键盘 | 表达式编辑逻辑抽为纯函数 `NumberPadExpression`（`NumberPadLogic.swift`）：按「当前数字段」校验位数、运算符首按为主运算符/再按切换、`%` 与退格边界；`AddBillView.parseExpression` 负责四则运算求值，两者都有单测 | `iFinance/Views/Transaction/Bills/NumberPadLogic.swift` |
 | 本地化自查 | `*LocalizationRegressionTests` 会校验四种语言的关键 key 都能解析出译文（`common.cancel` 曾缺失导致对话框直接显示原始 key） | `iFinanceTests`、`MaciFinanceTests` |
 
 macOS 端有独立副本：`MaciFinance/Views/Common/AppVisualStyle.swift`（130 行）与 `MaciFinance/Helpers/HapticManager.swift`（46 行，桌面端为空实现/降级）。

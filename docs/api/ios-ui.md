@@ -20,6 +20,7 @@
 | `Views/Transaction/Bills/EditBillView.swift` | `EditBillView` | 编辑 / 删除账单 |
 | `Views/Transaction/Bills/BillsCardView.swift` | `TimeRange`、`BillsCardView` | 账单列表：时间范围 / 分类 / 备注筛选 |
 | `Views/Transaction/Bills/NumberPad.swift` | `NumberPad` | 自定义数字键盘主体（含备注、日期） |
+| `Views/Transaction/Bills/NumberPadLogic.swift` | `NumberPadExpression` | 键盘表达式纯逻辑（追加数字/小数点、运算符切换、退格、百分比），独立可测 |
 | `Views/Transaction/Bills/NumberPadComponents.swift` | `NumberButton`、`OperationButton`、`DatePickerView` | 键盘组件 |
 | `Views/Transaction/Bills/{Expenditure,Income}CategoryItemView.swift` | 分类按钮 | 分类选择项 |
 | `Views/Transaction/Budget/BudgetView.swift` | `BudgetView`、`CategoryRowView` | 预算页：环形进度 + 分类列表/饼图 |
@@ -88,6 +89,14 @@ enum Tab { case home, transaction, tendency, setting }
 ## 4. 记账链路（Transaction）
 
 ### `NumberPad`（`Views/Transaction/Bills/NumberPad.swift:10`）
+
+输入规则由 `NumberPadExpression`（`NumberPadLogic.swift`）实现：
+
+- 数字与小数点只针对**当前数字段**（最后一个运算符之后的部分）校验：小数最多 2 位、整数最多 9 位、重复小数点忽略；
+- 运算符按钮首次点击插入主运算符（如 `+`），再点一次切换为备用运算符（如 `×`）；末尾已有其它运算符时替换之；
+- 占位 `0.00` 时输入数字直接开始新数字；运算符后直接按小数点补 `0.`；
+- 退格删到空回到 `0.00`；`%` 把纯数字除以 100（表达式含运算符时不处理）。
+  求值由 `AddBillView.parseExpression(_:)` 完成（对测试可见），支持 `+ - × ÷` 连续运算。
 
 ```swift
 struct NumberPad: View {

@@ -250,67 +250,30 @@ struct NumberPad: View {
         // 触感反馈：数字按键 — 轻量高频
         HapticManager.shared.light()
 
-        // 1. 防止重复输入小数点
-        if number == "." && displayText.contains(".") {
-            HapticManager.shared.error() // 无效输入
-            return
+        // 校验与拼接统一交给 NumberPadExpression（按「当前数字段」判断，支持运算符后的输入）
+        let updated = NumberPadExpression.append(number, to: displayText)
+        if updated == displayText {
+            HapticManager.shared.error() // 无效输入：重复小数点 / 超出位数上限
         }
-        
-        if displayText == "0.00" {
-            // 2. 如果当前是 0.00 且输入的是小数点，应该显示 "0." 而不是直接替换
-            if number == "." {
-                displayText = "0."
-            } else {
-                displayText = number
-            }
-        } else {
-            // 3. 限制小数位
-            if displayText.contains(".") {
-                let parts = displayText.split(separator: ".")
-                if parts.count > 1 {
-                    let decimalPart = parts[1]
-                    if decimalPart.count >= 2 && number != "." {
-                        return
-                    }
-                }
-            }
-            displayText += number
-        }
+        displayText = updated
     }
     
     private func handleDeleteTap() {
         // 触感反馈：删除操作
         HapticManager.shared.rigid()
 
-        // 如果当前是0.00，不允许退格
-        if displayText == "0.00" {
-            return
-        }
-        
-        // 如果只剩一个字符，重置为0.00
-        if displayText.count <= 1 {
-            displayText = "0.00"
-        } else {
-            displayText = String(displayText.dropLast())
-        }
+        displayText = NumberPadExpression.deleteLast(from: displayText)
     }
     
     private func handleOperationTap(_ primaryOp: String, altOp: String) {
         // 触感反馈：运算符
         HapticManager.shared.medium()
 
-        // 确定当前操作符
-        let newOp = (currentOperator == primaryOp) ? altOp : primaryOp
-        
-        // 更新当前操作符状态
-        currentOperator = newOp
-        
-        // 如果显示文本以操作符结尾，则替换最后一个字符
-        if let lastChar = displayText.last, ["+", "-", "×", "÷"].contains(String(lastChar)) {
-            displayText = String(displayText.dropLast()) + newOp
-        } else {
-            // 否则追加操作符
-            displayText += newOp
+        // 第一次按插入主运算符，再按一次在本按钮的两个运算符之间切换
+        let updated = NumberPadExpression.applyOperator(primary: primaryOp, alternate: altOp, to: displayText)
+        displayText = updated
+        if let last = updated.last, NumberPadExpression.operators.contains(last) {
+            currentOperator = String(last)
         }
     }
     
@@ -319,10 +282,7 @@ struct NumberPad: View {
         HapticManager.shared.medium()
 
         // 百分比操作 - 将当前金额除以100
-        if let value = Double(displayText), value != 0 {
-            let newValue = value / 100
-            displayText = String(format: "%.2f", newValue)
-        }
+        displayText = NumberPadExpression.applyPercent(to: displayText)
     }
     
     private func getFormattedDateString(_ date: Date) -> String {

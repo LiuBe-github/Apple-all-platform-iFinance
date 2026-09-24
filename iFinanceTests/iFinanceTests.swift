@@ -740,6 +740,99 @@ final class LocalizationRegressionTests: XCTestCase {
 
 // MARK: - 个性签名校验
 
+// MARK: - 数字键盘表达式逻辑（回归：带小数金额 + 运算符后无法继续输入）
+
+@MainActor
+final class NumberPadExpressionTests: XCTestCase {
+
+    /// 本次修复的 bug：先输入带小数的金额，按运算符后仍能继续输入数字
+    func testDigitsStillEnterableAfterOperatorWithDecimalAmount() {
+        var text = NumberPadExpression.placeholder
+        for input in ["1", "2", ".", "5"] {
+            text = NumberPadExpression.append(input, to: text)
+        }
+        XCTAssertEqual(text, "12.5")
+
+        text = NumberPadExpression.applyOperator(primary: "+", alternate: "×", to: text)
+        XCTAssertEqual(text, "12.5+")
+
+        // 修复前这里会被「整串表达式小数位已满」的判断拦掉
+        text = NumberPadExpression.append("3", to: text)
+        XCTAssertEqual(text, "12.5+3")
+
+        text = NumberPadExpression.append("0", to: text)
+        XCTAssertEqual(text, "12.5+30")
+    }
+
+    func testFractionLimitOnlyAppliesToCurrentSegment() {
+        var text = "12.5"
+        text = NumberPadExpression.append("0", to: text)
+        XCTAssertEqual(text, "12.50")
+
+        // 当前数字已满两位小数 → 拒绝
+        text = NumberPadExpression.append("1", to: text)
+        XCTAssertEqual(text, "12.50")
+
+        // 运算符之后是新的数字段，可以继续输入
+        text = NumberPadExpression.applyOperator(primary: "+", alternate: "×", to: text)
+        text = NumberPadExpression.append("7", to: text)
+        XCTAssertEqual(text, "12.50+7")
+    }
+
+    func testOperatorTogglesOnSecondTap() {
+        var text = NumberPadExpression.append("8", to: NumberPadExpression.placeholder)
+        text = NumberPadExpression.applyOperator(primary: "+", alternate: "×", to: text)
+        XCTAssertEqual(text, "8+", "第一次按应插入主运算符")
+
+        text = NumberPadExpression.applyOperator(primary: "+", alternate: "×", to: text)
+        XCTAssertEqual(text, "8×", "再按一次切换到备用运算符")
+
+        text = NumberPadExpression.applyOperator(primary: "-", alternate: "÷", to: text)
+        XCTAssertEqual(text, "8-", "换另一个按钮应替换为它的主运算符")
+    }
+
+    func testDecimalRightAfterOperatorStartsNewNumber() {
+        var text = "12"
+        text = NumberPadExpression.applyOperator(primary: "+", alternate: "×", to: text)
+        text = NumberPadExpression.append(".", to: text)
+        XCTAssertEqual(text, "12+0.")
+    }
+
+    func testPlaceholderAndLeadingZeroHandling() {
+        XCTAssertEqual(NumberPadExpression.append("5", to: NumberPadExpression.placeholder), "5")
+        XCTAssertEqual(NumberPadExpression.append(".", to: NumberPadExpression.placeholder), "0.")
+        XCTAssertEqual(NumberPadExpression.append("5", to: "0"), "5")
+        XCTAssertEqual(NumberPadExpression.append(".", to: "12.5"), "12.5", "重复小数点应被忽略")
+    }
+
+    func testIntegerDigitLimit() {
+        let long = String(repeating: "9", count: NumberPadExpression.maxIntegerDigits)
+        XCTAssertEqual(NumberPadExpression.append("9", to: long), long)
+    }
+
+    func testDeleteBehaviour() {
+        XCTAssertEqual(NumberPadExpression.deleteLast(from: "12+3"), "12+")
+        XCTAssertEqual(NumberPadExpression.deleteLast(from: "1"), NumberPadExpression.placeholder)
+        XCTAssertEqual(NumberPadExpression.deleteLast(from: NumberPadExpression.placeholder),
+                       NumberPadExpression.placeholder)
+    }
+
+    func testPercentKeepsTwoDecimalsForPlainNumber() {
+        XCTAssertEqual(NumberPadExpression.applyPercent(to: "12.5"), "0.12")
+        XCTAssertEqual(NumberPadExpression.applyPercent(to: "12+3"), "12+3", "表达式含运算符时不处理")
+    }
+
+    /// 键盘输入的表达式应能正确算出结果（用户要的「能做运算」）
+    func testExpressionEvaluation() {
+        let view = AddBillView()
+        XCTAssertEqual(view.parseExpression("12.5+30"), 42.5, accuracy: 0.001)
+        XCTAssertEqual(view.parseExpression("9-4"), 5, accuracy: 0.001)
+        XCTAssertEqual(view.parseExpression("10×3"), 30, accuracy: 0.001)
+        XCTAssertEqual(view.parseExpression("100÷4"), 25, accuracy: 0.001)
+        XCTAssertEqual(view.parseExpression("88"), 88, accuracy: 0.001)
+    }
+}
+
 @MainActor
 final class SignatureValidationTests: XCTestCase {
 
