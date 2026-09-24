@@ -83,6 +83,7 @@
 
 "common.save" = "Save";
 "common.confirm" = "Confirm";
+"common.cancel" = "Cancel";
 "common.done" = "Done";
 "common.today" = "Today";
 "common.yesterday" = "Yesterday";

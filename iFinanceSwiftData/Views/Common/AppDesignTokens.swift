@@ -53,8 +53,6 @@ enum AppLayout {
     static let avatarLarge: CGFloat = 84
     static let avatarMedium: CGFloat = 56
     static let iconTile: CGFloat = 32
-    /// 名言卡片最大高度（超出后按比例收缩宽度，避免 iPad 上被拉长到近千点）
-    static let heroImageMaxHeight: CGFloat = 520
     /// 图表高度（紧凑 / 常规）
     static let chartHeightCompact: CGFloat = 150
     static let chartHeightRegular: CGFloat = 190

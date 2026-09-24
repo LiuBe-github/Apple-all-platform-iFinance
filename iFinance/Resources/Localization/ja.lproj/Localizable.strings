@@ -3,7 +3,7 @@
 "tab.tendency" = "トレンド";
 "tab.setting" = "設定";
 
-"home.title" = "今日の一言";
+"home.title" = "概要";
 "transaction.title" = "家計簿";
 
 "profile.title" = "プロフィール";
@@ -83,6 +83,7 @@
 
 "common.save" = "保存";
 "common.confirm" = "確認";
+"common.cancel" = "キャンセル";
 "common.done" = "完了";
 "common.today" = "今日";
 "common.yesterday" = "昨日";
@@ -179,6 +180,7 @@
 "budget.tap_to_edit" = "タップして編集";
 "budget.this_month_expense" = "今月の支出";
 
+"home.change_quote" = "別の一言";
 "home.share_failed" = "共有に失敗しました";
 "home.share_error_render" = "共有画像の生成に失敗しました。";
 "home.share_error_encode" = "画像のエンコードに失敗しました。";

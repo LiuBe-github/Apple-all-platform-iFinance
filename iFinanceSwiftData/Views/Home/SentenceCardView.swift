@@ -2,157 +2,39 @@
 //  SentenceCardView.swift
 //  iFinance
 //
-//  名言卡片视图（用于首页展示）
+//  每日一言（纯文字）：图片能力已移除，作为「概况」页下方的补充信息。
 //
 
 import SwiftUI
 
-/// 名言卡片视图（用于首页展示）
+/// 每日一言（纯文字行：引言 + 作者）
 struct SentenceCardView: View {
     let sentence: DailySentence
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @StateObject private var loader = ImageLoader()
-    @State private var imageVisible = false
-    @State private var contentVisible = false
-
-    /// 卡片的目标显示尺寸（用于图片降采样）
-    var displaySize: CGSize = CGSize(width: 375, height: 520)
-
-    /// 图片宽高比（高度 = 宽度 / aspectRatio）
-    /// 0.75 → 约 4:3 竖图比例
-    private let imageAspectRatio: CGFloat = 0.75
-
-    private var imageURL: URL? {
-        let seed = abs(sentence.content.hashValue) % 1000
-        return URL(string: "https://picsum.photos/seed/\(seed)/800/1200")
-    }
-
-    /// 失败兜底渐变
-    private var fallbackGradient: LinearGradient {
-        let hue = Double(abs(sentence.content.hashValue) % 360) / 360
-        return LinearGradient(
-            colors: [
-                Color(hue: hue, saturation: 0.35, brightness: 0.45),
-                Color(hue: (hue + 0.1).truncatingRemainder(dividingBy: 1),
-                      saturation: 0.25, brightness: 0.35)
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-    }
-
     var body: some View {
-        GeometryReader { geo in
-            let w = geo.size.width
-            let h = height(for: w)
+        VStack(alignment: .leading, spacing: AppSpacing.xs) {
+            Text(sentence.content)
+                .font(AppTypography.caption)
+                .foregroundStyle(.secondary)
+                .lineSpacing(3)
+                .lineLimit(3)
+                .fixedSize(horizontal: false, vertical: true)
 
-            ZStack(alignment: .bottomLeading) {
-
-                // ── 背景：缓存图 / 骨架屏 / 兜底渐变 ──
-                Group {
-                    if let img = loader.image {
-                        Image(uiImage: img)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: w, height: h)
-                            .clipped()
-                            .scaleEffect(imageVisible || reduceMotion ? 1 : 1.07)
-                            .opacity(imageVisible ? 1 : 0)
-                            .onAppear {
-                                withAnimation(AppMotion.resolved(AppMotion.emphasized, reduceMotion: reduceMotion)) {
-                                    imageVisible = true
-                                }
-                            }
-                    } else if !loader.isLoaded {
-                        // 骨架屏（微光扫过）
-                        ZStack {
-                            Color(UIColor.systemGray5)
-                            ShimmerView()
-                        }
-                        .frame(width: w, height: h)
-                    } else {
-                        fallbackGradient
-                            .frame(width: w, height: h)
-                            .transition(.opacity)
-                    }
-                }
-
-                // ── 底部渐变遮罩 ──
-                LinearGradient(
-                    stops: [
-                        .init(color: .clear, location: 0.0),
-                        .init(color: .black.opacity(0.12), location: 0.42),
-                        .init(color: .black.opacity(0.70), location: 0.76),
-                        .init(color: .black.opacity(0.86), location: 1.0),
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .frame(height: h)
-                .opacity(imageVisible ? 1 : 0)
-
-                // ── 文字 ──
-                VStack(alignment: .leading, spacing: AppSpacing.md) {
-                    Text("\u{201C}")
-                        .font(.system(size: 52, weight: .bold, design: .serif))
-                        .foregroundStyle(.white.opacity(0.30))
-                        .offset(y: 10)
-
-                    Text(sentence.content)
-                        .font(.system(size: 19, weight: .medium, design: .serif))
-                        .foregroundStyle(.white)
-                        .lineSpacing(6)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .shadow(color: .black.opacity(0.45), radius: 4, x: 0, y: 2)
-
-                    HStack {
-                        Spacer()
-                        Text("\(sentence.note)")
-                            .font(.system(size: 14, weight: .regular, design: .serif))
-                            .foregroundStyle(.white.opacity(0.72))
-                            .italic()
-                            .shadow(color: .black.opacity(0.4), radius: 3, x: 0, y: 1)
-                    }
-                }
-                .padding(.horizontal, AppSpacing.xxl)
-                .padding(.bottom, AppSpacing.xxl)
-                .padding(.top, max(h * 0.36, 120))
-                .opacity(contentVisible ? 1 : 0)
-                .offset(y: contentVisible || reduceMotion ? 0 : 10)
-                .onAppear {
-                    withAnimation(AppMotion.resolved(AppMotion.emphasized, reduceMotion: reduceMotion).delay(0.15)) {
-                        contentVisible = true
-                    }
-                }
-            }
+            Text("—— \(sentence.note)")
+                .font(AppTypography.tiny)
+                .foregroundStyle(.tertiary)
+                .lineLimit(1)
         }
-        .aspectRatio(imageAspectRatio, contentMode: .fit)
-        .frame(maxHeight: AppLayout.heroImageMaxHeight)
-        .onAppear {
-            guard let url = imageURL else { return }
-            loader.load(url: url, targetSize: displaySize)
-        }
-        .onChange(of: sentence.id) { _, _ in
-            // 切换句子时重置入场状态
-            imageVisible = false
-            contentVisible = false
-            withAnimation(AppMotion.resolved(AppMotion.emphasized, reduceMotion: reduceMotion)) { imageVisible = true }
-            withAnimation(AppMotion.resolved(AppMotion.emphasized, reduceMotion: reduceMotion).delay(0.15)) { contentVisible = true }
-        }
-    }
-
-    /// 卡片高度：按宽度等比，并受 `AppLayout.heroImageMaxHeight` 限制（避免 iPad 上被过度拉长）
-    private func height(for width: CGFloat) -> CGFloat {
-        min(width / imageAspectRatio, AppLayout.heroImageMaxHeight)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, AppSpacing.xs)
     }
 }
 
 #Preview {
     SentenceCardView(sentence: DailySentence(
         content: "风险来自于你不知道自己在做什么。",
-        note: "沃伦·巴菲特",
-        picture2: ""
+        note: "沃伦·巴菲特"
     ))
-    .frame(height: 400)
+    .padding()
 }
+

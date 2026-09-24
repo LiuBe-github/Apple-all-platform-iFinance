@@ -1,12 +1,13 @@
 //
 //  HomeView.swift
-//  iFinance
+//  iFinanceSwiftData
+//
+//  概况页：今日概况为主视觉，每日一言为一行小字（图片能力已移除）
 //
 //  Created by 刘不易 on 2026/2/6.
 //
 
 import SwiftUI
-import Combine
 import UIKit
 import SwiftData
 
@@ -23,11 +24,11 @@ struct HomeView: View {
     @EnvironmentObject private var authManager: AuthManager
     @State private var showProfile = false
 
-    // MARK: - 今日账单数据
+    // MARK: - 今日账单数据（SwiftData）
     @Query(filter: PersistenceController.billUserPredicate, sort: \Bill.date, order: .reverse, animation: .default)
     private var userBills: [Bill]
 
-    /// 今日账单（SwiftData 版：先按用户查询，再在内存中过滤当天）
+    /// 今日账单（先按用户查询，再在内存中过滤当天）
     private var todayBills: [Bill] {
         let calendar = Calendar.current
         return userBills.filter { bill in
@@ -39,11 +40,9 @@ struct HomeView: View {
     // MARK: - UI State
     @State private var sentences: [DailySentence] = []
     @State private var currentSentence: DailySentence?
-    @State private var nextSentence: DailySentence?   // 预加载的下一条
     @State private var isInitialLoading = true
     @State private var isRefreshing = false
-    @State private var cardOpacity: Double = 1
-    @State private var cardScale: Double = 1
+    @State private var quoteOpacity: Double = 1
     @State private var refreshAngle: Double = 0
     @State private var shareBounceTrigger = 0
     @State private var contentVisible = false
@@ -81,13 +80,13 @@ struct HomeView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 0) {
                         if isInitialLoading {
-                            Spacer(minLength: 160)
+                            Spacer(minLength: 120)
                             ProgressView().scaleEffect(1.3)
-                            Spacer(minLength: 240)
-                        } else if let s = currentSentence {
-                            Spacer(minLength: 16)
+                            Spacer(minLength: 200)
+                        } else {
+                            Spacer(minLength: AppSpacing.section)
 
-                            // 今日结余卡片
+                            // ── 今日概况（主视觉） ──
                             TodayBalanceCard(
                                 income: todayIncome,
                                 expense: todayExpense,
@@ -97,20 +96,19 @@ struct HomeView: View {
                             .padding(.horizontal, AppSpacing.screen)
                             .transition(AppMotion.resolvedTransition(AppMotion.riseIn, reduceMotion: reduceMotion))
 
-                            Spacer(minLength: AppSpacing.lg)
+                            if let s = currentSentence {
+                                Spacer(minLength: AppSpacing.xl)
 
-                            // 名言卡片
-                            SentenceCardView(sentence: s, displaySize: cardSize)
-                                .id(s.id)
-                                .clipShape(RoundedRectangle(cornerRadius: AppRadius.sheet, style: .continuous))
-                                .shadow(color: .black.opacity(0.18), radius: 20, x: 0, y: 8)
-                                .opacity(cardOpacity)
-                                .scaleEffect(cardScale)
-                                .padding(.horizontal, AppSpacing.xl)
+                                // ── 每日一言（纯文字行） ──
+                                SentenceCardView(sentence: s)
+                                    .id(s.id)
+                                    .padding(.horizontal, AppSpacing.screen)
+                                    .opacity(quoteOpacity)
+                            }
 
-                            Spacer(minLength: AppSpacing.xxl)
+                            Spacer(minLength: AppSpacing.section)
 
-                            // 操作按钮
+                            // ── 操作按钮 ──
                             HStack(spacing: AppSpacing.section) {
                                 Button {
                                     guard !isRefreshing else { return }
@@ -128,11 +126,12 @@ struct HomeView: View {
                                 .foregroundStyle(.primary)
                                 .disabled(isRefreshing)
                                 .buttonStyle(ScaleButtonStyle())
+                                .accessibilityLabel(String(localized: "home.change_quote"))
 
                                 Button {
                                     HapticManager.shared.light()
                                     shareBounceTrigger += 1
-                                    renderAndShare(s)
+                                    renderAndShare()
                                 } label: {
                                     Image(systemName: "square.and.arrow.up")
                                         .font(.system(size: 17, weight: .medium))
@@ -146,7 +145,6 @@ struct HomeView: View {
                                 .buttonStyle(ScaleButtonStyle())
                             }
                             .padding(.bottom, AppSpacing.xl)
-                            .opacity(cardOpacity)
                         }
                     }
                     .appContentWidth()
@@ -206,12 +204,6 @@ struct HomeView: View {
         }
     }
 
-    /// 卡片宽度（自适应屏幕）
-    private var cardSize: CGSize {
-        CGSize(width: AppLayout.contentMaxWidth - AppSpacing.screen * 2,
-               height: AppLayout.heroImageMaxHeight)
-    }
-
     // MARK: - 加载 JSON
     private func loadSentences() {
         guard let url = Bundle.main.url(forResource: "EconomicQuotes", withExtension: "json"),
@@ -231,80 +223,48 @@ struct HomeView: View {
                 contentVisible = true
             }
         }
-
-        // 首次加载后立即预加载下一条
-        Task { await prepareNext() }
     }
 
-    // MARK: - 预加载下一条图片
-    private func prepareNext() async {
-        let filtered = sentences.filter { $0.id != currentSentence?.id }
-        guard let next = (filtered.isEmpty ? sentences : filtered).randomElement() else { return }
-        nextSentence = next
-
-        let seed = abs(next.content.hashValue) % 1000
-        guard let url = URL(string: "https://picsum.photos/seed/\(seed)/800/1200") else { return }
-
-        let loader = ImageLoader()
-        await loader.preload(url: url)
-    }
-
-    // MARK: - 刷新
+    // MARK: - 换一句（仅更换名言，不再加载图片）
     private func refresh() {
         guard sentences.count > 1 else { return }
         isRefreshing = true
 
-        // 刷新按钮转一圈
         withAnimation(AppMotion.resolved(AppMotion.ambient, reduceMotion: reduceMotion)) { refreshAngle += 360 }
 
-        // 卡片淡出缩小
         withAnimation(AppMotion.resolved(AppMotion.quick, reduceMotion: reduceMotion)) {
-            cardOpacity = 0
-            cardScale = 0.94
+            quoteOpacity = 0
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.20) {
-            // 切换到已预加载的下一条（图片已在缓存中）
-            if let next = nextSentence {
-                currentSentence = next
-            } else {
-                let filtered = sentences.filter { $0.id != currentSentence?.id }
-                currentSentence = (filtered.isEmpty ? sentences : filtered).randomElement()
-            }
-            nextSentence = nil
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+            let filtered = sentences.filter { $0.id != currentSentence?.id }
+            currentSentence = (filtered.isEmpty ? sentences : filtered).randomElement()
 
-            // 卡片弹入
             withAnimation(AppMotion.resolved(AppMotion.emphasized, reduceMotion: reduceMotion)) {
-                cardOpacity = 1
-                cardScale = 1
+                quoteOpacity = 1
             }
             isRefreshing = false
-
-            // 后台预加载再下一条
-            Task { await prepareNext() }
         }
     }
 
-    // MARK: - 渲染分享卡片（含当日统计数据）
+    // MARK: - 渲染分享卡片（含当日统计数据，无图片）
     @MainActor
-    private func renderAndShare(_ sentence: DailySentence) {
-        // 先获取当前已加载的图片（用于分享卡片渲染）
+    private func renderAndShare() {
+        guard let sentence = currentSentence else { return }
+
         let cardWidth: CGFloat = 375
-        let imageAreaHeight = cardWidth / 0.75 // 图片区域高度（与首页一致）
-        let statAreaHeight: CGFloat = 180      // 统计区域估算高度
-        let totalHeight = imageAreaHeight + statAreaHeight
+        let cardHeight: CGFloat = 460
 
         let renderer = ImageRenderer(
             content: ShareCardView(
                 sentence: sentence,
-                backgroundImage: getCurrentCardImage(),
                 dailyBalance: todayBalance,
                 incomeTotal: todayIncome,
                 expenseTotal: todayExpense,
                 billCount: todayBills.count,
                 dateText: todayDateText
             )
-            .frame(width: cardWidth, height: totalHeight)
+            .frame(width: cardWidth, height: cardHeight)
             .clipShape(RoundedRectangle(cornerRadius: AppRadius.sheet, style: .continuous))
         )
         renderer.scale = displayScale
@@ -328,17 +288,6 @@ struct HomeView: View {
         } catch {
             shareError = String(format: L10n.string("home.share_error_write"), error.localizedDescription)
         }
-    }
-
-    /// 获取当前卡片的图片（供分享使用）
-    private func getCurrentCardImage() -> UIImage? {
-        // 通过 ImageCache 获取当前句子的缓存图片
-        guard let s = currentSentence else { return nil }
-        let seed = abs(s.content.hashValue) % 1000
-        let urlString = "https://picsum.photos/seed/\(seed)/800/1200"
-
-        // 尝试获取更高分辨率的图片用于分享
-        return ImageCache.shared.get(urlString) ?? ImageCache.shared.getFromDisk(urlString)
     }
 }
 

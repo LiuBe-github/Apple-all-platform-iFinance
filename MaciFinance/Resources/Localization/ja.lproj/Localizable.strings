@@ -83,6 +83,7 @@
 
 "common.save" = "保存";
 "common.confirm" = "確認";
+"common.cancel" = "キャンセル";
 "common.done" = "完了";
 "common.today" = "今日";
 "common.yesterday" = "昨日";

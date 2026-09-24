@@ -307,6 +307,8 @@ Watch 端前缀独立：`add.*`、`category.*`、`summary.*`、`history.*`、`ta
 | 图标动效 | `.symbolEffect(...)` | 刷新/分享/选中/超支等场景 |
 | 设计/动画 token | `Views/Common/AppDesignTokens.swift`（`AppSpacing`/`AppRadius`/`AppLayout`/`AppTypography`）与 `AppMotion.swift`（`quick`/`standard`/`emphasized`/`numeric` + Reduce Motion 降级） | 2026-09 起新增 UI 一律用 token，禁止再写魔法数字 |
 | 后台隐私保护 | 进入 `.inactive`/`.background` 时 `BiometricLockManager.activatePrivacyShield()`（仅 `isLockEnabled` 时生效）→ `.appPrivacyShield(true)` 对整页做 20pt 高斯模糊 + 材质覆盖；回到前台且无需锁定时解除，解锁成功后也会清除 | `iFinance/Views/Common/AppPrivacyShield.swift`、`BiometricLockManager.swift` |
+| 概况页构成 | 今日概况大卡（日期 + 大号结余 + 收支笔数三栏）为主视觉；每日一言为纯文字小字。图片能力已整体移除（`ImageLoader`/`ImageCache`/`ImageDownsampler` 与 `DailySentence.picture2` 均已删除，运行时不再联网取图） | `iFinance/Views/Home/HomeView.swift`、`TodayBalanceCard.swift`、`SentenceCardView.swift` |
+| 本地化自查 | `*LocalizationRegressionTests` 会校验四种语言的关键 key 都能解析出译文（`common.cancel` 曾缺失导致对话框直接显示原始 key） | `iFinanceTests`、`MaciFinanceTests` |
 
 macOS 端有独立副本：`MaciFinance/Views/Common/AppVisualStyle.swift`（130 行）与 `MaciFinance/Helpers/HapticManager.swift`（46 行，桌面端为空实现/降级）。
 

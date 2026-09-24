@@ -3,7 +3,7 @@
 "tab.tendency" = "趨勢";
 "tab.setting" = "設定";
 
-"home.title" = "一言";
+"home.title" = "概況";
 "transaction.title" = "帳本";
 
 "profile.title" = "個人設定";
@@ -83,6 +83,7 @@
 
 "common.save" = "儲存";
 "common.confirm" = "確定";
+"common.cancel" = "取消";
 "common.done" = "完成";
 "common.today" = "今天";
 "common.yesterday" = "昨天";
@@ -179,6 +180,7 @@
 "budget.tap_to_edit" = "點擊修改";
 "budget.this_month_expense" = "本月支出";
 
+"home.change_quote" = "換一句";
 "home.share_failed" = "分享失敗";
 "home.share_error_render" = "無法生成分享圖片，請重試。";
 "home.share_error_encode" = "圖片編碼失敗，請重試。";

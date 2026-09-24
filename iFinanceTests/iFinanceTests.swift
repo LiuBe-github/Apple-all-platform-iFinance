@@ -677,3 +677,50 @@ final class PrivacyShieldTests: XCTestCase {
         }
     }
 }
+
+// MARK: - 本地化与名言数据回归
+
+@MainActor
+final class LocalizationRegressionTests: XCTestCase {
+
+    private let languages = ["zh-Hans", "zh-Hant", "en", "ja"]
+    private let criticalKeys = [
+        "common.ok", "common.confirm", "common.cancel",
+        "home.title", "home.change_quote", "home.surplus", "home.income_label"
+    ]
+
+    private func localized(_ key: String, language: String) -> String? {
+        guard let path = Bundle.main.path(forResource: language, ofType: "lproj"),
+              let bundle = Bundle(path: path) else { return nil }
+        return NSLocalizedString(key, bundle: bundle, comment: "")
+    }
+
+    /// 关键 key 在四种语言里都必须能解析出真实译文（值不能等于 key）
+    func testCriticalKeysHaveTranslations() {
+        for language in languages {
+            for key in criticalKeys {
+                let value = localized(key, language: language)
+                XCTAssertNotNil(value, "\(language) 缺少语言包")
+                XCTAssertNotEqual(value, key, "\(language) 的 \(key) 未配置译文（界面会显示原始 key）")
+            }
+        }
+    }
+}
+
+@MainActor
+final class DailySentenceDataTests: XCTestCase {
+
+    /// 名言 JSON 清理掉图片地址后仍必须可解码
+    func testEconomicQuotesDecoding() throws {
+        let url = try XCTUnwrap(
+            Bundle.main.url(forResource: "EconomicQuotes", withExtension: "json"),
+            "App bundle 中缺少 EconomicQuotes.json"
+        )
+        let data = try Data(contentsOf: url)
+        let list = try JSONDecoder().decode([DailySentence].self, from: data)
+
+        XCTAssertEqual(list.count, 100, "名言条数应为 100")
+        XCTAssertTrue(list.allSatisfy { !$0.content.isEmpty && !$0.note.isEmpty },
+                      "名言内容与作者都不应为空")
+    }
+}

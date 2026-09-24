@@ -579,3 +579,33 @@ struct ChartDisplayTests {
         #expect(formatted.contains("¥") || formatted.contains("¥") == false)
     }
 }
+
+// MARK: - 本地化回归（语言切换对话框 / 主题选项不得显示原始 key）
+
+@MainActor
+@Suite(.serialized)
+struct MacLocalizationRegressionTests {
+
+    private let languages = ["zh-Hans", "zh-Hant", "en", "ja"]
+    private let criticalKeys = [
+        "common.ok", "common.confirm", "common.cancel",
+        "settings.theme_light", "settings.theme_dark", "settings.theme_system"
+    ]
+
+    private func localized(_ key: String, language: String) -> String? {
+        guard let path = Bundle.main.path(forResource: language, ofType: "lproj"),
+              let bundle = Bundle(path: path) else { return nil }
+        return NSLocalizedString(key, bundle: bundle, comment: "")
+    }
+
+    @Test
+    func criticalKeysHaveTranslations() {
+        for language in languages {
+            for key in criticalKeys {
+                let value = localized(key, language: language)
+                #expect(value != nil, "\(language) 缺少语言包")
+                #expect(value != key, "\(language) 的 \(key) 未配置译文（界面会显示原始 key）")
+            }
+        }
+    }
+}

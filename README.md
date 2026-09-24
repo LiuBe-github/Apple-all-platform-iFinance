@@ -32,7 +32,7 @@
 | **账单管理** | 按日期分组展示，支持关键词搜索、分类筛选、时间范围（本日/本周/本月/本年）筛选、编辑与删除 |
 | **统计分析** | 周/月/年多维图表（Swift Charts），收支趋势折线图/柱状图切换，分类占比饼图 |
 | **活跃度热力图** | GitHub 风格 53 周热力图，5 级深浅着色，月份标签随内容同步滚动 |
-| **每日一句** | 首页展示经济名言（沃伦·巴菲特等），配随机风景图（三级缓存 + 图片降采样），支持一键分享今日统计卡片 |
+| **每日一句** | 首页展示经济名言（沃伦·巴菲特等，纯文字、不联网取图），与「今日概况」主卡片一同呈现，支持一键分享统计卡片 |
 | **今日结余卡片** | 首页顶部紧凑展示当日收入/支出/结余/笔数 |
 
 ### ⌚ Apple Watch 快速记账
@@ -126,14 +126,11 @@ iFinance/
 │   │   └── LocalizationHelper.swift   # L10n 静态国际化辅助
 │   ├── Views/
 │   │   ├── Home/                      # 🏠 首页
-│   │   │   ├── HomeView.swift         # 今日结余 + 名言卡片 + 分享
-│   │   │   ├── TodayBalanceCard.swift # 今日结余卡片
-│   │   │   ├── SentenceCardView.swift # 名言卡片（随机风景图）
+│   │   │   ├── HomeView.swift         # 概况页：今日概况 + 每日一言 + 换一句/分享
+│   │   │   ├── TodayBalanceCard.swift # 今日概况大卡（主视觉）
+│   │   │   ├── SentenceCardView.swift # 每日一言（纯文字）
 │   │   │   ├── ShareCardView.swift    # 分享统计卡片
 │   │   │   ├── ShareSheet.swift       # 系统分享面板
-│   │   │   ├── ImageLoader.swift      # 图片异步加载（Combine）
-│   │   │   ├── ImageCache.swift       # 图片三级缓存
-│   │   │   └── ImageDownsampler.swift # 图片降采样（内存优化）
 │   │   ├── Transaction/               # 📝 记账
 │   │   │   ├── Bills/                 # 新增/编辑/浏览账单，自定义数字键盘
 │   │   │   │   ├── NumberPad.swift            # 数字键盘主体
@@ -207,7 +204,6 @@ iFinance/
 | **AuthenticationServices** | Sign in with Apple |
 | **Network.framework** | 网络状态实时监控 |
 | **Combine** | `ObservableObject` + `@Published` 响应式数据流 |
-| **自研图片缓存** | 内存 + 磁盘双层缓存，配合图片降采样与请求去重 |
 | **UniformTypeIdentifiers** | CSV 导入导出 |
 | **CloudKit / UserNotifications** | iCloud 同步与本地通知（预留，暂禁用） |
 
@@ -229,7 +225,7 @@ iFinance/
 - **Xcode** 27（SDK：iOS 27 / macOS 27 / watchOS 27）
 - **Swift** 5.0
 - **最低系统版本**：iOS 18.0 / macOS 15.0 / watchOS 11.0（上限为各自 27.x）
-- **外部依赖**：无（图片加载使用内置 `ImageCache` / `ImageLoader` / `ImageDownsampler`）
+- **外部依赖**：无（名言为本地 JSON，运行时不再发起网络图片请求）
 
 ## 🚀 快速开始
 

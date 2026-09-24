@@ -3,7 +3,7 @@
 "tab.tendency" = "趋势";
 "tab.setting" = "设置";
 
-"home.title" = "一言";
+"home.title" = "概况";
 "transaction.title" = "账本";
 
 "header.add_bill" = "记一笔！";
@@ -225,12 +225,14 @@
 "budget.this_month_expense" = "本月支出";
 
 "common.confirm" = "确定";
+"common.cancel" = "取消";
 "common.done" = "完成";
 "common.today" = "今天";
 "common.yesterday" = "昨天";
 "common.unknown" = "未知";
 "common.unknown_error" = "未知错误";
 
+"home.change_quote" = "换一句";
 "home.share_failed" = "分享失败";
 "home.share_error_render" = "无法生成分享图片，请重试。";
 "home.share_error_encode" = "图片编码失败，请重试。";

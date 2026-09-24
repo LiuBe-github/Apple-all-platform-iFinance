@@ -8,14 +8,11 @@
 | 文件 | 主要类型 | 职责 |
 |------|----------|------|
 | `Views/ContentView.swift` | `ContentView` | 四个 Tab 容器（home/transaction/tendency/setting） |
-| `Views/Home/HomeView.swift` | `HomeView` | 首页：今日结余 + 每日一句 + 分享 |
-| `Views/Home/TodayBalanceCard.swift` | `TodayBalanceCard` | 今日收入/支出/结余/笔数卡片 |
-| `Views/Home/SentenceCardView.swift` | `SentenceCardView` | 每日一句卡片（随机风景图） |
-| `Views/Home/ShareCardView.swift` | `ShareCardView` | 分享用统计卡片（ImageRenderer 渲染） |
+| `Views/Home/HomeView.swift` | `HomeView` | 概况页：今日概况（主视觉）+ 每日一言 + 换一句/分享 |
+| `Views/Home/TodayBalanceCard.swift` | `TodayBalanceCard` | 今日概况大卡（日期 + 大号结余 + 收入/支出/笔数三栏） |
+| `Views/Home/SentenceCardView.swift` | `SentenceCardView` | 每日一言（纯文字行，已移除图片） |
+| `Views/Home/ShareCardView.swift` | `ShareCardView` | 分享用统计卡片（无图，ImageRenderer 渲染） |
 | `Views/Home/ShareSheet.swift` | `ShareSheet` | `UIActivityViewController` 包装 |
-| `Views/Home/ImageLoader.swift` | `ImageLoader` | 异步图片加载（Combine，可取消） |
-| `Views/Home/ImageCache.swift` | `ImageCache` | 内存 + 磁盘双层缓存 + 请求去重 |
-| `Views/Home/ImageDownsampler.swift` | `ImageDownsampler` | 图片降采样 |
 | `Views/Transaction/TransactionView.swift` | `TransactionView`、`SearchSheet` | 记账 Tab：预算卡片 + 账单卡片 + 搜索页 |
 | `Views/Transaction/TransactionRowView.swift` | `TransactionRowView` | 单条账单行 |
 | `Views/Transaction/Bills/AddBillView.swift` | `AddBillView` | 新增账单（数字键盘 + 分类） |
@@ -60,7 +57,7 @@ enum Tab { case home, transaction, tendency, setting }
 |-------|------|------|
 | `AppSpacing` | `xs=4 / sm=8 / md=12 / lg=16 / xl=20 / xxl=24 / section=32 / screen=20` | 所有 padding 与 `spacing:` |
 | `AppRadius` | `control=10 / row=14 / card=16 / sheet=22` | 控件、列表行、卡片、弹层圆角 |
-| `AppLayout` | `cardPadding=16`、`cardPaddingCozy=20`、`contentMaxWidth=700`、`formMaxWidth=640`、`listRowMinHeight=44`、`heroImageMaxHeight=520`、`chartHeightCompact/Regular`、`heatmapCell=12` | 卡片内边距、iPad 内容宽度、最小行高、图片与图表尺寸 |
+| `AppLayout` | `cardPadding=16`、`cardPaddingCozy=20`、`contentMaxWidth=700`、`formMaxWidth=640`、`listRowMinHeight=44`、`chartHeightCompact/Regular`、`heatmapCell=12`、`privacyBlurRadius=20` | 卡片内边距、iPad 内容宽度、最小行高与图表尺寸 |
 | `AppTypography` | `screenTitle` / `sectionTitle` / `body` / `secondary` / `caption` / `tiny` / `amount(_:)` | 语义字体（跟随 Dynamic Type）；金额用 `.appAmountStyle(size:weight:)` |
 | `AppMotion` | `quick=0.18s easeOut`、`standard=spring(0.35, 0.85)`、`emphasized=spring(0.5, 0.82)`、`numeric=snappy(0.35)`、`press`、`shimmer`、`ambient` | 全部动画参数 |
 | 修饰器 | `.appAmountStyle(size:weight:)`、`.appContentWidth(_:)`、`.appCardPadding(cozy:)`、`.appAnimation(_:value:)`、`.appEntrance(index:visible:)`、`.appPressable()` | 统一挂载点 |
@@ -123,23 +120,17 @@ struct NumberPad: View {
 
 `TendencyView`（`TendencyView.swift:10`）持有 `@FetchRequest` 的 `allBills` 并把 `Array(allBills)` 传给两张 `TrendCard`；`TendencyHeatmapView`（`:11`）渲染 53 周热力图与月份标签。
 
-## 6. 首页与图片管线（Home）
+## 6. 概况页（Home）
 
 | 类型 | 接口要点 |
 |------|----------|
-| `HomeView`（`HomeView.swift:20`） | `@FetchRequest` 今日账单（`date` 区间 + `createdBy`）；从 `Bundle` 读取 `EconomicQuotes.json` 解析 `[DailySentence]`；`@State` 维护当前/预加载下一条名言；渲染并分享统计卡片 |
-| `TodayBalanceCard`（`TodayBalanceCard.swift:11`） | 输入今日收入/支出/结余/笔数；金额用 `.contentTransition(.numericText())` |
-| `SentenceCardView`（`SentenceCardView.swift:11`） | 参数：`sentence: DailySentence`；图片经 `ImageLoader` 加载 |
-| `ShareCardView`（`ShareCardView.swift:11`） | 参数：`sentence: DailySentence` + 统计值；`ImageRenderer` 输出分享图 |
+| `HomeView`（`HomeView.swift:20`） | `@FetchRequest` 今日账单（`date` 区间 + `createdBy`）；从 `Bundle` 读取 `EconomicQuotes.json` 解析 `[DailySentence]`；`@State` 维护当前名言与 `quoteOpacity`；「换一句」只更换名言（不再加载图片） |
+| `TodayBalanceCard`（`TodayBalanceCard.swift:11`） | 输入今日收入/支出/结余/笔数；主视觉为 40pt 大号结余（`.appAmountStyle` + `.appNumericTransition`），下方三栏统计 |
+| `SentenceCardView`（`SentenceCardView.swift:11`） | 参数：`sentence: DailySentence`；纯文字（引言 + 作者），无背景与图片 |
+| `ShareCardView`（`ShareCardView.swift:11`） | 参数：`sentence` + 统计值 + `dateText`（**无 backgroundImage**）；`ImageRenderer` 以 375×460 输出分享图 |
 | `ShareSheet`（`ShareSheet.swift:12`） | `UIViewControllerRepresentable` 包装 `UIActivityViewController` |
 
-图片三级管线：
-
-| 组件 | 接口 | 说明 |
-|------|------|------|
-| `ImageCache`（`ImageCache.swift:11`） | `get(_:)` / `set(_:for:)` / `getFromDisk(_:)` / `saveToDisk(_:for:)` / `setInflightTask(_:forKey:)` / `getInflightTask(forKey:)` / `removeInflightTask(forKey:)` | 内存 `NSCache` + 磁盘目录（`diskURL(for:)`），过期清理 `cleanupExpiredDiskCache()`；`inflightTasks` 做请求去重 |
-| `ImageLoader`（`ImageLoader.swift:13`） | `@Published image: UIImage?` / `isLoaded`；`load(url:targetSize:)`（默认 400×560）、`preload(url:) async`、`performDownload(url:key:)` | Combine 驱动，支持取消与降采样 |
-| `ImageDownsampler`（`ImageDownsampler.swift:11`） | `static func downsample(_ imageData: Data, to maxSize: CGSize) -> UIImage?` | 降低内存占用 |
+> 首页原「名言随机风景图 + 三级图片缓存」能力已移除（2026-09）：`ImageLoader` / `ImageCache` / `ImageDownsampler` 三个文件与 `DailySentence.picture2` 字段均已删除，运行时不再发起网络图片请求。
 
 ## 7. 设置与个人中心
 
@@ -153,4 +144,3 @@ CSV 导出表头 `date,type,category,amount,note`；导入解析见 `parseCSVRow
 
 - 各视图的手势/动画细节未逐条展开；改动画请直接阅读对应文件的 `body`。
 - `ShareCardView` 的导出分辨率与不同机型缩放未做像素级核对。
-- 首页名言图片来自 `picsum.photos`，离线环境下会走缓存或降级占位图。

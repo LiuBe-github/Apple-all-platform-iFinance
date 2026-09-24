@@ -225,6 +225,7 @@
 "budget.this_month_expense" = "本月支出";
 
 "common.confirm" = "确定";
+"common.cancel" = "取消";
 "common.done" = "完成";
 "common.today" = "今天";
 "common.yesterday" = "昨天";

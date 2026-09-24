@@ -2,12 +2,12 @@
 //  TodayBalanceCard.swift
 //  iFinance
 //
-//  今日结余卡片（首页顶部，紧凑版）
+//  今日概况卡片（首页主视觉：日期 + 大号结余 + 收入/支出/笔数三栏）
 //
 
 import SwiftUI
 
-/// 今日结余卡片（首页顶部，紧凑版）
+/// 今日概况卡片（首页顶部主视觉）
 struct TodayBalanceCard: View {
     let income: Decimal
     let expense: Decimal
@@ -43,34 +43,40 @@ struct TodayBalanceCard: View {
     }
 
     var body: some View {
-        HStack(spacing: AppSpacing.md) {
-            // ── 左侧：金额 ──
-            VStack(alignment: .leading, spacing: AppSpacing.xs) {
-                HStack(spacing: AppSpacing.xs) {
-                    Image(systemName: "sun.max.fill")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(.orange)
-                    Text(dateLabel)
-                        .font(AppTypography.tiny.weight(.medium))
-                        .foregroundStyle(.tertiary)
-                }
+        VStack(alignment: .leading, spacing: AppSpacing.lg) {
+            // ── 顶部：日期 + 卡片标题 ──
+            HStack(spacing: AppSpacing.xs) {
+                Image(systemName: "sun.max.fill")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.orange)
 
-                HStack(alignment: .firstTextBaseline, spacing: AppSpacing.xs) {
-                    Text(formatted(balance))
-                        .appAmountStyle(size: 28, weight: .heavy)
-                        .foregroundStyle(balanceColor)
-                        .appNumericTransition(value: NSDecimalNumber(decimal: balance).doubleValue)
+                Text(dateLabel)
+                    .font(AppTypography.tiny.weight(.medium))
+                    .foregroundStyle(.tertiary)
 
-                    Text(balance >= 0 ? String(localized: "home.surplus") : String(localized: "home.deficit"))
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(balanceColor.opacity(0.7))
-                        .transition(.opacity)
-                }
+                Spacer(minLength: AppSpacing.sm)
+
+                Text(String(localized: "home.today_balance"))
+                    .font(AppTypography.tiny.weight(.medium))
+                    .foregroundStyle(.quaternary)
             }
 
-            Spacer()
+            // ── 主视觉：今日结余 ──
+            HStack(alignment: .firstTextBaseline, spacing: AppSpacing.sm) {
+                Text(formatted(balance))
+                    .appAmountStyle(size: 40, weight: .heavy)
+                    .foregroundStyle(balanceColor)
+                    .appNumericTransition(value: NSDecimalNumber(decimal: balance).doubleValue)
 
-            // ── 右侧：三栏统计 ──
+                Text(balance >= 0 ? String(localized: "home.surplus") : String(localized: "home.deficit"))
+                    .font(AppTypography.caption.weight(.semibold))
+                    .foregroundStyle(balanceColor.opacity(0.75))
+                    .transition(.opacity)
+            }
+
+            Divider().opacity(0.5)
+
+            // ── 底部：收入 / 支出 / 笔数 ──
             HStack(spacing: AppSpacing.md) {
                 miniStat(icon: "arrow.down.circle.fill", tint: .green,
                          value: formatted(income), label: String(localized: "home.income_label"))
@@ -80,8 +86,8 @@ struct TodayBalanceCard: View {
                          value: "\(billCount)", label: String(localized: "home.count_label"))
             }
         }
-        .padding(.horizontal, AppLayout.cardPadding)
-        .padding(.vertical, AppSpacing.md)
+        .padding(.horizontal, AppLayout.cardPaddingCozy)
+        .padding(.vertical, AppLayout.cardPadding)
         .appGlassCard(cornerRadius: AppRadius.sheet)
         .appEntrance(index: 0, visible: appeared)
         .onAppear { appeared = true }
@@ -103,13 +109,13 @@ struct TodayBalanceCard: View {
                             .strokeBorder(tint.opacity(0.25), lineWidth: 0.8)
                     )
                 Image(systemName: icon)
-                    .font(.system(size: 10, weight: .bold))
+                    .font(.system(size: 11, weight: .bold))
                     .foregroundStyle(tint)
             }
-            .frame(width: 26, height: 26)
+            .frame(width: AppLayout.iconTile, height: AppLayout.iconTile)
 
             Text(value)
-                .font(AppTypography.amount(12, weight: .bold))
+                .font(AppTypography.amount(15, weight: .bold))
                 .foregroundStyle(.primary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
@@ -118,7 +124,9 @@ struct TodayBalanceCard: View {
                 .font(AppTypography.tiny)
                 .foregroundStyle(.quaternary)
         }
-        .frame(minWidth: 40, minHeight: AppLayout.listRowMinHeight)
+        .frame(maxWidth: .infinity)
+        .frame(minHeight: AppLayout.listRowMinHeight)
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -131,3 +139,4 @@ struct TodayBalanceCard: View {
     )
     .padding()
 }
+
