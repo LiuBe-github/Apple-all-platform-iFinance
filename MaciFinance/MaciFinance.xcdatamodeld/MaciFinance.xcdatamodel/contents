@@ -24,6 +24,7 @@
         <attribute name="providerID" optional="YES" attributeType="String"/>
         <attribute name="passwordHash" optional="YES" attributeType="String"/>
         <attribute name="passwordSalt" optional="YES" attributeType="String"/>
+        <attribute name="signature" optional="YES" attributeType="String"/>
         <attribute name="createdAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
     </entity>

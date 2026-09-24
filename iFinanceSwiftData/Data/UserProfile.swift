@@ -29,6 +29,9 @@ final class UserProfile {
 
     var nickname: String?
 
+    /// 个性签名（设置页用户名下方的描述）
+    var signature: String?
+
     /// 头像（外部存储，避免撑大主库）
     @Attribute(.externalStorage) var avatarData: Data?
 
@@ -48,6 +51,7 @@ final class UserProfile {
         provider: String? = nil,
         providerID: String? = nil,
         nickname: String? = nil,
+        signature: String? = nil,
         avatarData: Data? = nil,
         monthlyBudget: Double = 3000,
         createdAt: Date? = Date(),
@@ -62,10 +66,10 @@ final class UserProfile {
         self.provider = provider
         self.providerID = providerID
         self.nickname = nickname
+        self.signature = signature
         self.avatarData = avatarData
         self.monthlyBudget = monthlyBudget
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
 }
-

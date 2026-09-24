@@ -41,6 +41,7 @@
 | `Views/Common/AppSplashView.swift` | `AppSplashView` | 冷启动开屏动画（渐变底 + 呼吸光晕 + 标题/副标题 + 加载指示，1.8s） |
 | `Views/Common/AvatarImageCache.swift` | `AvatarImageCache` | 头像解码缓存（按数据哈希复用 `UIImage`，避免每次渲染重新解码） |
 | `Views/Profile/AvatarCropView.swift` | `AvatarCropView` | 头像裁剪（圆形遮罩 + 拖动/缩放，输出 300×300 JPEG） |
+| `Views/Profile/EditSignatureView.swift` | `EditSignatureView` | 个性签名编辑（40 字上限 + 实时计数器） |
 
 ## 2. 根容器：`ContentView`（`Views/ContentView.swift:11`）
 
@@ -156,7 +157,9 @@ struct NumberPad: View {
 
 CSV 导出表头 `date,type,category,amount,note`；导入解析见 `parseCSVRows`（`:662`），已知缺陷与 SwiftData 版差异见 [data-and-sync.md](data-and-sync.md) §3。
 
-`ProfileView`（`Profile/ProfileView.swift:4`）与 `LoginView`（`Auth/LoginView.swift:4`）通过 `AuthManager` 完成注册/登录/改密/头像等操作，错误以本地化 key 返回后由视图映射为文案。
+设置页头部 `SettingsProfileHeaderView`（`Setting/SettingView.swift`）显示「头像 + 昵称 + 个性签名」：未设置签名时显示占位提示「点击设置个性签名」，点击整块头部弹出 `EditSignatureView`；个人中心也提供「个性签名」入口。
+
+`ProfileView`（`Profile/ProfileView.swift:4`）与 `LoginView`（`Auth/LoginView.swift:4`）通过 `AuthManager` 完成注册/登录/改密/头像/个性签名等操作，错误以本地化 key 返回后由视图映射为文案。
 
 ## 8. 未覆盖 / 存疑
 

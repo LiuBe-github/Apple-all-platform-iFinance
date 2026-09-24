@@ -120,6 +120,9 @@
 "profile.logout" = "Log Out";
 "profile.avatar_crop_title" = "Adjust Photo";
 "profile.avatar_crop_hint" = "Drag or pinch to adjust the frame";
+"profile.change_signature" = "Signature";
+"profile.signature_placeholder" = "Tap to add a signature";
+"profile.signature_too_long" = "Signature can be up to 40 characters";
 
 "settings.contact" = "Contact";
 "settings.icloud_section" = "iCloud";

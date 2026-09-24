@@ -120,6 +120,9 @@
 "profile.logout" = "退出登入";
 "profile.avatar_crop_title" = "調整頭像";
 "profile.avatar_crop_hint" = "拖曳或雙指縮放來調整取景";
+"profile.change_signature" = "個人簽名";
+"profile.signature_placeholder" = "點擊設定個人簽名";
+"profile.signature_too_long" = "個人簽名最多 40 個字";
 
 "settings.contact" = "聯繫我們";
 "settings.icloud_section" = "iCloud";

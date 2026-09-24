@@ -627,52 +627,79 @@ struct SettingView: View {
 /// 头部：头像 + 昵称（只依赖 authManager，不受设置页其它状态影响）
 private struct SettingsProfileHeaderView: View {
     @EnvironmentObject private var authManager: AuthManager
+    @State private var showSignatureEditor = false
+
+    /// 未设置签名时显示可点击的占位提示
+    private var signatureText: String {
+        let value = authManager.signature
+        return value.isEmpty ? L10n.string("profile.signature_placeholder") : value
+    }
 
     var body: some View {
-        HStack(spacing: AppSpacing.lg) {
-            ZStack {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [Color.blue.opacity(0.35), Color.purple.opacity(0.25), Color.pink.opacity(0.2)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 72, height: 72)
-                    .overlay(
-                        Circle()
-                            .strokeBorder(
-                                LinearGradient(
-                                    colors: [Color.blue.opacity(0.8), Color.purple.opacity(0.7)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 2
+        Button {
+            HapticManager.shared.light()
+            showSignatureEditor = true
+        } label: {
+            HStack(spacing: AppSpacing.lg) {
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.blue.opacity(0.35), Color.purple.opacity(0.25), Color.pink.opacity(0.2)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
                             )
-                    )
+                        )
+                        .frame(width: 72, height: 72)
+                        .overlay(
+                            Circle()
+                                .strokeBorder(
+                                    LinearGradient(
+                                        colors: [Color.blue.opacity(0.8), Color.purple.opacity(0.7)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 2
+                                )
+                        )
 
-                if let uiImage = AvatarImageCache.shared.image(for: authManager.avatarData) {
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: 66, height: 66)
-                        .clipShape(Circle())
-                } else {
-                    Image(systemName: "person.crop.circle.fill")
-                        .font(.system(size: 66))
-                        .foregroundStyle(.secondary)
+                    if let uiImage = AvatarImageCache.shared.image(for: authManager.avatarData) {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 66, height: 66)
+                            .clipShape(Circle())
+                    } else {
+                        Image(systemName: "person.crop.circle.fill")
+                            .font(.system(size: 66))
+                            .foregroundStyle(.secondary)
+                    }
                 }
-            }
 
-            VStack(alignment: .leading, spacing: AppSpacing.xs) {
-                Text(authManager.nickname).font(.title2.weight(.bold))
-                Text(L10n.string("settings.about_desc")).font(.subheadline).foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                    Text(authManager.nickname).font(.title2.weight(.bold))
+
+                    HStack(spacing: AppSpacing.xs) {
+                        Text(signatureText)
+                            .font(.subheadline)
+                            .foregroundStyle(authManager.signature.isEmpty ? .tertiary : .secondary)
+                            .lineLimit(1)
+
+                        Image(systemName: "pencil")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(.tertiary)
+                    }
+                }
+                Spacer()
             }
-            Spacer()
         }
+        .buttonStyle(.plain)
         .padding(AppSpacing.xxl)
         .padding(.top, AppSpacing.sm)
+        .sheet(isPresented: $showSignatureEditor) {
+            EditSignatureView(initial: authManager.signature)
+                .environmentObject(authManager)
+        }
     }
 }
 

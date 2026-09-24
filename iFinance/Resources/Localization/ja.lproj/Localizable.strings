@@ -120,6 +120,9 @@
 "profile.logout" = "ログアウト";
 "profile.avatar_crop_title" = "写真を調整";
 "profile.avatar_crop_hint" = "ドラッグやピンチで位置を調整";
+"profile.change_signature" = "署名";
+"profile.signature_placeholder" = "タップして署名を設定";
+"profile.signature_too_long" = "署名は40文字以内で入力してください";
 
 "settings.contact" = "お問い合わせ";
 "settings.icloud_section" = "iCloud";

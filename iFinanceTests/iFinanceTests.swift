@@ -693,7 +693,8 @@ final class LocalizationRegressionTests: XCTestCase {
         "auth.invalid_email", "auth.invalid_phone", "auth.invalid_credentials",
         "auth.password_too_short", "auth.password_not_match", "auth.no_account",
         "auth.email_empty", "auth.phone_empty", "auth.nickname_empty",
-        "auth.current_password_wrong", "auth.reset_account_not_match"
+        "auth.current_password_wrong", "auth.reset_account_not_match",
+        "profile.change_signature", "profile.signature_placeholder", "profile.signature_too_long"
     ]
 
     private func localized(_ key: String, language: String) -> String? {
@@ -736,6 +737,28 @@ final class LocalizationRegressionTests: XCTestCase {
 }
 
 // MARK: - AppleLanguages 同步（让系统本地化解析跟随 App 内语言）
+
+// MARK: - 个性签名校验
+
+@MainActor
+final class SignatureValidationTests: XCTestCase {
+
+    func testEmptySignatureClearsValue() {
+        XCTAssertEqual(AuthManager.validateSignature("   "), .valid(nil))
+    }
+
+    func testSignatureTrimsWhitespace() {
+        XCTAssertEqual(AuthManager.validateSignature("  记录每一天  "), .valid("记录每一天"))
+    }
+
+    func testSignatureLengthBoundary() {
+        let exactlyLimit = String(repeating: "字", count: AuthManager.signatureMaxLength)
+        XCTAssertEqual(AuthManager.validateSignature(exactlyLimit), .valid(exactlyLimit))
+
+        let tooLong = String(repeating: "字", count: AuthManager.signatureMaxLength + 1)
+        XCTAssertEqual(AuthManager.validateSignature(tooLong), .tooLong)
+    }
+}
 
 @MainActor
 final class LocalizationSyncTests: XCTestCase {

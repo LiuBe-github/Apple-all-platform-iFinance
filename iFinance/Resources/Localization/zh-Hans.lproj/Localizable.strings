@@ -63,6 +63,9 @@
 "profile.logout" = "退出登录";
 "profile.avatar_crop_title" = "调整头像";
 "profile.avatar_crop_hint" = "拖动或双指缩放来调整取景";
+"profile.change_signature" = "个性签名";
+"profile.signature_placeholder" = "点击设置个性签名";
+"profile.signature_too_long" = "个性签名最多 40 个字";
 
 "settings.title" = "设置";
 "settings.about_you" = "关于你";

@@ -54,6 +54,29 @@ final class AuthManager: ObservableObject {
         currentUser?.nickname ?? "用户123"
     }
 
+    /// 个性签名（未设置时为空串）
+    var signature: String {
+        currentUser?.signature ?? ""
+    }
+
+    /// 个性签名最大长度
+    nonisolated static let signatureMaxLength = 40
+
+    /// 个性签名的校验结果
+    enum SignatureValidation: Equatable {
+        /// 合法值（nil 表示清空签名）
+        case valid(String?)
+        /// 超出长度限制
+        case tooLong
+    }
+
+    /// 校验并规范化个性签名（去掉首尾空白；空串表示清空）
+    nonisolated static func validateSignature(_ raw: String) -> SignatureValidation {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count <= signatureMaxLength else { return .tooLong }
+        return .valid(trimmed.isEmpty ? nil : trimmed)
+    }
+
     var monthlyBudget: Double {
         currentUser?.monthlyBudget ?? 3000
     }
@@ -320,6 +343,22 @@ final class AuthManager: ObservableObject {
         try? PersistenceController.shared.container.viewContext.save()
         objectWillChange.send()
         return nil
+    }
+
+    /// 更新个性签名（空串表示清空；超长返回本地化错误 key）
+    @discardableResult
+    func updateSignature(_ newSignature: String) -> String? {
+        switch Self.validateSignature(newSignature) {
+        case .tooLong:
+            return "profile.signature_too_long"
+        case .valid(let value):
+            guard let user = currentUser else { return nil }
+            user.signature = value
+            user.updatedAt = Date()
+            try? PersistenceController.shared.container.viewContext.save()
+            objectWillChange.send()
+            return nil
+        }
     }
 
     func updateAvatar(_ data: Data) {

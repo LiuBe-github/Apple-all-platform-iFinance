@@ -91,6 +91,9 @@ struct ProfileView: View {
                                 // 昵称已通过 authManager.nickname 绑定，无需额外操作
                             }
                         }
+                        NavigationLink("profile.change_signature") {
+                            EditSignatureView(initial: authManager.signature)
+                        }
                         NavigationLink("profile.bind_phone") {
                             BindPhoneView(currentPhone: authManager.currentPhone)
                         }

@@ -287,6 +287,32 @@ struct PrivacyShieldTests {
 
 // MARK: - 概况页区间聚合（本月 / 上月 / 本年）
 
+// MARK: - 个性签名校验（SwiftData 版同名实现）
+
+@MainActor
+@Suite(.serialized)
+struct SignatureValidationTests {
+
+    @Test
+    func emptySignatureClearsValue() {
+        #expect(AuthManager.validateSignature("   ") == .valid(nil))
+    }
+
+    @Test
+    func trimsWhitespace() {
+        #expect(AuthManager.validateSignature("  记录每一天  ") == .valid("记录每一天"))
+    }
+
+    @Test
+    func lengthBoundary() {
+        let exactlyLimit = String(repeating: "字", count: AuthManager.signatureMaxLength)
+        #expect(AuthManager.validateSignature(exactlyLimit) == .valid(exactlyLimit))
+
+        let tooLong = String(repeating: "字", count: AuthManager.signatureMaxLength + 1)
+        #expect(AuthManager.validateSignature(tooLong) == .tooLong)
+    }
+}
+
 @MainActor
 @Suite(.serialized)
 struct PeriodSummaryTests {

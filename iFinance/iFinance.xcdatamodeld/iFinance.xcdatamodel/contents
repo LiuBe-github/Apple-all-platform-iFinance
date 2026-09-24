@@ -24,6 +24,7 @@
         <attribute name="phone" optional="YES" attributeType="String"/>
         <attribute name="provider" optional="YES" attributeType="String"/>
         <attribute name="providerID" optional="YES" attributeType="String"/>
+        <attribute name="signature" optional="YES" attributeType="String"/>
         <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="userIdentifier" attributeType="String" defaultValueString="anonymous"/>
     </entity>

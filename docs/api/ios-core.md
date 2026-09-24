@@ -62,6 +62,9 @@ Published：`isAuthenticated`、`hasAccount`、`currentEmail`、`currentPhone`�
 | `handleSignInWithApple(result:)` | `String?` | 取消返回 `nil`，其它失败 `auth.apple_failed` |
 | `logout()` / `deleteAccount()` / `deleteAllAccounts()` | `Void` | 删除账号用 `NSBatchDeleteRequest` 清账单（`:345`/`:368`） |
 | `updateNickname(_:)`、`updateEmail(newEmail:password:)`、`updatePhone(newPhone:password:)`、`updatePassword(...)`、`resetPassword(...)` | `String?` | 返回本地化错误 key |
+| `signature` | `String` | 个性签名（未设置时为空串） |
+| `updateSignature(_:)` | `String?` | 保存个性签名（空串表示清空；超长返回 `profile.signature_too_long`） |
+| `validateSignature(_:)` | `nonisolated static func -> SignatureValidation` | 去首尾空白 + 校验 40 字上限，返回 `.valid(String?)` / `.tooLong`（`signatureMaxLength = 40`） |
 | `updateAvatar(_:)` / `updateMonthlyBudget(_:)` | `Void` | 写 Core Data |
 | `hashPassword(password:salt:)` | `static func -> String` | `SHA256("salt|password")` hex（`:621`） |
 
