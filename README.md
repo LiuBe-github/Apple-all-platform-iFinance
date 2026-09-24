@@ -290,6 +290,7 @@ iFinance/
 | 文档 | 内容 |
 |------|------|
 | [AGENTS.md](AGENTS.md) | Agent 速用记忆：版本矩阵、构建命令、不可违反的约定、已知坑 |
+| [docs/PRD.md](docs/PRD.md) | 产品需求文档：定位、各端功能需求与优先级、业务规则、非功能要求、验收清单、路线图 |
 | [docs/PROJECT_MEMORY.md](docs/PROJECT_MEMORY.md) | 深度项目记忆：架构、数据层、认证、跨端协议、国际化、技术债 |
 | [docs/api/README.md](docs/api/README.md) | 接口文档索引与全局约定 |
 | [docs/api/ios-core.md](docs/api/ios-core.md) · [ios-ui.md](docs/api/ios-ui.md) | iOS 核心层与视图层接口 |

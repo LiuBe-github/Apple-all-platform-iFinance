@@ -368,6 +368,7 @@ macOS 端有独立副本：`MaciFinance/Views/Common/AppVisualStyle.swift`（130
 
 | 文档 | 内容 |
 |------|------|
+| [docs/PRD.md](PRD.md) | 产品需求文档：功能需求与优先级、业务规则、非功能要求、验收清单、路线图 |
 | [docs/api/README.md](api/README.md) | 接口文档索引与通用约定 |
 | [docs/api/ios-core.md](api/ios-core.md) | iOS 核心层：入口、Persistence、Manager、Model、Helper |
 | [docs/api/ios-ui.md](api/ios-ui.md) | iOS 视图层：Home / Transaction / Tendency / Profile / Setting / Auth / Common |
