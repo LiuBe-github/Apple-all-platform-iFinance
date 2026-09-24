@@ -144,6 +144,8 @@ struct BillModelTests {
 
 // MARK: - DashboardView 计算逻辑测试
 
+/// 与其它用到内存容器的套件并行运行时会偶发互相干扰（曾出现 testDailyDataPointsGeneration 随机失败），因此串行执行
+@Suite(.serialized)
 struct DashboardLogicTests {
     @MainActor
     @Test

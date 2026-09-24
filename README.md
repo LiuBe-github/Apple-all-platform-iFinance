@@ -245,6 +245,14 @@ iFinance/
 ## 🧪 开发辅助脚本
 
 - **`reset_ifinance_data.sh`** — 一键清除 iOS 模拟器中该 App 的所有账号与账单数据（用于开发调试，需先启动模拟器）
+- **`scripts/run-on-device.sh`** — 真机快速部署：`xcodebuild` 增量构建 → `devicectl` 安装 → 启动，并打印各阶段耗时。相比 Xcode 里点 Run，它**跳过 Watch App 部署与调试器附加**（两者通常是配对手表后最慢的环节），适合不需要断点的快速验证：
+
+  ```bash
+  scripts/run-on-device.sh                     # 默认 scheme iFinance，自动挑选已连接真机
+  scripts/run-on-device.sh -s iFinanceSwiftData --console
+  scripts/run-on-device.sh -d <设备 UDID> --no-build
+  ```
+- **`scripts/check_localization.py`** — 本地化审计：扫描代码引用的 key 与四个语言包比对（缺失或语言间不一致返回非零码）
 
 ---
 

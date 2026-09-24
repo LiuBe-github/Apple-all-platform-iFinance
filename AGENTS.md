@@ -30,6 +30,9 @@ xcodebuild test -project iFinance.xcodeproj -scheme MaciFinance -destination 'pl
 
 xcodebuild build -project iFinance.xcodeproj -scheme iFinanceSwiftData -destination 'generic/platform=iOS Simulator'
 xcodebuild test -project iFinance.xcodeproj -scheme iFinanceSwiftData -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.6' -only-testing:iFinanceSwiftDataTests
+
+# 真机快速部署（跳过 Watch 部署与调试器附加，打印各阶段耗时）
+scripts/run-on-device.sh -s iFinance
 ```
 
 测试目标：`iFinanceTests`（XCTest，38 用例）、`MaciFinanceTests`（Swift Testing，`@Test`）、watch/UI 测试为模板占位。
@@ -99,6 +102,7 @@ Watch 概览 → requestSync → transferUserInfo(action: requestTodayBills)
 | `WatchiFinance Watch App/Models/WatchDataModel.swift` | iPhone 不可达时账单只进本地缓存，没有补传队列 |
 | iOS 语言切换 | 走 `exit(0)` 重启进程；改语言相关逻辑时不要假设热切换 |
 | 工程 scheme | 存在无对应文件的遗留 scheme `Copy of iFinance` |
+| 真机部署慢 | 构建本身很快（增量 3～6s、全量约 24s），慢在部署阶段：iOS scheme 依赖 watch target（`Embed Watch Content`），配对手表时每次 Run 都会推送 Watch App，且 Xcode 会附加调试器。改用 `scripts/run-on-device.sh` 可绕过这两步；另注意设备需解锁且已信任电脑 |
 
 ## 文档维护约定
 
