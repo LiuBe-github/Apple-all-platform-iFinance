@@ -18,9 +18,9 @@ enum ThemeMode: String, CaseIterable, Identifiable {
     
     var displayName: String {
         switch self {
-        case .light: return String(localized: "settings.theme_light", defaultValue: "浅色")
-        case .dark: return String(localized: "settings.theme_dark", defaultValue: "深色")
-        case .system: return String(localized: "settings.theme_system", defaultValue: "跟随系统")
+        case .light: return L10n.string("settings.theme_light")
+        case .dark: return L10n.string("settings.theme_dark")
+        case .system: return L10n.string("settings.theme_system")
         }
     }
 }

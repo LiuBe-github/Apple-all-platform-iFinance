@@ -38,8 +38,8 @@ enum ChartDisplayType: String, CaseIterable {
 
     var displayName: String {
         switch self {
-        case .line: return String(localized: "chart.type_line", defaultValue: "折线图")
-        case .bar: return String(localized: "chart.type_bar", defaultValue: "柱状图")
+        case .line: return L10n.string("chart.type_line")
+        case .bar: return L10n.string("chart.type_bar")
         }
     }
 }

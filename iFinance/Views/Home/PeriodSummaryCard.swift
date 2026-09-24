@@ -30,7 +30,7 @@ struct PeriodSummaryCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
-            Text(String(localized: "home.period.title"))
+            Text(L10n.string("home.period.title"))
                 .font(AppTypography.tiny.weight(.semibold))
                 .foregroundStyle(.quaternary)
 
@@ -64,9 +64,9 @@ struct PeriodSummaryCard: View {
 
             // ── 中：收入 / 支出 ──
             VStack(alignment: .leading, spacing: AppSpacing.xs) {
-                amountLine(label: String(localized: "home.income_label"),
+                amountLine(label: L10n.string("home.income_label"),
                            value: Self.amount(item.income), color: .green)
-                amountLine(label: String(localized: "home.expense_label"),
+                amountLine(label: L10n.string("home.expense_label"),
                            value: Self.amount(item.expense), color: .red)
             }
 
@@ -81,8 +81,8 @@ struct PeriodSummaryCard: View {
                     .minimumScaleFactor(0.7)
 
                 Text(item.balance >= 0
-                     ? String(localized: "home.surplus")
-                     : String(localized: "home.deficit"))
+                     ? L10n.string("home.surplus")
+                     : L10n.string("home.deficit"))
                     .font(AppTypography.tiny)
                     .foregroundStyle(.quaternary)
             }

@@ -292,8 +292,13 @@ Watch 端前缀独立：`add.*`、`category.*`、`summary.*`、`history.*`、`ta
 
 实现见 `iFinance/Helper/LocalizationHelper.swift:15`；Apple 语言标识归一化函数 `normalizeLanguageIdentifier` 在 `:52`（`zh`→`zh-Hans`、`zh-HK`→`zh-Hant` 等）。
 
-⚠️ 项目内三种本地化调用方式**并存**，改文案时要一起检查：`L10n.string("...")`、`String(localized: "...")`、`Text("key")`（`LocalizedStringKey`）、以及少量 `NSLocalizedString`。
-⚠️ 语言切换后走 `exit(0)` 主动退出进程（`LocalizationHelper.swift:185`），是刻意行为。
+**调用方式（2026-09 起已统一）**：
+
+- 新增文案一律 `L10n.string("...")`；`String(localized:)` 与 `NSLocalizedString` 已全量替换（各端共 268 处），它们原先走系统语言、切换后不跟随。
+- `Text("key")`（`LocalizedStringKey`）可继续使用，随注入的 `\.locale` 正确工作。
+- 语言切换时 `LocalizationSync.apply(_:)` 会写入 `UserDefaults["AppleLanguages"]`（跟随系统则移除），重启后让**系统控件**（分享面板、Face ID 提示、系统弹窗）也跟随 App 内语言；三端 App 入口另有 `LocalizationSync.syncIfNeeded()` 幂等兜底。
+- 防回归：`scripts/check_localization.py`（代码 key ↔ 四语言包审计）+ `iFinanceTests` / `MaciFinanceTests` 中的「四语言 key 集合一致」用例。
+⚠️ 语言切换后走 `exit(0)` / `NSApplication.terminate` 主动退出进程（`LocalizationHelper.swift:185`），是刻意行为：`AppleLanguages` 需重启才生效。
 
 ## 8. 视觉与交互规范
 

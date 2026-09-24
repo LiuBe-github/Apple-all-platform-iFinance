@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import os.log
 
 enum L10n {
     /// 应用内统一的字符串获取函数
@@ -103,6 +104,49 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     }
 }
 
+// MARK: - AppleLanguages 同步
+
+/// 让系统本地化解析（`String(localized:)`、`NSLocalizedString`、系统控件文案）跟随 App 内选择的语言。
+///
+/// - 固定语言：覆盖 `UserDefaults["AppleLanguages"]`，重启后由系统按该语言解析 App bundle；
+/// - 跟随系统：移除该覆盖，恢复系统默认语言。
+///
+/// 说明：`AppleLanguages` 是系统读取的语言偏好键（非官方 API），业界广泛使用；
+/// 写入后必须重启进程才生效——这与现有语言切换流程（`exit(0)` 重启）一致。
+enum LocalizationSync {
+    private static let appleLanguagesKey = "AppleLanguages"
+    private static let logger = Logger(subsystem: "com.liube.ifinance", category: "Localization")
+
+    /// 应用语言设置；返回是否有实际改动
+    @discardableResult
+    static func apply(_ language: AppLanguage) -> Bool {
+        let current = UserDefaults.standard.stringArray(forKey: appleLanguagesKey)
+
+        let changed: Bool
+        switch language {
+        case .system:
+            guard current != nil else { return false }
+            UserDefaults.standard.removeObject(forKey: appleLanguagesKey)
+            changed = true
+        default:
+            guard current != [language.rawValue] else { return false }
+            UserDefaults.standard.set([language.rawValue], forKey: appleLanguagesKey)
+            changed = true
+        }
+
+        UserDefaults.standard.synchronize()
+        logger.notice("AppleLanguages 已同步为 \(language.rawValue, privacy: .public)（原值 \(current?.joined(separator: ",") ?? "nil", privacy: .public)）")
+        return changed
+    }
+
+    /// 启动时幂等同步：读取 `app_language` 并修正 AppleLanguages（覆盖老版本遗留的不一致）
+    static func syncIfNeeded() {
+        let stored = UserDefaults.standard.string(forKey: "app_language") ?? AppLanguage.system.rawValue
+        logger.notice("启动同步：app_language=\(stored, privacy: .public)")
+        apply(AppLanguage(rawValue: stored) ?? .system)
+    }
+}
+
 struct LanguageSettingView: View {
     @AppStorage("app_language") private var selectedLanguage: String = AppLanguage.system.rawValue
     @State private var showRestartAlert = false
@@ -181,6 +225,8 @@ struct LanguageSettingView: View {
     /// 重启 App：退出当前进程，iOS 会自动重新拉起 App
     private func restartApp() {
         HapticManager.shared.success()
+        // 让系统本地化解析（String(localized:)、系统控件）跟随本次选择的语言，重启后生效
+        LocalizationSync.apply(currentLanguage)
         // 清除 SwiftUI 的 scene 以确保重启时状态干净
         exit(0)
     }

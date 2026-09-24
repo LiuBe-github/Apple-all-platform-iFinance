@@ -203,11 +203,11 @@ struct HomeView: View {
                 ShareSheet(items: [payload.imageURL])
                     .presentationDetents([.medium, .large])
             }
-            .alert(String(localized: "home.share_failed"), isPresented: Binding(
+            .alert(L10n.string("home.share_failed"), isPresented: Binding(
                 get: { shareError != nil },
                 set: { if !$0 { shareError = nil } }
             )) {
-                Button(String(localized: "common.ok")) { shareError = nil }
+                Button(L10n.string("common.ok")) { shareError = nil }
             } message: {
                 Text(shareError ?? "")
             }

@@ -688,7 +688,12 @@ final class LocalizationRegressionTests: XCTestCase {
         "common.ok", "common.confirm", "common.cancel",
         "home.title", "home.change_quote", "home.surplus", "home.income_label",
         "home.period.title", "home.period.this_month", "home.period.last_month",
-        "home.period.this_year", "home.period.count_value", "home.quote.title"
+        "home.period.this_year", "home.period.count_value", "home.quote.title",
+        // 登录/注册错误提示（曾只有简体中文，非简体语言下会显示原始 key）
+        "auth.invalid_email", "auth.invalid_phone", "auth.invalid_credentials",
+        "auth.password_too_short", "auth.password_not_match", "auth.no_account",
+        "auth.email_empty", "auth.phone_empty", "auth.nickname_empty",
+        "auth.current_password_wrong", "auth.reset_account_not_match"
     ]
 
     private func localized(_ key: String, language: String) -> String? {
@@ -705,6 +710,95 @@ final class LocalizationRegressionTests: XCTestCase {
                 XCTAssertNotNil(value, "\(language) 缺少语言包")
                 XCTAssertNotEqual(value, key, "\(language) 的 \(key) 未配置译文（界面会显示原始 key）")
             }
+        }
+    }
+
+    /// 四种语言包必须包含完全相同的 key 集合（防止漏翻译）
+    func testLanguagePacksHaveIdenticalKeys() throws {
+        var keySets: [String: Set<String>] = [:]
+        for language in languages {
+            let path = try XCTUnwrap(Bundle.main.path(forResource: language, ofType: "lproj"),
+                                     "\(language) 语言包缺失")
+            let bundle = try XCTUnwrap(Bundle(path: path))
+            let stringsPath = try XCTUnwrap(bundle.path(forResource: "Localizable", ofType: "strings"))
+            let dict = try XCTUnwrap(NSDictionary(contentsOfFile: stringsPath) as? [String: String])
+            keySets[language] = Set(dict.keys)
+        }
+
+        let reference = try XCTUnwrap(keySets["zh-Hans"])
+        for (language, keys) in keySets where language != "zh-Hans" {
+            let missing = reference.subtracting(keys).sorted()
+            let extra = keys.subtracting(reference).sorted()
+            XCTAssertTrue(missing.isEmpty, "\(language) 缺少 key: \(missing.prefix(5))")
+            XCTAssertTrue(extra.isEmpty, "\(language) 多出 key: \(extra.prefix(5))")
+        }
+    }
+}
+
+// MARK: - AppleLanguages 同步（让系统本地化解析跟随 App 内语言）
+
+@MainActor
+final class LocalizationSyncTests: XCTestCase {
+
+    private let appleLanguagesKey = "AppleLanguages"
+    private let appLanguageKey = "app_language"
+
+    /// 只读取 App 自身持久域中的 AppleLanguages（`UserDefaults.standard` 还会返回系统域提供的默认值）
+    private func storedAppleLanguages() -> [String]? {
+        guard let bundleID = Bundle.main.bundleIdentifier,
+              let domain = UserDefaults.standard.persistentDomain(forName: bundleID) else { return nil }
+        return domain[appleLanguagesKey] as? [String]
+    }
+
+    /// 执行用例后恢复 UserDefaults，避免影响其它测试
+    private func withRestoredDefaults(_ body: () -> Void) {
+        let defaults = UserDefaults.standard
+        let originalApple = storedAppleLanguages()
+        let originalApp = defaults.string(forKey: appLanguageKey)
+        defer {
+            if let originalApple { defaults.set(originalApple, forKey: appleLanguagesKey) }
+            else { defaults.removeObject(forKey: appleLanguagesKey) }
+            if let originalApp { defaults.set(originalApp, forKey: appLanguageKey) }
+            else { defaults.removeObject(forKey: appLanguageKey) }
+        }
+        body()
+    }
+
+    func testApplyWritesAppleLanguagesForFixedLanguage() {
+        withRestoredDefaults {
+            // 先置为确定状态（模拟器/宿主 App 可能已写入过其它值）
+            _ = LocalizationSync.apply(.en)
+
+            XCTAssertTrue(LocalizationSync.apply(.ja))
+            XCTAssertEqual(storedAppleLanguages(), ["ja"])
+
+            // 幂等：重复设置相同语言不再变更
+            XCTAssertFalse(LocalizationSync.apply(.ja))
+        }
+    }
+
+    func testApplySystemRemovesOverride() {
+        withRestoredDefaults {
+            _ = LocalizationSync.apply(.en)
+            XCTAssertEqual(storedAppleLanguages(), ["en"])
+
+            XCTAssertTrue(LocalizationSync.apply(.system))
+            XCTAssertNil(storedAppleLanguages(),
+                         "跟随系统时应移除 AppleLanguages 覆盖")
+        }
+    }
+
+    func testSyncIfNeededFollowsStoredAppLanguage() {
+        withRestoredDefaults {
+            UserDefaults.standard.set(AppLanguage.zhHant.rawValue, forKey: appLanguageKey)
+            UserDefaults.standard.removeObject(forKey: appleLanguagesKey)
+
+            LocalizationSync.syncIfNeeded()
+            XCTAssertEqual(storedAppleLanguages(), ["zh-Hant"])
+
+            UserDefaults.standard.set(AppLanguage.system.rawValue, forKey: appLanguageKey)
+            LocalizationSync.syncIfNeeded()
+            XCTAssertNil(storedAppleLanguages())
         }
     }
 }

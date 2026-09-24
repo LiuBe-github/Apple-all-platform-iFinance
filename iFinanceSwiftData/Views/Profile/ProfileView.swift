@@ -191,7 +191,7 @@ private struct ChangeNicknameView: View {
     var body: some View {
         Form {
             Section("profile.change_nickname") {
-                TextField(String(localized: "profile.nickname_placeholder"), text: $nickname)
+                TextField(L10n.string("profile.nickname_placeholder"), text: $nickname)
             }
 
             if let errorMessage {
@@ -229,12 +229,12 @@ private struct BindEmailView: View {
     var body: some View {
         Form {
             Section("profile.bind_email") {
-                TextField(String(localized: "auth.email_placeholder"), text: $email)
+                TextField(L10n.string("auth.email_placeholder"), text: $email)
                     .textInputAutocapitalization(.never)
                     .keyboardType(.emailAddress)
                     .autocorrectionDisabled()
 
-                SecureField(String(localized: "auth.current_password"), text: $password)
+                SecureField(L10n.string("auth.current_password"), text: $password)
             }
 
             if let errorMessage {
@@ -271,9 +271,9 @@ private struct BindPhoneView: View {
     var body: some View {
         Form {
             Section("profile.bind_phone") {
-                TextField(String(localized: "auth.phone_placeholder"), text: $phone)
+                TextField(L10n.string("auth.phone_placeholder"), text: $phone)
                     .keyboardType(.numberPad)
-                SecureField(String(localized: "auth.current_password"), text: $password)
+                SecureField(L10n.string("auth.current_password"), text: $password)
             }
 
             if let errorMessage {
@@ -304,19 +304,19 @@ private struct ThirdPartyAccountsView: View {
                 HStack {
                     Label("auth.provider_wechat", systemImage: "message.fill")
                     Spacer()
-                    Text(authManager.currentProvider == .wechat ? String(localized: "profile.connected") : String(localized: "profile.not_connected"))
+                    Text(authManager.currentProvider == .wechat ? L10n.string("profile.connected") : L10n.string("profile.not_connected"))
                         .foregroundStyle(.secondary)
                 }
                 HStack {
                     Label("auth.provider_qq", systemImage: "bubble.left.and.bubble.right.fill")
                     Spacer()
-                    Text(authManager.currentProvider == .qq ? String(localized: "profile.connected") : String(localized: "profile.not_connected"))
+                    Text(authManager.currentProvider == .qq ? L10n.string("profile.connected") : L10n.string("profile.not_connected"))
                         .foregroundStyle(.secondary)
                 }
                 HStack {
                     Label("auth.provider_apple", systemImage: "apple.logo")
                     Spacer()
-                    Text(authManager.currentProvider == .apple ? String(localized: "profile.connected") : String(localized: "profile.not_connected"))
+                    Text(authManager.currentProvider == .apple ? L10n.string("profile.connected") : L10n.string("profile.not_connected"))
                         .foregroundStyle(.secondary)
                 }
             }
@@ -338,9 +338,9 @@ private struct ChangePasswordView: View {
     var body: some View {
         Form {
             Section("profile.change_password") {
-                SecureField(String(localized: "auth.current_password"), text: $currentPassword)
-                SecureField(String(localized: "auth.new_password"), text: $newPassword)
-                SecureField(String(localized: "auth.confirm_password"), text: $confirmPassword)
+                SecureField(L10n.string("auth.current_password"), text: $currentPassword)
+                SecureField(L10n.string("auth.new_password"), text: $newPassword)
+                SecureField(L10n.string("auth.confirm_password"), text: $confirmPassword)
             }
 
             if let errorMessage {

@@ -19,7 +19,6 @@
 "profile.third_party" = "第三方帳號";
 "profile.bind_email" = "綁定郵箱";
 "profile.change_password" = "修改密碼";
-"profile.todo" = "功能開發中";
 
 "settings.title" = "設定";
 "settings.about_you" = "關於你";
@@ -75,10 +74,6 @@
 "tendency.expense" = "支出趨勢";
 "tendency.income" = "收入趨勢";
 "tendency.last_year" = "近一年連續數據";
-"tendency.span_7" = "7天";
-"tendency.span_30" = "30天";
-"tendency.span_90" = "90天";
-"tendency.span_180" = "180天";
 "tendency.drag_hint" = "在圖表上拖動可查看任意日期數據";
 "tendency.no_data" = "當前無數據可渲染";
 "tendency.avg" = "均值";
@@ -218,9 +213,23 @@
 "tendency.heatmap_bills" = "筆";
 "transaction.empty" = "當前還沒有帳單，記一筆吧！";
 
-"iFinance" = "iFinance";
 "auth.apple_frontend_only" = "Apple 登入目前僅保留介面展示，尚未接入真實鑑權。";
 "auth.apple_failed" = "Apple 登入失敗，請重試。";
+"auth.current_password_wrong" = "目前密碼不正確";
+"auth.email_empty" = "電子郵件不能為空";
+"auth.invalid_credentials" = "帳號或密碼錯誤";
+"auth.invalid_email" = "請輸入有效的電子郵件地址";
+"auth.invalid_phone" = "請輸入有效的手機號碼";
+"auth.login_hint" = "請選擇登入方式並輸入帳號資訊";
+"auth.nickname_empty" = "暱稱不能為空";
+"auth.no_account" = "找不到帳號，請先註冊";
+"auth.password_not_match" = "兩次輸入的密碼不一致";
+"auth.password_same" = "新密碼不能與舊密碼相同";
+"auth.password_too_short" = "密碼至少需要 6 位";
+"auth.phone_empty" = "手機號碼不能為空";
+"auth.register_hint" = "支援電子郵件或手機號碼註冊";
+"auth.register_now" = "註冊並登入";
+"auth.reset_account_not_match" = "帳號不匹配";
 
 // 生物識別鎖
 "lock.face_id" = "Face ID";

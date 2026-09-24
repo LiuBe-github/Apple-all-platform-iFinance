@@ -94,7 +94,7 @@ struct TransactionView: View {
                             )
                     }
                     .buttonStyle(.borderless)
-                    .accessibilityLabel("transaction.search")
+                    .accessibilityLabel("search.title")
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     // 个人中心按钮

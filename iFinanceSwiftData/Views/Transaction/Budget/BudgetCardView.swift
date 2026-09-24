@@ -136,7 +136,7 @@ struct BudgetCardView: View {
                 // 已花 / 剩余 两列
                 HStack(spacing: AppSpacing.xl) {
                     amountColumn(
-                        title: String(localized: "budget.spent"),
+                        title: L10n.string("budget.spent"),
                         value: spent,
                         color: accentColor
                     )
@@ -145,7 +145,7 @@ struct BudgetCardView: View {
                         .fill(Color.secondary.opacity(0.2))
                         .frame(width: 1, height: 32)
                     amountColumn(
-                        title: isOverBudget ? String(localized: "budget.over") : String(localized: "budget.remaining"),
+                        title: isOverBudget ? L10n.string("budget.over") : L10n.string("budget.remaining"),
                         value: isOverBudget ? spent - monthlyBudget : remaining,
                         color: isOverBudget ? .red : .secondary
                     )

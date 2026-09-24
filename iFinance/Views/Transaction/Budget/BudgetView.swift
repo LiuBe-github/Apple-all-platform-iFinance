@@ -47,8 +47,8 @@ struct BudgetView: View {
 
         var displayName: String {
             switch self {
-            case .list: return String(localized: "budget.chart_type", defaultValue: "图表类型")
-            case .pie: return String(localized: "chart.type_pie", defaultValue: "饼图")
+            case .list: return L10n.string("budget.chart_type")
+            case .pie: return L10n.string("chart.type_pie")
             }
         }
     }
@@ -220,8 +220,8 @@ struct BudgetView: View {
                 
                 HStack {
                     Label(
-                        isOver ? String(format: String(localized: "budget.over_amount"), formatAmount(totalExpenditure - monthlyBudget))
-                        : String(format: String(localized: "budget.spent_amount"), formatAmount(totalExpenditure)),
+                        isOver ? String(format: L10n.string("budget.over_amount"), formatAmount(totalExpenditure - monthlyBudget))
+                        : String(format: L10n.string("budget.spent_amount"), formatAmount(totalExpenditure)),
                         systemImage: isOver ? "exclamationmark.triangle.fill" : "arrow.up.right"
                     )
                     .font(.caption)
@@ -230,7 +230,7 @@ struct BudgetView: View {
                     
                     Spacer()
                     
-                    Text(isOver ? String(localized: "budget.over") : String(format: String(localized: "budget.remaining_amount"), formatAmount(remaining)))
+                    Text(isOver ? L10n.string("budget.over") : String(format: L10n.string("budget.remaining_amount"), formatAmount(remaining)))
                         .font(.caption)
                         .foregroundStyle(isOver ? .red : .secondary)
                 }
@@ -238,14 +238,14 @@ struct BudgetView: View {
             
             // ── 三格统计栏 ──
             HStack(spacing: 0) {
-                statCell(title: String(localized: "budget.spent"), value: formatAmount(totalExpenditure), color: accentColor)
+                statCell(title: L10n.string("budget.spent"), value: formatAmount(totalExpenditure), color: accentColor)
                 divider
-                statCell(title: isOver ? String(localized: "budget.over") : String(localized: "budget.remaining"),
+                statCell(title: isOver ? L10n.string("budget.over") : L10n.string("budget.remaining"),
                          value: formatAmount(isOver ? totalExpenditure - monthlyBudget : remaining),
                          color: isOver ? .red : .primary)
                 divider
-                statCell(title: String(localized: "budget.count"),
-                         value: String(format: String(localized: "budget.count_value"), currentMonthExpenditures.count),
+                statCell(title: L10n.string("budget.count"),
+                         value: String(format: L10n.string("budget.count_value"), currentMonthExpenditures.count),
                          color: .primary)
             }
             .padding(.vertical, AppSpacing.lg)
@@ -287,7 +287,7 @@ struct BudgetView: View {
                     .fontWeight(.semibold)
                     .foregroundStyle(.primary)
                 Spacer()
-                Text(String(format: String(localized: "budget.categories_count"), categoryItems.count))
+                Text(String(format: L10n.string("budget.categories_count"), categoryItems.count))
                     .font(.caption)
                     .foregroundStyle(.tertiary)
                 

@@ -147,9 +147,9 @@ private struct HelpFeedbackView: View {
 
     var body: some View {
         List {
-            Section(String(localized: "settings.contact")) {
+            Section(L10n.string("settings.contact")) {
                 HStack {
-                    Text(String(localized: "settings.feedback_email"))
+                    Text(L10n.string("settings.feedback_email"))
                     Spacer()
                     Text(feedbackEmail).foregroundStyle(.secondary).font(.footnote)
                 }
@@ -159,7 +159,7 @@ private struct HelpFeedbackView: View {
                     copied = true
                 } label: {
                     Label(
-                        String(localized: copied ? "settings.copied_email" : "settings.copy_email"),
+                        L10n.string(copied ? "settings.copied_email" : "settings.copy_email"),
                         systemImage: copied ? "checkmark.circle" : "doc.on.doc"
                     )
                 }
@@ -169,17 +169,17 @@ private struct HelpFeedbackView: View {
                         openURL(url)
                     }
                 } label: {
-                    Label(String(localized: "settings.send_email"), systemImage: "envelope")
+                    Label(L10n.string("settings.send_email"), systemImage: "envelope")
                 }
             }
 
-            Section(String(localized: "settings.faq")) {
-                Text(String(localized: "settings.faq_1"))
-                Text(String(localized: "settings.faq_2"))
-                Text(String(localized: "settings.faq_3"))
+            Section(L10n.string("settings.faq")) {
+                Text(L10n.string("settings.faq_1"))
+                Text(L10n.string("settings.faq_2"))
+                Text(L10n.string("settings.faq_3"))
             }
         }
-        .navigationTitle(String(localized: "settings.help_feedback"))
+        .navigationTitle(L10n.string("settings.help_feedback"))
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -198,7 +198,7 @@ private struct AboutAppView: View {
                         .font(.system(size: 46, weight: .semibold))
                         .foregroundStyle(.blue)
                     Text("iFinance").font(.title2).fontWeight(.bold)
-                    Text(String(localized: "settings.about_desc"))
+                    Text(L10n.string("settings.about_desc"))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -207,31 +207,31 @@ private struct AboutAppView: View {
                 .padding(.vertical, AppSpacing.md)
             }
 
-            Section(String(localized: "settings.version_section")) {
+            Section(L10n.string("settings.version_section")) {
                 HStack {
-                    Text(String(localized: "settings.version_number")); Spacer(); Text(version).foregroundStyle(.secondary)
+                    Text(L10n.string("settings.version_number")); Spacer(); Text(version).foregroundStyle(.secondary)
                 }
                 HStack {
-                    Text(String(localized: "settings.build_number")); Spacer(); Text(build).foregroundStyle(.secondary)
+                    Text(L10n.string("settings.build_number")); Spacer(); Text(build).foregroundStyle(.secondary)
                 }
             }
 
-            Section(String(localized: "settings.disclaimer")) {
-                Text(String(localized: "settings.disclaimer_text")).font(.footnote).foregroundStyle(.secondary)
+            Section(L10n.string("settings.disclaimer")) {
+                Text(L10n.string("settings.disclaimer_text")).font(.footnote).foregroundStyle(.secondary)
             }
 
-            Section(String(localized: "settings.wechat_section")) {
+            Section(L10n.string("settings.wechat_section")) {
                 VStack(spacing: AppSpacing.sm) {
                     Image("MyWeChat")
                         .resizable()
                         .scaledToFit()
                         .frame(maxWidth: 180, maxHeight: 180)
                         .clipShape(RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous))
-                    Text(String(localized: "settings.wechat_desc")).font(.footnote).foregroundStyle(.secondary)
+                    Text(L10n.string("settings.wechat_desc")).font(.footnote).foregroundStyle(.secondary)
                 }.frame(maxWidth: .infinity).padding(.vertical, AppSpacing.sm)
             }
         }
-        .navigationTitle(String(localized: "settings.about_me"))
+        .navigationTitle(L10n.string("settings.about_me"))
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -268,11 +268,11 @@ struct SettingView: View {
     private let feedbackEmail = "liubeol@outlook.com"
 
     private var appVersion: String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? String(localized: "common.unknown")
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? L10n.string("common.unknown")
     }
 
     private var buildNumber: String {
-        Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? String(localized: "common.unknown")
+        Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? L10n.string("common.unknown")
     }
 
     // MARK: - Body
@@ -287,8 +287,8 @@ struct SettingView: View {
                         profileHeader
 
                         // 个人信息
-                        SettingsGroup(title: String(localized: "settings.about_you"), icon: "person.fill", iconColor: .blue) {
-                            SettingsRow(icon: "person.circle.fill", iconColor: .blue, title: String(localized: "settings.profile")) {
+                        SettingsGroup(title: L10n.string("settings.about_you"), icon: "person.fill", iconColor: .blue) {
+                            SettingsRow(icon: "person.circle.fill", iconColor: .blue, title: L10n.string("settings.profile")) {
                                 navigateToProfile = true
                             }
                             SettingsDivider()
@@ -305,7 +305,7 @@ struct SettingView: View {
                                             .font(.system(size: 14, weight: .medium))
                                             .foregroundStyle(.red)
                                     }
-                                    Text(String(localized: "settings.delete_account"))
+                                    Text(L10n.string("settings.delete_account"))
                                         .font(.body).foregroundStyle(.red)
                                     Spacer()
                                 }
@@ -317,30 +317,30 @@ struct SettingView: View {
                         }
 
                         // 数据同步（iCloud 同步已暂时禁用，需付费开发者账号）
-                        // SettingsGroup(title: String(localized: "settings.icloud_section"), icon: "icloud.fill", iconColor: .cyan) {
-                        //     SettingsRow(icon: "icloud", iconColor: .cyan, title: String(localized: "settings.icloud")) {
+                        // SettingsGroup(title: L10n.string("settings.icloud_section"), icon: "icloud.fill", iconColor: .cyan) {
+                        //     SettingsRow(icon: "icloud", iconColor: .cyan, title: L10n.string("settings.icloud")) {
                         //         navigateToICloud = true
                         //     }
                         // }
 
                         // 导入导出
-                        SettingsGroup(title: String(localized: "settings.import_export"), icon: "doc.fill", iconColor: .green) {
-                            SettingsRow(icon: "square.and.arrow.up", iconColor: .green, title: String(localized: "settings.export_csv")) {
+                        SettingsGroup(title: L10n.string("settings.import_export"), icon: "doc.fill", iconColor: .green) {
+                            SettingsRow(icon: "square.and.arrow.up", iconColor: .green, title: L10n.string("settings.export_csv")) {
                                 prepareExportDocument()
                             }
                             SettingsDivider()
-                            SettingsRow(icon: "square.and.arrow.down", iconColor: .orange, title: String(localized: "settings.import_csv")) {
+                            SettingsRow(icon: "square.and.arrow.down", iconColor: .orange, title: L10n.string("settings.import_csv")) {
                                 isImporting = true
                             }
                         }
 
                         // 外观
-                        SettingsGroup(title: String(localized: "settings.appearance"), icon: "paintbrush.fill", iconColor: .purple) {
+                        SettingsGroup(title: L10n.string("settings.appearance"), icon: "paintbrush.fill", iconColor: .purple) {
                             themeSelector
                         }
 
                         // 通用
-                        SettingsGroup(title: String(localized: "settings.general"), icon: "gearshape.fill", iconColor: .gray) {
+                        SettingsGroup(title: L10n.string("settings.general"), icon: "gearshape.fill", iconColor: .gray) {
                             // 生物识别锁
                             if biometricLock.isBiometricAvailable {
                                 HStack(spacing: AppSpacing.md) {
@@ -354,9 +354,9 @@ struct SettingView: View {
                                     }
 
                                     VStack(alignment: .leading, spacing: 2) {
-                                        Text(String(localized: "settings.biometric_lock"))
+                                        Text(L10n.string("settings.biometric_lock"))
                                             .font(.body).foregroundStyle(.primary)
-                                        Text(biometricLock.biometricDisplayName + String(localized: "settings.biometric_lock_desc"))
+                                        Text(biometricLock.biometricDisplayName + L10n.string("settings.biometric_lock_desc"))
                                             .font(.caption).foregroundStyle(.secondary)
                                     }
 
@@ -374,18 +374,18 @@ struct SettingView: View {
                                 .padding(.vertical, AppSpacing.md)
                             }
 
-                            SettingsRow(icon: "globe", iconColor: .indigo, title: String(localized: "settings.language")) {
+                            SettingsRow(icon: "globe", iconColor: .indigo, title: L10n.string("settings.language")) {
                                 navigateToLanguage = true
                             }
                         }
 
                         // 关于
-                        SettingsGroup(title: String(localized: "settings.about"), icon: "info.circle.fill", iconColor: .blue) {
-                            SettingsRow(icon: "questionmark.bubble", iconColor: .blue, title: String(localized: "settings.help_feedback"), subtitle: feedbackEmail) {
+                        SettingsGroup(title: L10n.string("settings.about"), icon: "info.circle.fill", iconColor: .blue) {
+                            SettingsRow(icon: "questionmark.bubble", iconColor: .blue, title: L10n.string("settings.help_feedback"), subtitle: feedbackEmail) {
                                 navigateToHelp = true
                             }
                             SettingsDivider()
-                            SettingsRow(icon: "info.circle", iconColor: .blue, title: String(localized: "settings.about_me"), subtitle: "v\(appVersion) (\(buildNumber))") {
+                            SettingsRow(icon: "info.circle", iconColor: .blue, title: L10n.string("settings.about_me"), subtitle: "v\(appVersion) (\(buildNumber))") {
                                 navigateToAbout = true
                             }
                         }
@@ -400,11 +400,11 @@ struct SettingView: View {
             .navigationBarTitleDisplayMode(.large)
             .navigationBarBackButtonHidden(true)
             .navigationDestination(isPresented: $navigateToProfile) {
-                ProfileView().toolbar(.hidden, for: .tabBar).navigationTitle(String(localized: "settings.profile"))
+                ProfileView().toolbar(.hidden, for: .tabBar).navigationTitle(L10n.string("settings.profile"))
             }
             // iCloud 同步已暂时禁用
             // .navigationDestination(isPresented: $navigateToICloud) {
-            //     iCloudSyncView().toolbar(.hidden, for: .tabBar).navigationTitle(String(localized: "settings.icloud"))
+            //     iCloudSyncView().toolbar(.hidden, for: .tabBar).navigationTitle(L10n.string("settings.icloud"))
             // }
             .navigationDestination(isPresented: $navigateToHelp) {
                 HelpFeedbackView(feedbackEmail: feedbackEmail).toolbar(.hidden, for: .tabBar)
@@ -413,18 +413,18 @@ struct SettingView: View {
                 AboutAppView(version: appVersion, build: buildNumber).toolbar(.hidden, for: .tabBar)
             }
             .navigationDestination(isPresented: $navigateToLanguage) {
-                LanguageSettingView().toolbar(.hidden, for: .tabBar).navigationTitle(String(localized: "settings.language"))
+                LanguageSettingView().toolbar(.hidden, for: .tabBar).navigationTitle(L10n.string("settings.language"))
             }
             .fileExporter(isPresented: $isExporting, document: exportDocument, contentType: .commaSeparatedText, defaultFilename: "iFinance-bills-\(Date().formatted(.dateTime.year().month().day()))") { result in
                 switch result {
-                case .success: showResult(title: String(localized: "settings.export_success"), message: String(localized: "settings.export_success_msg"))
-                case .failure(let e): showResult(title: String(localized: "settings.export_failed"), message: e.localizedDescription)
+                case .success: showResult(title: L10n.string("settings.export_success"), message: L10n.string("settings.export_success_msg"))
+                case .failure(let e): showResult(title: L10n.string("settings.export_failed"), message: e.localizedDescription)
                 }
             }
             .fileImporter(isPresented: $isImporting, allowedContentTypes: [.commaSeparatedText, .plainText], allowsMultipleSelection: false) { result in
                 switch result {
                 case .success(let urls): guard let u = urls.first else { return }; importCSV(from: u)
-                case .failure(let e): showResult(title: String(localized: "settings.import_failed"), message: e.localizedDescription)
+                case .failure(let e): showResult(title: L10n.string("settings.import_failed"), message: e.localizedDescription)
                 }
             }
             .alert(resultTitle, isPresented: $showResultAlert) {
@@ -432,14 +432,14 @@ struct SettingView: View {
             } message: {
                 Text(resultMessage)
             }
-            .alert(String(localized: "settings.delete_account_confirm_title"), isPresented: $showDeleteAccountConfirmation) {
-                Button(String(localized: "settings.delete_account_cancel"), role: .cancel) {}
-                Button(String(localized: "settings.delete_account_confirm"), role: .destructive) {
+            .alert(L10n.string("settings.delete_account_confirm_title"), isPresented: $showDeleteAccountConfirmation) {
+                Button(L10n.string("settings.delete_account_cancel"), role: .cancel) {}
+                Button(L10n.string("settings.delete_account_confirm"), role: .destructive) {
                     HapticManager.shared.heavy()
                     authManager.deleteAccount()
                 }
             } message: {
-                Text(String(localized: "settings.delete_account_confirm_message"))
+                Text(L10n.string("settings.delete_account_confirm_message"))
             }
             .onAppear {
                 biometricLock.evaluateBiometricCapability()
@@ -488,7 +488,7 @@ struct SettingView: View {
             }
             VStack(alignment: .leading, spacing: AppSpacing.xs) {
                 Text("iFinance").font(.title2.weight(.bold))
-                Text(String(localized: "settings.about_desc")).font(.subheadline).foregroundStyle(.secondary)
+                Text(L10n.string("settings.about_desc")).font(.subheadline).foregroundStyle(.secondary)
             }
             Spacer()
         }.padding(AppSpacing.xxl).padding(.top, AppSpacing.sm)
@@ -544,7 +544,7 @@ struct SettingView: View {
         switch t { case .light: return "sun.max.fill"; case .dark: return "moon.fill"; case .system: return "circle.lefthalf.filled" }
     }
     private func themeTitle(_ t: ThemeMode) -> String {
-        switch t { case .light: return String(localized: "settings.theme_light"); case .dark: return String(localized: "settings.theme_dark"); case .system: return String(localized: "settings.theme_system") }
+        switch t { case .light: return L10n.string("settings.theme_light"); case .dark: return L10n.string("settings.theme_dark"); case .system: return L10n.string("settings.theme_system") }
     }
 
     // MARK: - 生物识别锁辅助
@@ -580,7 +580,7 @@ struct SettingView: View {
             HStack(spacing: AppSpacing.sm) {
                 Image(systemName: "rectangle.portrait.and.arrow.right")
                     .font(.system(size: 14, weight: .medium))
-                Text(String(localized: "profile.logout")).font(.body.weight(.medium))
+                Text(L10n.string("profile.logout")).font(.body.weight(.medium))
             }
             .foregroundStyle(.red)
             .frame(maxWidth: .infinity).padding(.vertical, AppSpacing.lg)
@@ -610,7 +610,7 @@ struct SettingView: View {
             exportDocument = BillCSVDocument(text: lines.joined(separator: "\n"))
             isExporting = true
         } catch {
-            showResult(title: String(localized: "settings.export_failed"), message: error.localizedDescription)
+            showResult(title: L10n.string("settings.export_failed"), message: error.localizedDescription)
         }
     }
 
@@ -619,7 +619,7 @@ struct SettingView: View {
             let content = try String(contentsOf: url, encoding: .utf8)
             let rows = parseCSVRows(content)
             guard rows.count > 1 else {
-                showResult(title: String(localized: "settings.import_failed"), message: String(localized: "settings.import_invalid"))
+                showResult(title: L10n.string("settings.import_failed"), message: L10n.string("settings.import_invalid"))
                 return
             }
             let iso = ISO8601DateFormatter()
@@ -653,9 +653,9 @@ struct SettingView: View {
             if viewContext.hasChanges {
                 try viewContext.save()
             }
-            showResult(title: String(localized: "settings.import_done"), message: String(format: NSLocalizedString("settings.import_done_msg", comment: ""), inserted, skipped))
+            showResult(title: L10n.string("settings.import_done"), message: String(format: L10n.string("settings.import_done_msg"), inserted, skipped))
         } catch {
-            showResult(title: String(localized: "settings.import_failed"), message: error.localizedDescription)
+            showResult(title: L10n.string("settings.import_failed"), message: error.localizedDescription)
         }
     }
 

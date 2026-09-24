@@ -131,18 +131,18 @@ struct LoginView: View {
     private var credentialForm: some View {
         VStack(spacing: 12) {
             if loginType == .email {
-                TextField(String(localized: "auth.email_placeholder"), text: $email)
+                TextField(L10n.string("auth.email_placeholder"), text: $email)
                     .textFieldStyle(.roundedBorder)
             } else {
-                TextField(String(localized: "auth.phone_placeholder"), text: $phone)
+                TextField(L10n.string("auth.phone_placeholder"), text: $phone)
                     .textFieldStyle(.roundedBorder)
             }
 
-            SecureField(String(localized: "auth.password"), text: $password)
+            SecureField(L10n.string("auth.password"), text: $password)
                 .textFieldStyle(.roundedBorder)
 
             if authMode == .register {
-                SecureField(String(localized: "auth.confirm_password"), text: $confirmPassword)
+                SecureField(L10n.string("auth.confirm_password"), text: $confirmPassword)
                     .textFieldStyle(.roundedBorder)
             }
 
@@ -191,11 +191,11 @@ struct LoginView: View {
             }
 
             HStack(spacing: 12) {
-                socialButton(title: String(localized: "auth.provider_wechat"), systemImage: "message.fill", color: Color.green) {
+                socialButton(title: L10n.string("auth.provider_wechat"), systemImage: "message.fill", color: Color.green) {
                     errorMessage = authManager.loginWithProvider(.wechat, identifier: "wx_\(UUID().uuidString)")
                 }
 
-                socialButton(title: String(localized: "auth.provider_qq"), systemImage: "bubble.left.and.bubble.right.fill", color: Color.blue) {
+                socialButton(title: L10n.string("auth.provider_qq"), systemImage: "bubble.left.and.bubble.right.fill", color: Color.blue) {
                     errorMessage = authManager.loginWithProvider(.qq, identifier: "qq_\(UUID().uuidString)")
                 }
             }
@@ -286,12 +286,12 @@ private struct ResetPasswordView: View {
 
                 Section("auth.reset_password") {
                     if loginType == .email {
-                        TextField(String(localized: "auth.email_placeholder"), text: $email)
+                        TextField(L10n.string("auth.email_placeholder"), text: $email)
                     } else {
-                        TextField(String(localized: "auth.phone_placeholder"), text: $phone)
+                        TextField(L10n.string("auth.phone_placeholder"), text: $phone)
                     }
-                    SecureField(String(localized: "auth.new_password"), text: $newPassword)
-                    SecureField(String(localized: "auth.confirm_password"), text: $confirmPassword)
+                    SecureField(L10n.string("auth.new_password"), text: $newPassword)
+                    SecureField(L10n.string("auth.confirm_password"), text: $confirmPassword)
                 }
 
                 if let message {

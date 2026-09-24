@@ -46,7 +46,7 @@ struct ShareCardView: View {
                     .appAmountStyle(size: 42, weight: .heavy)
                     .foregroundStyle(balanceColor)
 
-                Text(dailyBalance >= 0 ? String(localized: "home.share_surplus") : String(localized: "home.share_deficit"))
+                Text(dailyBalance >= 0 ? L10n.string("home.share_surplus") : L10n.string("home.share_deficit"))
                     .font(AppTypography.secondary.weight(.medium))
                     .foregroundStyle(dailyBalance >= 0 ? .green : .red)
             }

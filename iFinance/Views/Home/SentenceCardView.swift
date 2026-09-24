@@ -18,7 +18,7 @@ struct SentenceCardView: View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
             // ── 标题行 + 换一句 ──
             HStack(spacing: AppSpacing.sm) {
-                Text(String(localized: "home.quote.title"))
+                Text(L10n.string("home.quote.title"))
                     .font(AppTypography.tiny.weight(.semibold))
                     .foregroundStyle(.quaternary)
 
@@ -34,7 +34,7 @@ struct SentenceCardView: View {
                     }
                     .foregroundStyle(.secondary)
                     .buttonStyle(.scalePress)
-                    .accessibilityLabel(String(localized: "home.change_quote"))
+                    .accessibilityLabel(L10n.string("home.change_quote"))
                 }
             }
 

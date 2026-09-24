@@ -63,6 +63,8 @@ struct MacLanguageSettingView: View {
 
     /// 重启 App
     private func restartApp() {
+        // 让系统本地化解析（String(localized:)、系统控件）跟随本次选择的语言，重启后生效
+        LocalizationSync.apply(currentLanguage)
         NSApplication.shared.terminate(nil)
     }
 }

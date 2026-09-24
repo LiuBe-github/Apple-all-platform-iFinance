@@ -13,7 +13,6 @@
 "profile.third_party" = "Third-party Accounts";
 "profile.bind_email" = "Bind Email";
 "profile.change_password" = "Change Password";
-"profile.todo" = "Coming soon";
 
 "settings.title" = "Settings";
 "settings.about_you" = "You";
@@ -69,10 +68,6 @@
 "tendency.expense" = "Expense Trend";
 "tendency.income" = "Income Trend";
 "tendency.last_year" = "Continuous data for last year";
-"tendency.span_7" = "7D";
-"tendency.span_30" = "30D";
-"tendency.span_90" = "90D";
-"tendency.span_180" = "180D";
 "tendency.drag_hint" = "Drag on chart to inspect any date";
 "tendency.no_data" = "No data";
 "tendency.avg" = "Average";
@@ -209,8 +204,22 @@
 
 "transaction.empty" = "No bills yet. Add your first bill.";
 
-"iFinance" = "iFinance";
 "auth.apple_frontend_only" = "Apple Sign In is currently UI-only and not connected to real authentication.";
+"auth.current_password_wrong" = "Current password is incorrect";
+"auth.email_empty" = "Email cannot be empty";
+"auth.invalid_credentials" = "Incorrect account or password";
+"auth.invalid_email" = "Please enter a valid email address";
+"auth.invalid_phone" = "Please enter a valid phone number";
+"auth.login_hint" = "Choose a sign-in method and enter your credentials";
+"auth.nickname_empty" = "Nickname cannot be empty";
+"auth.no_account" = "No account found — please sign up first";
+"auth.password_not_match" = "Passwords do not match";
+"auth.password_same" = "New password must be different from the current one";
+"auth.password_too_short" = "Password must be at least 6 characters";
+"auth.phone_empty" = "Phone number cannot be empty";
+"auth.register_hint" = "Sign up with an email address or phone number";
+"auth.register_now" = "Sign up and sign in";
+"auth.reset_account_not_match" = "Account does not match";
 
 // Biometric lock
 "lock.face_id" = "Face ID";

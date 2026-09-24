@@ -168,7 +168,7 @@ struct AddBillView: View {
     private func saveBill() {
         let result = parseExpression(displayText)
         guard result > 0 else {
-            showAlert(message: String(localized: "bill.amount_gt_zero"))
+            showAlert(message: L10n.string("bill.amount_gt_zero"))
             return
         }
         
@@ -176,20 +176,20 @@ struct AddBillView: View {
         switch transactionType {
         case .expenditure:
             guard let cat = selectedExpenditureCategory else {
-                showAlert(message: String(localized: "bill.choose_category"))
+                showAlert(message: L10n.string("bill.choose_category"))
                 return
             }
             categoryString = cat.rawValue
         case .income:
             guard let cat = selectedIncomeCategory else {
-                showAlert(message: String(localized: "bill.choose_category"))
+                showAlert(message: L10n.string("bill.choose_category"))
                 return
             }
             categoryString = cat.rawValue
         case .transfer:
             guard !transferFrom.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
                   !transferTo.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                showAlert(message: String(localized: "bill.transfer_account_required"))
+                showAlert(message: L10n.string("bill.transfer_account_required"))
                 return
             }
             categoryString = "transfer"
@@ -227,7 +227,7 @@ struct AddBillView: View {
             dismiss()
         } catch {
             HapticManager.shared.error()
-            showAlert(message: String(localized: "bill.save_failed"))
+            showAlert(message: L10n.string("bill.save_failed"))
         }
     }
     

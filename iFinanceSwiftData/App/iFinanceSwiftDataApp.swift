@@ -62,6 +62,8 @@ struct iFinanceSwiftDataApp: App {
                     selectedTheme == .dark  ? .dark  : nil
             )
             .onAppear {
+                // 让系统的本地化解析跟随 App 内语言（修正老版本遗留的不一致）
+                LocalizationSync.syncIfNeeded()
                 authManager.bootstrap()
                 biometricLock.evaluateBiometricCapability()
                 biometricLock.requestLock()

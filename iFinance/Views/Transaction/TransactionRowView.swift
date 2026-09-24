@@ -63,7 +63,7 @@ struct TransactionRowView: View {
         case .expenditure(let c): return Text(c.localizedDisplayName)
         case .income(let c): return Text(c.localizedDisplayName)
         case .transfer: return Text("bill.type_transfer")
-        case .unknown: return Text(bill.category ?? String(localized: "bill.uncategorized"))
+        case .unknown: return Text(bill.category ?? L10n.string("bill.uncategorized"))
         }
     }
     

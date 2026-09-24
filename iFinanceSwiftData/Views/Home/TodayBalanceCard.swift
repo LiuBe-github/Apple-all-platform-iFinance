@@ -56,7 +56,7 @@ struct TodayBalanceCard: View {
 
                 Spacer(minLength: AppSpacing.sm)
 
-                Text(String(localized: "home.today_balance"))
+                Text(L10n.string("home.today_balance"))
                     .font(AppTypography.tiny.weight(.medium))
                     .foregroundStyle(.quaternary)
             }
@@ -73,11 +73,11 @@ struct TodayBalanceCard: View {
             // ── 底部：收入 / 支出 / 笔数 ──
             HStack(spacing: AppSpacing.md) {
                 miniStat(icon: "arrow.down.circle.fill", tint: .green,
-                         value: formatted(income), label: String(localized: "home.income_label"))
+                         value: formatted(income), label: L10n.string("home.income_label"))
                 miniStat(icon: "arrow.up.circle.fill", tint: .red,
-                         value: formatted(expense), label: String(localized: "home.expense_label"))
+                         value: formatted(expense), label: L10n.string("home.expense_label"))
                 miniStat(icon: "list.bullet.clipboard.fill", tint: .blue,
-                         value: "\(billCount)", label: String(localized: "home.count_label"))
+                         value: "\(billCount)", label: L10n.string("home.count_label"))
             }
         }
         .padding(.horizontal, AppLayout.cardPaddingCozy)

@@ -13,7 +13,6 @@
 "profile.third_party" = "外部アカウント";
 "profile.bind_email" = "メール連携";
 "profile.change_password" = "パスワード変更";
-"profile.todo" = "開発中";
 
 "settings.title" = "設定";
 "settings.about_you" = "あなた";
@@ -69,10 +68,6 @@
 "tendency.expense" = "支出トレンド";
 "tendency.income" = "収入トレンド";
 "tendency.last_year" = "過去1年の連続データ";
-"tendency.span_7" = "7日";
-"tendency.span_30" = "30日";
-"tendency.span_90" = "90日";
-"tendency.span_180" = "180日";
 "tendency.drag_hint" = "チャートをドラッグして任意日の値を確認";
 "tendency.no_data" = "データなし";
 "tendency.avg" = "平均";
@@ -209,8 +204,22 @@
 
 "transaction.empty" = "明細がありません。最初の1件を追加しましょう。";
 
-"iFinance" = "iFinance";
 "auth.apple_frontend_only" = "Appleログインは現在UIのみで、実認証は未接続です。";
+"auth.current_password_wrong" = "現在のパスワードが正しくありません";
+"auth.email_empty" = "メールアドレスを入力してください";
+"auth.invalid_credentials" = "アカウントまたはパスワードが正しくありません";
+"auth.invalid_email" = "有効なメールアドレスを入力してください";
+"auth.invalid_phone" = "有効な電話番号を入力してください";
+"auth.login_hint" = "ログイン方法を選択し、アカウント情報を入力してください";
+"auth.nickname_empty" = "ニックネームを入力してください";
+"auth.no_account" = "アカウントが見つかりません。先に登録してください";
+"auth.password_not_match" = "パスワードが一致しません";
+"auth.password_same" = "新しいパスワードは現在のものと異なる必要があります";
+"auth.password_too_short" = "パスワードは6文字以上必要です";
+"auth.phone_empty" = "電話番号を入力してください";
+"auth.register_hint" = "メールアドレスまたは電話番号で登録できます";
+"auth.register_now" = "登録してログイン";
+"auth.reset_account_not_match" = "アカウントが一致しません";
 
 // Biometric lock
 "lock.face_id" = "Face ID";

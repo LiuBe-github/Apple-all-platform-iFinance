@@ -139,6 +139,15 @@ rawValue 为中文：`餐饮`、`购物`、`服饰`、`日用`、`数码`、`美
 
 `HapticManager.shared`（`Helper/HapticManager.swift:16`）：`light()`、`medium()`、`heavy()`、`soft()`、`rigid()`、`success()`、`warning()`、`error()`、`selectionChanged()`。
 
+### AppleLanguages 同步（`LocalizationSync`，`Helper/LocalizationHelper.swift:115`）
+
+| 成员 | 签名 | 说明 |
+|------|------|------|
+| `apply(_:)` | `@discardableResult static func apply(_ language: AppLanguage) -> Bool` | 固定语言 → 写 `UserDefaults["AppleLanguages"] = [lang]`；`.system` → 移除该键；返回是否有改动，并 `synchronize()` 后由调用方重启进程 |
+| `syncIfNeeded()` | `static func syncIfNeeded()` | 读取 `app_language` 幂等修正（App 入口 `onAppear` 调用，兜底修正老版本安装） |
+
+作用：让 `String(localized:)`、`NSLocalizedString` 以及系统控件文案（分享面板、Face ID 提示、系统弹窗）跟随 App 内选择的语言。新增文案不要再用 `String(localized:)`，统一走 `L10n.string`。
+
 ## 10. 未覆盖 / 存疑
 
 - `AuthManager` 的 Apple 登录需真机与已登录 Apple ID 才能完整验证；本仓库仅在编译与模拟器层面验证。

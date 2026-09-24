@@ -608,4 +608,24 @@ struct MacLocalizationRegressionTests {
             }
         }
     }
+
+    /// macOS 四种语言包必须包含完全相同的 key 集合（防止漏翻译）
+    @Test
+    func languagePacksHaveIdenticalKeys() throws {
+        var keySets: [String: Set<String>] = [:]
+        for language in languages {
+            let path = try #require(Bundle.main.path(forResource: language, ofType: "lproj"),
+                                    "\(language) 语言包缺失")
+            let bundle = try #require(Bundle(path: path))
+            let stringsPath = try #require(bundle.path(forResource: "Localizable", ofType: "strings"))
+            let dict = try #require(NSDictionary(contentsOfFile: stringsPath) as? [String: String])
+            keySets[language] = Set(dict.keys)
+        }
+
+        let reference = try #require(keySets["zh-Hans"])
+        for (language, keys) in keySets where language != "zh-Hans" {
+            #expect(reference.subtracting(keys).isEmpty, "\(language) 缺少 key")
+            #expect(keys.subtracting(reference).isEmpty, "\(language) 多出 key")
+        }
+    }
 }

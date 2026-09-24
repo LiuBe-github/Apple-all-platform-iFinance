@@ -37,10 +37,10 @@ enum TimeRange: String, CaseIterable {
 
     var displayName: String {
         switch self {
-        case .today: return String(localized: "bill.time_range.today", defaultValue: "本日")
-        case .thisWeek: return String(localized: "bill.time_range.week", defaultValue: "本周")
-        case .thisMonth: return String(localized: "bill.time_range.month", defaultValue: "本月")
-        case .thisYear: return String(localized: "bill.time_range.year", defaultValue: "本年")
+        case .today: return L10n.string("bill.time_range.today")
+        case .thisWeek: return L10n.string("bill.time_range.week")
+        case .thisMonth: return L10n.string("bill.time_range.month")
+        case .thisYear: return L10n.string("bill.time_range.year")
         }
     }
 }
@@ -246,8 +246,8 @@ private struct DayGroupCard: View, Equatable {
     // MARK: 日期格式
     private var dayLabel: String {
         let cal = Calendar.current
-        if cal.isDateInToday(date)     { return String(localized: "common.today") }
-        if cal.isDateInYesterday(date) { return String(localized: "common.yesterday") }
+        if cal.isDateInToday(date)     { return L10n.string("common.today") }
+        if cal.isDateInYesterday(date) { return L10n.string("common.yesterday") }
         
         return date.formatted(.dateTime.month(.abbreviated).day())
     }

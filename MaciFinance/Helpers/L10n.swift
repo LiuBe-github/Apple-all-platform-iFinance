@@ -88,3 +88,37 @@ enum AppLanguage: String, CaseIterable, Identifiable {
         }
     }
 }
+
+// MARK: - AppleLanguages 同步
+
+/// 让系统本地化解析（`String(localized:)`、`NSLocalizedString`、系统控件文案）跟随 App 内选择的语言。
+///
+/// - 固定语言：覆盖 `UserDefaults["AppleLanguages"]`，重启后由系统按该语言解析 App bundle；
+/// - 跟随系统：移除该覆盖，恢复系统默认语言。
+enum LocalizationSync {
+    private static let appleLanguagesKey = "AppleLanguages"
+
+    /// 应用语言设置；返回是否有实际改动
+    @discardableResult
+    static func apply(_ language: AppLanguage) -> Bool {
+        let current = UserDefaults.standard.stringArray(forKey: appleLanguagesKey)
+
+        switch language {
+        case .system:
+            guard current != nil else { return false }
+            UserDefaults.standard.removeObject(forKey: appleLanguagesKey)
+        default:
+            guard current != [language.rawValue] else { return false }
+            UserDefaults.standard.set([language.rawValue], forKey: appleLanguagesKey)
+        }
+
+        UserDefaults.standard.synchronize()
+        return true
+    }
+
+    /// 启动时幂等同步：读取 `app_language` 并修正 AppleLanguages（覆盖老版本遗留的不一致）
+    static func syncIfNeeded() {
+        let stored = UserDefaults.standard.string(forKey: "app_language") ?? AppLanguage.system.rawValue
+        apply(AppLanguage(rawValue: stored) ?? .system)
+    }
+}

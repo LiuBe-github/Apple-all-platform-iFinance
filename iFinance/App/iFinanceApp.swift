@@ -62,6 +62,8 @@ struct iFinanceApp: App {
                     selectedTheme == .dark  ? .dark  : nil
             )
             .onAppear {
+                // 让系统的本地化解析跟随 App 内语言（修正老版本遗留的不一致）
+                LocalizationSync.syncIfNeeded()
                 authManager.bootstrap()
                 biometricLock.evaluateBiometricCapability()
                 // 启动时尝试锁定（requestLock 是幂等的：未启用/已锁定/冷却期 = 空操作）
