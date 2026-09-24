@@ -43,7 +43,7 @@ struct TodayBalanceCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.lg) {
+        VStack(alignment: .leading, spacing: AppSpacing.xl) {
             // ── 顶部：日期 + 卡片标题 ──
             HStack(spacing: AppSpacing.xs) {
                 Image(systemName: "sun.max.fill")
@@ -52,13 +52,13 @@ struct TodayBalanceCard: View {
 
                 Text(dateLabel)
                     .font(AppTypography.tiny.weight(.medium))
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(.secondary)
 
                 Spacer(minLength: AppSpacing.sm)
 
                 Text(L10n.string("home.today_balance"))
-                    .font(AppTypography.tiny.weight(.medium))
-                    .foregroundStyle(.quaternary)
+                    .font(AppTypography.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
             }
 
             // ── 主视觉：今日结余（收入 − 支出，纯数字，不做文字描述） ──
@@ -115,8 +115,8 @@ struct TodayBalanceCard: View {
                 .minimumScaleFactor(0.7)
 
             Text(label)
-                .font(AppTypography.tiny)
-                .foregroundStyle(.quaternary)
+                .font(AppTypography.caption)
+                .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
         .frame(minHeight: AppLayout.listRowMinHeight)

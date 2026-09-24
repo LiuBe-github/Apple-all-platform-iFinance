@@ -85,6 +85,23 @@ enum AppTypography {
 
 // MARK: - 便捷修饰器
 
+enum AppNumberFormat {
+    private static let percentFormatter: NumberFormatter = {
+        let f = NumberFormatter()
+        f.numberStyle = .percent
+        f.maximumFractionDigits = 2
+        f.minimumFractionDigits = 0
+        f.locale = .autoupdatingCurrent
+        return f
+    }()
+
+    /// 百分比：最多两位小数、去掉尾随零（0.43 → 43%、0.432 → 43.2%、0.4325 → 43.25%）
+    static func percent(_ ratio: Double) -> String {
+        percentFormatter.string(from: NSNumber(value: ratio))
+            ?? "\(Int((ratio * 100).rounded()))%"
+    }
+}
+
 extension View {
     /// 大号金额数字：等宽数字 + 禁止换行 + 自动缩放，避免 Dynamic Type 撑破卡片
     func appAmountStyle(size: CGFloat, weight: Font.Weight = .semibold) -> some View {

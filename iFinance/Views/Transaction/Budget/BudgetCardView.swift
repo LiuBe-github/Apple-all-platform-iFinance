@@ -179,7 +179,7 @@ struct BudgetCardView: View {
                 .frame(width: 72, height: 72)
                 
                 VStack(spacing: 1) {
-                    Text("\(Int(progress * 100))%")
+                    Text(AppNumberFormat.percent(progress))
                         .font(.system(size: 16, weight: .bold, design: .rounded))
                         .foregroundStyle(.primary)
                         .appNumericTransition(value: progress * 100)

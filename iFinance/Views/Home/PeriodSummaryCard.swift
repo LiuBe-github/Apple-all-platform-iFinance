@@ -31,8 +31,8 @@ struct PeriodSummaryCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
             Text(L10n.string("home.period.title"))
-                .font(AppTypography.tiny.weight(.semibold))
-                .foregroundStyle(.quaternary)
+                .font(AppTypography.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
 
             VStack(spacing: 0) {
                 ForEach(Array(periods.enumerated()), id: \.element.id) { index, item in
@@ -57,8 +57,8 @@ struct PeriodSummaryCard: View {
                     .foregroundStyle(.primary)
 
                 Text(String(format: L10n.string("home.period.count_value"), item.count))
-                    .font(AppTypography.tiny)
-                    .foregroundStyle(.tertiary)
+                    .font(AppTypography.caption)
+                    .foregroundStyle(.secondary)
             }
             .frame(minWidth: 60, alignment: .leading)
 
@@ -83,8 +83,8 @@ struct PeriodSummaryCard: View {
                 Text(item.balance >= 0
                      ? L10n.string("home.surplus")
                      : L10n.string("home.deficit"))
-                    .font(AppTypography.tiny)
-                    .foregroundStyle(.quaternary)
+                    .font(AppTypography.caption)
+                    .foregroundStyle(.secondary)
             }
         }
         .padding(.vertical, AppSpacing.md)
@@ -94,8 +94,8 @@ struct PeriodSummaryCard: View {
     private func amountLine(label: String, value: String, color: Color) -> some View {
         HStack(spacing: AppSpacing.xs) {
             Text(label)
-                .font(AppTypography.tiny)
-                .foregroundStyle(.tertiary)
+                .font(AppTypography.caption)
+                .foregroundStyle(.secondary)
             Text(value)
                 .font(AppTypography.amount(13, weight: .medium))
                 .foregroundStyle(color)

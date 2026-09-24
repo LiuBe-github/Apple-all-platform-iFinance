@@ -189,7 +189,7 @@ struct BudgetView: View {
                         .appAnimation(AppMotion.emphasized, value: progress)
                     
                     VStack(spacing: 1) {
-                        Text("\(Int(progress * 100))%")
+                        Text(AppNumberFormat.percent(progress))
                             .font(.system(size: 15, weight: .bold, design: .rounded))
                         Text("budget.used")
                             .font(.system(size: 9, weight: .medium))

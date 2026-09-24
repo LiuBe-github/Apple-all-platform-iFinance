@@ -61,6 +61,8 @@
 "profile.connected" = "已连接";
 "profile.not_connected" = "未连接";
 "profile.logout" = "退出登录";
+"profile.avatar_crop_title" = "调整头像";
+"profile.avatar_crop_hint" = "拖动或双指缩放来调整取景";
 
 "settings.title" = "设置";
 "settings.about_you" = "关于你";
@@ -355,6 +357,7 @@
 
 /* Settings */
 "settings.appearance" = "外观";
+"splash.subtitle" = "记录每一笔，看清每一天";
 
 /* macOS Dashboard */
 "mac.dashboard.today_expense" = "今日支出";

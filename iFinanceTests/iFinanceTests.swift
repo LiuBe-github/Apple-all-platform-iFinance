@@ -806,6 +806,27 @@ final class LocalizationSyncTests: XCTestCase {
 // MARK: - 概况页区间聚合（本月 / 上月 / 本年）
 
 @MainActor
+final class NumberFormatTests: XCTestCase {
+
+    /// 只保留数字与小数点，避免不同地区格式（空格、全角符号）影响断言
+    private func digits(_ text: String) -> String {
+        text.filter { $0.isNumber || $0 == "." }
+    }
+
+    func testPercentKeepsAtMostTwoDecimals() {
+        XCTAssertEqual(digits(AppNumberFormat.percent(0)), "0")
+        XCTAssertEqual(digits(AppNumberFormat.percent(0.43)), "43")
+        XCTAssertEqual(digits(AppNumberFormat.percent(0.432)), "43.2")
+        XCTAssertEqual(digits(AppNumberFormat.percent(0.4325)), "43.25")
+        XCTAssertEqual(digits(AppNumberFormat.percent(1.0)), "100")
+    }
+
+    func testPercentEndsWithSymbol() {
+        XCTAssertTrue(AppNumberFormat.percent(0.5).contains("%"))
+    }
+}
+
+@MainActor
 final class PeriodSummaryTests: XCTestCase {
 
     private var persistenceController: PersistenceController!

@@ -118,6 +118,8 @@
 "profile.connected" = "已連接";
 "profile.not_connected" = "未連接";
 "profile.logout" = "退出登入";
+"profile.avatar_crop_title" = "調整頭像";
+"profile.avatar_crop_hint" = "拖曳或雙指縮放來調整取景";
 
 "settings.contact" = "聯繫我們";
 "settings.icloud_section" = "iCloud";
@@ -355,6 +357,7 @@
 
 /* Settings */
 "settings.appearance" = "外觀";
+"splash.subtitle" = "記錄每一筆，看清每一天";
 
 /* macOS Dashboard */
 "mac.dashboard.today_expense" = "今日支出";

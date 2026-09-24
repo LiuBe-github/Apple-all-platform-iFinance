@@ -6,6 +6,8 @@ struct ProfileView: View {
 
     @State private var avatarImage: Image? = nil
     @State private var selectedAvatar: PhotosPickerItem? = nil
+    /// 等待裁剪的图片（非 nil 时弹出裁剪页）
+    @State private var pendingAvatarImage: UIImage? = nil
 
     var body: some View {
         NavigationStack {
@@ -125,8 +127,20 @@ struct ProfileView: View {
             .onChange(of: selectedAvatar) { _, newItem in
                 Task {
                     if let newItem = newItem {
-                        await saveAvatar(from: newItem)
+                        await prepareForCropping(from: newItem)
                     }
+                }
+            }
+            .sheet(isPresented: Binding(
+                get: { pendingAvatarImage != nil },
+                set: { if !$0 { pendingAvatarImage = nil } }
+            )) {
+                if let image = pendingAvatarImage {
+                    AvatarCropView(
+                        image: image,
+                        onCancel: { pendingAvatarImage = nil },
+                        onConfirm: { applyCroppedAvatar($0) }
+                    )
                 }
             }
         }
@@ -142,36 +156,30 @@ struct ProfileView: View {
         }
     }
 
-    private func saveAvatar(from item: PhotosPickerItem) async {
+    /// 读取相册图片并进入裁剪流程（不再直接等比缩放保存）
+    private func prepareForCropping(from item: PhotosPickerItem) async {
         guard let data = try? await item.loadTransferable(type: Data.self),
               let uiImage = UIImage(data: data) else {
             return
         }
 
-        let resizedImage = resizeImage(uiImage, targetSize: CGSize(width: 300, height: 300))
-
-        if let imageData = resizedImage.jpegData(compressionQuality: 0.8) {
-            // 保存到 Core Data User 模型
-            authManager.updateAvatar(imageData)
-            await MainActor.run {
-                avatarImage = Image(uiImage: resizedImage)
-            }
+        await MainActor.run {
+            pendingAvatarImage = uiImage
         }
     }
 
-    private func resizeImage(_ image: UIImage, targetSize: CGSize) -> UIImage {
-        let size = image.size
-        let widthRatio = targetSize.width / size.width
-        let heightRatio = targetSize.height / size.height
-        let scaleFactor = min(widthRatio, heightRatio)
-        let newSize = CGSize(width: size.width * scaleFactor, height: size.height * scaleFactor)
-
-        UIGraphicsBeginImageContextWithOptions(newSize, false, 0)
-        image.draw(in: CGRect(origin: .zero, size: newSize))
-        let resizedImage = UIGraphicsGetImageFromCurrentImageContext() ?? image
-        UIGraphicsEndImageContext()
-        return resizedImage
+    /// 裁剪确认后写回（300×300 JPEG，与既有存储格式一致）
+    private func applyCroppedAvatar(_ cropped: UIImage) {
+        defer {
+            pendingAvatarImage = nil
+            selectedAvatar = nil
+        }
+        guard let imageData = cropped.jpegData(compressionQuality: 0.85) else { return }
+        authManager.updateAvatar(imageData)
+        avatarImage = Image(uiImage: cropped)
+        HapticManager.shared.success()
     }
+
 }
 
 private struct ChangeNicknameView: View {

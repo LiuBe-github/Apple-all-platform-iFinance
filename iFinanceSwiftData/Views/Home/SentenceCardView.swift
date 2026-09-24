@@ -19,8 +19,8 @@ struct SentenceCardView: View {
             // ── 标题行 + 换一句 ──
             HStack(spacing: AppSpacing.sm) {
                 Text(L10n.string("home.quote.title"))
-                    .font(AppTypography.tiny.weight(.semibold))
-                    .foregroundStyle(.quaternary)
+                    .font(AppTypography.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
 
                 Spacer(minLength: AppSpacing.sm)
 
@@ -42,7 +42,7 @@ struct SentenceCardView: View {
             HStack(alignment: .top, spacing: AppSpacing.sm) {
                 Text("\u{201C}")
                     .font(.system(size: 30, weight: .bold, design: .serif))
-                    .foregroundStyle(.quaternary)
+                    .foregroundStyle(.tertiary)
                     .offset(y: -6)
                     .accessibilityHidden(true)
 
@@ -59,7 +59,7 @@ struct SentenceCardView: View {
                 Spacer()
                 Text("—— \(sentence.note)")
                     .font(AppTypography.caption)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(.secondary)
                     .italic()
                     .lineLimit(1)
             }

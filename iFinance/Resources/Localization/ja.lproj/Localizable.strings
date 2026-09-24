@@ -118,6 +118,8 @@
 "profile.connected" = "連携済み";
 "profile.not_connected" = "未連携";
 "profile.logout" = "ログアウト";
+"profile.avatar_crop_title" = "写真を調整";
+"profile.avatar_crop_hint" = "ドラッグやピンチで位置を調整";
 
 "settings.contact" = "お問い合わせ";
 "settings.icloud_section" = "iCloud";
@@ -355,6 +357,7 @@
 
 /* Settings */
 "settings.appearance" = "外観";
+"splash.subtitle" = "毎日の記録を、もっとシンプルに";
 
 /* macOS Dashboard */
 "mac.dashboard.today_expense" = "今日の支出";

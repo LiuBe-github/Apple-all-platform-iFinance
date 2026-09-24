@@ -106,6 +106,11 @@ struct TransactionRowView: View {
         guard let date = bill.date else { return "" }
         return Self.timeFormatter.string(from: date)
     }
+
+    /// 备注（去掉首尾空白；空串视为没有备注）
+    private var noteText: String {
+        (bill.note ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+    }
     
     // MARK: - Body
     var body: some View {
@@ -117,17 +122,35 @@ struct TransactionRowView: View {
                 .foregroundStyle(iconColor)
                 .appIconTile(iconColor)
             
-            // 分类名 + 时间
+            // 备注为主、分类 · 时间为次；没有备注时回退为「分类 + 时间」
             VStack(alignment: .leading, spacing: 3) {
-                categoryText
-                    .font(AppTypography.secondary.weight(.medium))
-                    .foregroundStyle(.primary)
+                if noteText.isEmpty {
+                    categoryText
+                        .font(AppTypography.secondary.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+
+                    if !timeText.isEmpty {
+                        Text(timeText)
+                            .font(AppTypography.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                } else {
+                    Text(noteText)
+                        .font(AppTypography.body.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+
+                    HStack(spacing: AppSpacing.xs) {
+                        categoryText
+                        if !timeText.isEmpty {
+                            Text("·")
+                            Text(timeText)
+                        }
+                    }
+                    .font(AppTypography.caption)
+                    .foregroundStyle(.secondary)
                     .lineLimit(1)
-                
-                if !timeText.isEmpty {
-                    Text(timeText)
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
                 }
             }
             

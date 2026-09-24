@@ -118,6 +118,8 @@
 "profile.connected" = "Connected";
 "profile.not_connected" = "Not Connected";
 "profile.logout" = "Log Out";
+"profile.avatar_crop_title" = "Adjust Photo";
+"profile.avatar_crop_hint" = "Drag or pinch to adjust the frame";
 
 "settings.contact" = "Contact";
 "settings.icloud_section" = "iCloud";
@@ -355,6 +357,7 @@
 
 /* Settings */
 "settings.appearance" = "Appearance";
+"splash.subtitle" = "Track every bill, see every day";
 
 /* macOS Dashboard */
 "mac.dashboard.today_expense" = "Today's Expense";

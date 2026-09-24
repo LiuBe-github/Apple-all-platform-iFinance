@@ -487,7 +487,7 @@ struct SettingView: View {
                 }
             }
             VStack(alignment: .leading, spacing: AppSpacing.xs) {
-                Text("iFinance").font(.title2.weight(.bold))
+                Text(authManager.nickname).font(.title2.weight(.bold))
                 Text(L10n.string("settings.about_desc")).font(.subheadline).foregroundStyle(.secondary)
             }
             Spacer()

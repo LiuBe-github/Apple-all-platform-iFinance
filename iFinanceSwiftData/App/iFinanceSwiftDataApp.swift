@@ -12,11 +12,15 @@ import SwiftData
 @main
 struct iFinanceSwiftDataApp: App {
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @AppStorage("selectedTheme") private var selectedTheme: ThemeMode = .system
     @AppStorage("app_language") private var appLanguage: String = AppLanguage.system.rawValue
     @StateObject private var authManager = AuthManager.shared
     @StateObject private var biometricLock = BiometricLockManager.shared
+
+    /// 冷启动开屏动画（每次进程启动只展示一次）
+    @State private var showSplash = true
 
     let persistenceController = PersistenceController.shared
 
@@ -57,6 +61,13 @@ struct iFinanceSwiftDataApp: App {
             .environmentObject(authManager)
             .modelContainer(persistenceController.container)
             .environment(\.locale, appLocale)
+            .overlay {
+                if showSplash {
+                    AppSplashView()
+                        .transition(.opacity)
+                        .zIndex(200)
+                }
+            }
             .preferredColorScheme(
                 selectedTheme == .light ? .light :
                     selectedTheme == .dark  ? .dark  : nil
@@ -64,6 +75,11 @@ struct iFinanceSwiftDataApp: App {
             .onAppear {
                 // 让系统的本地化解析跟随 App 内语言（修正老版本遗留的不一致）
                 LocalizationSync.syncIfNeeded()
+                // 开屏动画：正常 1.8s，开启「减弱动态效果」时 0.8s
+                let splashDuration: TimeInterval = reduceMotion ? 0.8 : 1.8
+                DispatchQueue.main.asyncAfter(deadline: .now() + splashDuration) {
+                    withAnimation(.easeOut(duration: 0.35)) { showSplash = false }
+                }
                 authManager.bootstrap()
                 biometricLock.evaluateBiometricCapability()
                 biometricLock.requestLock()

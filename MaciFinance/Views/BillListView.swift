@@ -245,12 +245,18 @@ private struct BillDetailRow: View {
                     .foregroundStyle(isExpense ? .red : .green)
             }
 
+            // 备注为主、分类 · 日期为次；没有备注时回退为「分类 + 日期」
             VStack(alignment: .leading, spacing: 3) {
-                Text(bill.category ?? L10n.string("mac.bill.uncategorized"))
-                    .font(.system(size: 14, weight: .medium))
+                if noteText.isEmpty {
+                    Text(categoryText)
+                        .font(.system(size: 14, weight: .semibold))
+                        .lineLimit(1)
+                } else {
+                    Text(noteText)
+                        .font(.system(size: 14, weight: .semibold))
+                        .lineLimit(1)
 
-                if let note = bill.note, !note.isEmpty, note != L10n.string("mac.bill.no_note") {
-                    Text(note)
+                    Text(categoryText)
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
@@ -293,6 +299,16 @@ private struct BillDetailRow: View {
             return ExpenditureCategory.allCases.first(where: { $0.rawValue == cat })?.icon ?? "tag.fill"
         }
         return IncomeCategory.allCases.first(where: { $0.rawValue == cat })?.icon ?? "tag.fill"
+    }
+
+    private var categoryText: String {
+        bill.category ?? L10n.string("mac.bill.uncategorized")
+    }
+
+    /// 备注（占位值「无备注」与空白串都视为没有备注）
+    private var noteText: String {
+        let note = (bill.note ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        return note == L10n.string("mac.bill.no_note") ? "" : note
     }
 }
 
