@@ -485,8 +485,7 @@ final class iFinanceTests: XCTestCase {
             visibleDays: 7,
             isHourly: false,
             selectedDate: .constant(nil),
-            scrollPosition: .constant(today),
-            chartType: .constant(.line)
+            scrollPosition: .constant(today)
         )
         XCTAssertNotNil(chartView)
     }
@@ -509,7 +508,6 @@ final class iFinanceTests: XCTestCase {
             allSeries: series,
             allBills: [],
             span: .constant(SpanOption.all[1]),
-            chartType: .constant(.line),
             selectedDate: .constant(nil),
             scrollPosition: .constant(today)
         )
@@ -591,8 +589,7 @@ final class iFinanceTests: XCTestCase {
             visibleDays: 30,
             isHourly: false,
             selectedDate: .constant(nil),
-            scrollPosition: .constant(today),
-            chartType: .constant(.bar)
+            scrollPosition: .constant(today)
         )
         XCTAssertNotNil(chartView, "空数据的图表也应能正常初始化")
     }
@@ -741,6 +738,126 @@ final class LocalizationRegressionTests: XCTestCase {
 // MARK: - 个性签名校验
 
 // MARK: - 数字键盘表达式逻辑（回归：带小数金额 + 运算符后无法继续输入）
+
+// MARK: - 分类占比聚合（趋势页饼图）
+
+@MainActor
+final class CategoryBreakdownTests: XCTestCase {
+
+    private var persistenceController: PersistenceController!
+    private var context: NSManagedObjectContext!
+    private let calendar = Calendar(identifier: .gregorian)
+
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        persistenceController = PersistenceController(inMemory: true)
+        context = persistenceController.container.viewContext
+    }
+
+    override func tearDownWithError() throws {
+        context = nil
+        persistenceController = nil
+        try super.tearDownWithError()
+    }
+
+    private func date(_ year: Int, _ month: Int, _ day: Int) -> Date {
+        calendar.date(from: DateComponents(year: year, month: month, day: day, hour: 12))!
+    }
+
+    @discardableResult
+    private func makeBill(_ amount: Decimal, type: String, category: String?, on date: Date) -> Bill {
+        let bill = Bill(context: context)
+        bill.id = UUID()
+        bill.amount = NSDecimalNumber(decimal: amount)
+        bill.type = type
+        bill.category = category
+        bill.date = date
+        bill.createdBy = "test@example.com"
+        bill.createdAt = date
+        bill.updatedAt = date
+        return bill
+    }
+
+    private func fetchBills() throws -> [Bill] {
+        try context.fetch(Bill.fetchRequest())
+    }
+
+    /// 窗口 = 最近 7 天（含今天）：第 8 天的数据不计入
+    func testWindowCoversTodayAndLastNDays() throws {
+        let now = date(2026, 3, 10)
+        makeBill(10, type: "expenditure", category: "餐饮", on: date(2026, 3, 10)) // 今天 ✓
+        makeBill(20, type: "expenditure", category: "餐饮", on: date(2026, 3, 4))  // 第 7 天 ✓
+        makeBill(40, type: "expenditure", category: "餐饮", on: date(2026, 3, 3))  // 第 8 天 ✗
+        try context.save()
+
+        let slices = CategoryBreakdown.slices(bills: try fetchBills(), type: "expenditure", days: 7,
+                                              calendar: calendar, now: now)
+        XCTAssertEqual(slices.count, 1)
+        XCTAssertEqual(slices[0].amount, 30, accuracy: 0.001)
+        XCTAssertEqual(slices[0].count, 2)
+    }
+
+    /// 分组求和 + 金额降序（同额按 rawValue 升序）
+    func testGroupingAndSorting() throws {
+        let now = date(2026, 3, 10)
+        makeBill(10, type: "expenditure", category: "餐饮", on: date(2026, 3, 10))
+        makeBill(20, type: "expenditure", category: "餐饮", on: date(2026, 3, 9))
+        makeBill(50, type: "expenditure", category: "购物", on: date(2026, 3, 8))
+        makeBill(50, type: "expenditure", category: "交通", on: date(2026, 3, 7))
+        try context.save()
+
+        let slices = CategoryBreakdown.slices(bills: try fetchBills(), type: "expenditure", days: 30,
+                                              calendar: calendar, now: now)
+        XCTAssertEqual(slices.count, 3)
+        XCTAssertEqual(slices[0].amount, 50, accuracy: 0.001)
+        XCTAssertEqual(slices[1].amount, 50, accuracy: 0.001)
+        // 同额时按 rawValue 升序：「交通」< 「购物」
+        XCTAssertTrue(slices[1].rawValue < slices[2].rawValue)
+
+        let food = slices.first { $0.rawValue == "餐饮" }
+        XCTAssertEqual(food?.amount ?? 0, 30, accuracy: 0.001)
+        XCTAssertEqual(food?.count, 2)
+    }
+
+    /// 类型隔离：查询支出时不包含收入与转账
+    func testTypeIsolation() throws {
+        let now = date(2026, 3, 10)
+        makeBill(10, type: "expenditure", category: "餐饮", on: now)
+        makeBill(99, type: "income", category: "工资", on: now)
+        makeBill(88, type: "transfer", category: "transfer", on: now)
+        try context.save()
+
+        let expense = CategoryBreakdown.slices(bills: try fetchBills(), type: "expenditure", days: 30,
+                                               calendar: calendar, now: now)
+        XCTAssertEqual(expense.map(\.rawValue), ["餐饮"])
+        XCTAssertEqual(CategoryBreakdown.total(of: expense), 10, accuracy: 0.001)
+
+        let income = CategoryBreakdown.slices(bills: try fetchBills(), type: "income", days: 30,
+                                              calendar: calendar, now: now)
+        XCTAssertEqual(income.map(\.rawValue), ["工资"])
+    }
+
+    /// 空数据与占比格式（最多两位小数）
+    func testEmptyAndPercentFormat() throws {
+        let now = date(2026, 3, 10)
+        let empty = CategoryBreakdown.slices(bills: try fetchBills(), type: "expenditure", days: 7,
+                                             calendar: calendar, now: now)
+        XCTAssertTrue(empty.isEmpty)
+        XCTAssertEqual(CategoryBreakdown.total(of: empty), 0, accuracy: 0.001)
+
+        makeBill(43.25, type: "expenditure", category: "餐饮", on: now)
+        makeBill(56.75, type: "expenditure", category: "购物", on: now)
+        try context.save()
+
+        let slices = CategoryBreakdown.slices(bills: try fetchBills(), type: "expenditure", days: 7,
+                                              calendar: calendar, now: now)
+        let total = CategoryBreakdown.total(of: slices)
+        XCTAssertEqual(total, 100, accuracy: 0.001)
+        let percentText = AppNumberFormat.percent((slices.first { $0.rawValue == "餐饮" }?.amount ?? 0) / total)
+        let digits = percentText.filter { $0.isNumber || $0 == "." }
+        XCTAssertEqual(digits, "43.25")
+    }
+}
 
 @MainActor
 final class NumberPadExpressionTests: XCTestCase {

@@ -16,6 +16,7 @@
 | `iFinance/Manager/CloudKitSyncManager.swift` | `CloudKitSyncManager`、`CloudKitSyncState`、`iCloudAccountState` | iCloud 同步**禁用 stub** |
 | `iFinance/Manager/NotificationManager.swift` | `NotificationManager`、`NotificationType` | 本地通知**禁用 stub** + 两个 `Notification.Name` 扩展 |
 | `iFinance/Models/*.swift` | `ExpenditureCategory`、`IncomeCategory`、`ThemeMode`、`DailySentence` | 分类与主题等模型 |
+| `iFinance/Models/CategoryBreakdown.swift` | `CategorySlice`、`CategoryBreakdown` | 分类占比聚合（趋势页饼图的数据源，纯函数） |
 | `iFinance/Protocol/TransactionCategory.swift` | `TransactionCategory` | 分类协议（`icon` + `localizedDisplayName`） |
 | `iFinance/Helper/LocalizationHelper.swift` | `L10n`、`AppLanguage`、`LanguageSettingView` | 国际化查找与语言设置页 |
 | `iFinance/Helper/HapticManager.swift` | `HapticManager` | 9 种触觉反馈单例 |

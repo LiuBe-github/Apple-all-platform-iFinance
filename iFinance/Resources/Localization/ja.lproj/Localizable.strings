@@ -216,6 +216,10 @@
 "tendency.heatmap_less" = "少";
 "tendency.heatmap_more" = "多";
 "tendency.heatmap_bills" = "件";
+"tendency.expense_categories" = "支出のカテゴリ別";
+"tendency.income_categories" = "収入のカテゴリ別";
+"tendency.category.empty" = "この期間の記録はありません";
+"tendency.category.total" = "合計";
 "transaction.empty" = "明細がありません。最初の1件を追加しましょう。";
 
 "auth.apple_frontend_only" = "Appleログインは現在UIのみで、実認証は未接続です。";
@@ -346,8 +350,6 @@
 "bill.time_range.year" = "今年";
 
 /* Chart Display Types */
-"chart.type_line" = "折れ線グラフ";
-"chart.type_bar" = "棒グラフ";
 "chart.type_pie" = "円グラフ";
 
 "mac.dashboard.total_income_cumulative" = "累計収入";

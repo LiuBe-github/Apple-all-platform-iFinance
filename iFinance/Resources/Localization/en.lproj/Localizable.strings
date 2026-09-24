@@ -216,6 +216,10 @@
 "tendency.heatmap_less" = "Less";
 "tendency.heatmap_more" = "More";
 "tendency.heatmap_bills" = "entries";
+"tendency.expense_categories" = "Expense by Category";
+"tendency.income_categories" = "Income by Category";
+"tendency.category.empty" = "No records in this period";
+"tendency.category.total" = "Total";
 "transaction.empty" = "No bills yet. Add your first bill.";
 
 "auth.apple_frontend_only" = "Apple Sign In is currently UI-only and not connected to real authentication.";
@@ -346,8 +350,6 @@
 "bill.time_range.year" = "This Year";
 
 /* Chart Display Types */
-"chart.type_line" = "Line Chart";
-"chart.type_bar" = "Bar Chart";
 "chart.type_pie" = "Pie Chart";
 
 "mac.dashboard.total_income_cumulative" = "Cumulative Income";

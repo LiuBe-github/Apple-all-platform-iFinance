@@ -22,17 +22,19 @@ struct TendencyView: View {
     
     // 支出趋势状态
     @State private var expenseSpan: SpanOption = SpanOption.all[1] // 默认周视图
-    @State private var expenseChartType: ChartDisplayType = .line
     @State private var expenseSelection: Date?
     @State private var expenseScrollPosition: Date = Date().startOfDay
     
     // 收入趋势状态
     @State private var incomeSpan: SpanOption = SpanOption.all[1]
-    @State private var incomeChartType: ChartDisplayType = .line
     @State private var incomeSelection: Date?
     @State private var incomeScrollPosition: Date = Date().startOfDay
     
     // 热力图数据
+    // 分类占比跨度状态（两张饼图各自独立）
+    @State private var expensePieSpan: SpanOption = SpanOption.all[1]
+    @State private var incomePieSpan: SpanOption = SpanOption.all[1]
+
     @State private var dailyBillCounts: [Date: Int] = [:]
     
     // MARK: - 计算属性
@@ -62,9 +64,18 @@ struct TendencyView: View {
                             allSeries: expenseSeries,
                             allBills: Array(allBills),
                             span: $expenseSpan,
-                            chartType: $expenseChartType,
                             selectedDate: $expenseSelection,
                             scrollPosition: $expenseScrollPosition
+                        )
+
+                        // 支出分类占比（饼图）
+                        CategoryPieCard(
+                            titleKey: "tendency.expense_categories",
+                            accent: .pink,
+                            kind: .expenditure,
+                            billType: "expenditure",
+                            allBills: Array(allBills),
+                            span: $expensePieSpan
                         )
                         
                         // 收入趋势
@@ -75,9 +86,18 @@ struct TendencyView: View {
                             allSeries: incomeSeries,
                             allBills: Array(allBills),
                             span: $incomeSpan,
-                            chartType: $incomeChartType,
                             selectedDate: $incomeSelection,
                             scrollPosition: $incomeScrollPosition
+                        )
+
+                        // 收入分类占比（饼图）
+                        CategoryPieCard(
+                            titleKey: "tendency.income_categories",
+                            accent: .mint,
+                            kind: .income,
+                            billType: "income",
+                            allBills: Array(allBills),
+                            span: $incomePieSpan
                         )
                         
                         // 活跃度热力图

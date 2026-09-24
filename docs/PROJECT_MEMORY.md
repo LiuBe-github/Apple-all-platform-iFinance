@@ -317,6 +317,7 @@ Watch 端前缀独立：`add.*`、`category.*`、`summary.*`、`history.*`、`ta
 | 个性签名 | `UserProfile.signature`（三份模型同步：iOS/macOS Core Data + SwiftData）；设置页头部用户名下方显示签名（为空时显示「点击设置个性签名」占位），点击头部或个人中心的「个性签名」入口打开 `EditSignatureView`（40 字上限） | `AuthManager.validateSignature/updateSignature`、`Views/Profile/EditSignatureView.swift` |
 | 性能约定 | 背景动画统一走 `AppBackgroundView` + 全局 `AppBackgroundClock`（10fps、非活跃暂停、Reduce Motion 静态、RadialGradient 代替 blur）；头像解码走 `AvatarImageCache`；Formatter 全部 `static let`；`AddBillView` 的分类网格拆成 Equatable 子视图避免输入时重建 | `iFinance/Views/Common/`、`AddBillView.swift` |
 | 记账键盘 | 表达式编辑逻辑抽为纯函数 `NumberPadExpression`（`NumberPadLogic.swift`）：按「当前数字段」校验位数、运算符首按为主运算符/再按切换、`%` 与退格边界；`AddBillView.parseExpression` 负责四则运算求值，两者都有单测 | `iFinance/Views/Transaction/Bills/NumberPadLogic.swift` |
+| 趋势页结构 | 支出趋势（柱状）→ 支出分类占比（饼图）→ 收入趋势（柱状）→ 收入分类占比（饼图）→ 活跃度热力图；折线图与图表类型切换器已移除。饼图数据来自纯函数 `CategoryBreakdown`（最近 N 天、按分类汇总降序），环形图组件 `CategoryPieView` 与配色 `CategoryPalette` 与预算页共用 | `iFinance/Views/Tendency/`、`Views/Common/CategoryPie*.swift`、`Models/CategoryBreakdown.swift` |
 | 本地化自查 | `*LocalizationRegressionTests` 会校验四种语言的关键 key 都能解析出译文（`common.cancel` 曾缺失导致对话框直接显示原始 key） | `iFinanceTests`、`MaciFinanceTests` |
 
 macOS 端有独立副本：`MaciFinance/Views/Common/AppVisualStyle.swift`（130 行）与 `MaciFinance/Helpers/HapticManager.swift`（46 行，桌面端为空实现/降级）。

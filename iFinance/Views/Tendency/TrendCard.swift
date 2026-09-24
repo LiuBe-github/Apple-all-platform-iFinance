@@ -22,7 +22,6 @@ struct TrendCard: View {
     // MARK: - 状态
     
     @Binding var span: SpanOption
-    @Binding var chartType: ChartDisplayType
     @Binding var selectedDate: Date?
     @Binding var scrollPosition: Date
     
@@ -104,11 +103,9 @@ struct TrendCard: View {
                 visibleDays: span.days,
                 isHourly: span.days == 1,
                 selectedDate: $selectedDate,
-                scrollPosition: $scrollPosition,
-                chartType: $chartType
+                scrollPosition: $scrollPosition
             )
             .appAnimation(AppMotion.emphasized, value: span)
-            .appAnimation(AppMotion.emphasized, value: chartType)
         }
         .padding(TendencyConstants.cardPadding)
         .appGlassCard(cornerRadius: TendencyConstants.cardCornerRadius)

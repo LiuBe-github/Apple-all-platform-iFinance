@@ -6,7 +6,7 @@
 import SwiftUI
 import Charts
 
-/// 趋势图表视图（支持折线图和柱状图）
+/// 趋势柱状图视图（原折线图已移除）
 struct TendencyChartView: View {
     @Environment(\.colorScheme) private var colorScheme
     
@@ -21,7 +21,6 @@ struct TendencyChartView: View {
     
     @Binding var selectedDate: Date?
     @Binding var scrollPosition: Date
-    @Binding var chartType: ChartDisplayType
     
     // MARK: - 格式化器（静态缓存）
     
@@ -51,8 +50,7 @@ struct TendencyChartView: View {
         visibleDays: Int,
         isHourly: Bool = false,
         selectedDate: Binding<Date?>,
-        scrollPosition: Binding<Date>,
-        chartType: Binding<ChartDisplayType>
+        scrollPosition: Binding<Date>
     ) {
         self.series = series
         self.accent = accent
@@ -60,28 +58,12 @@ struct TendencyChartView: View {
         self.isHourly = isHourly
         self._selectedDate = selectedDate
         self._scrollPosition = scrollPosition
-        self._chartType = chartType
     }
     
     // MARK: - 视图
     
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
-            // 图表类型切换
-            HStack {
-                Spacer()
-                Picker("", selection: $chartType) {
-                    ForEach(ChartDisplayType.allCases, id: \.self) { type in
-                        Text(type.displayName).tag(type)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .frame(width: TendencyConstants.chartTypePickerWidth)
-                .onChange(of: chartType) { _, _ in
-                    HapticManager.shared.selectionChanged()
-                }
-            }
-            
             // 数据提示
             if let selected = selectedPoint {
                 Text(selectedText(for: selected))
@@ -99,7 +81,7 @@ struct TendencyChartView: View {
             } else {
                 chartContent
                     .frame(height: TendencyConstants.chartHeight)
-                    .appAnimation(AppMotion.standard, value: chartType)
+                    .appAnimation(AppMotion.standard, value: series.count)
             }
         }
     }
@@ -125,13 +107,8 @@ struct TendencyChartView: View {
     
     // MARK: - 子视图
     
-    @ViewBuilder
     private var chartContent: some View {
-        if chartType == .bar {
-            barChartView
-        } else {
-            lineChartView
-        }
+        barChartView
     }
     
     @ViewBuilder
@@ -146,78 +123,13 @@ struct TendencyChartView: View {
                 Image(systemName: "chart.line.uptrend.xyaxis")
                     .font(.system(size: 32))
                     .foregroundStyle(accent.opacity(0.6))
-                    .symbolEffect(.bounce, options: .speed(0.6).repeat(2), value: chartType)
+                    .symbolEffect(.bounce, options: .speed(0.6).repeat(2))
                 Text("tendency.no_data")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
         }
         .frame(maxWidth: .infinity, minHeight: TendencyConstants.chartHeight)
-    }
-    
-    // MARK: - 折线图
-    
-    @ViewBuilder
-    private var lineChartView: some View {
-        Chart {
-            ForEach(series) { point in
-                // 渐变面积填充（增强层次感）
-                AreaMark(
-                    x: .value("date", point.date),
-                    y: .value("amount", point.value)
-                )
-                .interpolationMethod(.linear)
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [accent.opacity(0.22), accent.opacity(0.01)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
-                
-                LineMark(
-                    x: .value("date", point.date),
-                    y: .value("amount", point.value)
-                )
-                .interpolationMethod(.linear)
-                .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
-                .foregroundStyle(accent)
-            }
-            
-            if let focus = selectedPoint {
-                RuleMark(x: .value("focus", focus.date))
-                    .foregroundStyle(.secondary.opacity(0.35))
-                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
-                
-                PointMark(
-                    x: .value("focus-date", focus.date),
-                    y: .value("focus-value", focus.value)
-                )
-                .symbolSize(120)
-                .foregroundStyle(accent.opacity(0.95))
-                .annotation(position: .top, alignment: .center) {
-                    annotationLabel(value: focus.value)
-                        .transition(.scale(scale: 0.6).combined(with: .opacity))
-                }
-            }
-        }
-        .chartScrollableAxes(.horizontal)
-        .chartScrollPosition(x: $scrollPosition)
-        .chartXVisibleDomain(length: visibleLength)
-        .chartXScale(domain: viewDateRange)
-        .chartXAxis { axisMarksContent }
-        .chartYAxis { yAxisMarksContent }
-        .chartOverlay { proxy in
-            chartGestureOverlay(proxy: proxy)
-        }
-        .chartPlotStyle { plot in
-            plot.background(
-                RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous)
-                    .fill(accent.opacity(0.06))
-            )
-        }
-        .appAnimation(AppMotion.standard, value: selectedDate)
-        .padding(.horizontal, TendencyConstants.chartHorizontalPadding)
     }
     
     // MARK: - 柱状图

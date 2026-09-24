@@ -291,6 +291,57 @@ struct PrivacyShieldTests {
 
 // MARK: - 数字键盘表达式逻辑（与 iOS 版同名实现）
 
+// MARK: - 分类占比聚合（趋势页饼图）
+
+@MainActor
+@Suite(.serialized)
+struct CategoryBreakdownTests {
+
+    private let calendar = Calendar(identifier: .gregorian)
+
+    private func date(_ year: Int, _ month: Int, _ day: Int) -> Date {
+        calendar.date(from: DateComponents(year: year, month: month, day: day, hour: 12))!
+    }
+
+    @Test
+    func windowCoversTodayAndLastNDays() throws {
+        let ctx = SwiftDataTestContext()
+        let now = date(2026, 3, 10)
+        ctx.makeBill(amount: 10, type: "expenditure", category: "餐饮", date: date(2026, 3, 10))
+        ctx.makeBill(amount: 20, type: "expenditure", category: "餐饮", date: date(2026, 3, 4))
+        ctx.makeBill(amount: 40, type: "expenditure", category: "餐饮", date: date(2026, 3, 3))
+        try ctx.context.save()
+
+        let bills = try ctx.context.fetch(FetchDescriptor<Bill>())
+        let slices = CategoryBreakdown.slices(bills: bills, type: "expenditure", days: 7,
+                                              calendar: calendar, now: now)
+        #expect(slices.count == 1)
+        #expect(abs((slices.first?.amount ?? 0) - 30) < 0.001)
+        #expect(slices.first?.count == 2)
+    }
+
+    @Test
+    func groupingSortingAndTypeIsolation() throws {
+        let ctx = SwiftDataTestContext()
+        let now = date(2026, 3, 10)
+        ctx.makeBill(amount: 30, type: "expenditure", category: "餐饮", date: now)
+        ctx.makeBill(amount: 50, type: "expenditure", category: "购物", date: now)
+        ctx.makeBill(amount: 99, type: "income", category: "工资", date: now)
+        ctx.makeBill(amount: 88, type: "transfer", category: "transfer", date: now)
+        try ctx.context.save()
+
+        let bills = try ctx.context.fetch(FetchDescriptor<Bill>())
+        let expense = CategoryBreakdown.slices(bills: bills, type: "expenditure", days: 30,
+                                               calendar: calendar, now: now)
+        #expect(expense.map(\.rawValue) == ["购物", "餐饮"])
+        #expect(abs(CategoryBreakdown.total(of: expense) - 80) < 0.001)
+
+        let income = CategoryBreakdown.slices(bills: bills, type: "income", days: 30,
+                                              calendar: calendar, now: now)
+        #expect(income.map(\.rawValue) == ["工资"])
+    }
+}
+
 @MainActor
 @Suite(.serialized)
 struct NumberPadExpressionTests {

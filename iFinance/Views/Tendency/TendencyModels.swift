@@ -30,20 +30,6 @@ struct SpanOption: Identifiable, Hashable {
     ]
 }
 
-// MARK: - 图表类型
-
-enum ChartDisplayType: String, CaseIterable {
-    case line = "折线图"
-    case bar = "柱状图"
-
-    var displayName: String {
-        switch self {
-        case .line: return L10n.string("chart.type_line")
-        case .bar: return L10n.string("chart.type_bar")
-        }
-    }
-}
-
 // MARK: - 常量
 
 enum TendencyConstants {
@@ -69,7 +55,6 @@ enum TendencyConstants {
     static let heatmapTrailingDays = 364
     
     /// 选择器宽度
-    static let chartTypePickerWidth: CGFloat = 140
     
     /// 图表水平内边距
     static let chartHorizontalPadding: CGFloat = 6

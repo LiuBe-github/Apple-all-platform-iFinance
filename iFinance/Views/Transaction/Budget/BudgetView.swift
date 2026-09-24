@@ -38,8 +38,6 @@ struct BudgetView: View {
     // 图表切换状态
     @State private var chartType: CategoryChartType = .list
     // 饼图选中角度（chartAngleSelection）与选中分类
-    @State private var selectedPieAngle: Double?
-    @State private var selectedPieCategory: ExpenditureCategory?
     
     enum CategoryChartType: String, CaseIterable {
         case list = "列表"
@@ -110,6 +108,11 @@ struct BudgetView: View {
             .map { (category: $0, amount: dict[$0] ?? 0) }
             .filter { $0.amount > 0 }
             .sorted { $0.amount > $1.amount }
+    }
+
+    /// 饼图数据（分类汇总 → 共享饼图组件输入）
+    private var pieSlices: [CategorySlice] {
+        categoryItems.map { CategorySlice(rawValue: $0.category.rawValue, amount: $0.amount, count: 0) }
     }
     
     private var monthLabel: String {
@@ -305,7 +308,12 @@ struct BudgetView: View {
             
             // 根据选择显示列表或饼图
             if chartType == .pie {
-                pieChartView
+                CategoryPieView(
+                    slices: pieSlices,
+                    accent: accentColor,
+                    kind: .expenditure,
+                    emptyKey: "budget.empty"
+                )
             } else {
                 categoryListContent
             }
@@ -332,139 +340,7 @@ struct BudgetView: View {
         .clipShape(RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous))
     }
     
-    // MARK: - 饼状图视图
-    private var pieChartView: some View {
-        VStack(spacing: AppSpacing.lg) {
-            // 饼图
-            Chart(categoryItems, id: \.category) { item in
-                SectorMark(
-                    angle: .value(L10n.string("bill.amount_legend"), item.amount),
-                    innerRadius: .ratio(0.5),
-                    angularInset: 1.5
-                )
-                .foregroundStyle(by: .value(L10n.string("bill.category_legend"), item.category.localizedDisplayName))
-                .cornerRadius(4)
-                .opacity(selectedPieAngle == nil || selectedPieCategory == item.category ? 1 : 0.4)
-            }
-            .chartLegend(position: .bottom, alignment: .center, spacing: AppSpacing.md)
-            .chartAngleSelection(value: $selectedPieAngle)
-            .onChange(of: selectedPieAngle) { _, newAngle in
-                HapticManager.shared.selectionChanged()
-                selectedPieCategory = newAngle.map { pieCategory(at: $0) } ?? nil
-            }
-            .chartBackground { proxy in
-                // 中心选中提示
-                if let cat = selectedPieCategory,
-                   let amount = categoryItems.first(where: { $0.category == cat })?.amount {
-                    VStack(spacing: 2) {
-                        Text(cat.localizedDisplayName)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Text(formatAmount(amount))
-                            .font(.system(size: 15, weight: .bold, design: .rounded))
-                            .foregroundStyle(.primary)
-                            .appNumericTransition(value: amount)
-                    }
-                    .transition(.scale(scale: 0.85).combined(with: .opacity))
-                    .appAnimation(AppMotion.quick, value: cat)
-                }
-            }
-            .frame(height: AppLayout.chartHeightRegular + 50)
-            .padding(.horizontal, AppSpacing.sm)
-            .appAnimation(AppMotion.quick, value: selectedPieCategory)
-            
-            // 分类金额列表
-            VStack(spacing: 1) {
-                ForEach(Array(categoryItems.enumerated()), id: \.element.category) { index, item in
-                    HStack(spacing: AppSpacing.md) {
-                        // 颜色指示
-                        Circle()
-                            .fill(colorForCategory(item.category))
-                            .frame(width: 10, height: 10)
-                        
-                        Text(item.category.localizedDisplayName)
-                            .font(.system(size: 14))
-                            .foregroundStyle(.primary)
-                        
-                        Spacer()
-                        
-                        Text(formatAmount(item.amount))
-                            .font(.system(size: 14, weight: .semibold, design: .rounded))
-                            .foregroundStyle(.primary)
-                            .appNumericTransition(value: item.amount)
-                        
-                        Text("\(Int(item.amount / totalExpenditure * 100))%")
-                            .font(.system(size: 12))
-                            .foregroundStyle(.secondary)
-                            .frame(width: 40, alignment: .trailing)
-                    }
-                    .padding(.horizontal, AppSpacing.lg)
-                    .padding(.vertical, AppSpacing.md)
-                    .contentShape(Rectangle())
-                    .background(
-                        selectedPieCategory == item.category
-                        ? Color.blue.opacity(0.06)
-                        : Color.clear
-                    )
-                    .onTapGesture {
-                        HapticManager.shared.selectionChanged()
-                        withAnimation(AppMotion.quick) {
-                            if selectedPieCategory == item.category {
-                                selectedPieCategory = nil
-                                selectedPieAngle = nil
-                            } else {
-                                selectedPieCategory = item.category
-                            }
-                        }
-                    }
-                    
-                    if index < categoryItems.count - 1 {
-                        Rectangle()
-                            .fill(Color.secondary.opacity(0.08))
-                            .frame(height: 0.5)
-                            .padding(.leading, 38)
-                    }
-                }
-            }
-            .padding(.vertical, AppSpacing.sm)
-            .background(
-                RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous)
-                    .fill(Color(UIColor.secondarySystemGroupedBackground))
-            )
-        }
-        .padding(.horizontal, AppSpacing.xs)
-    }
     
-    /// 根据角度解析对应的分类（饼图扇区）
-    private func pieCategory(at angle: Double) -> ExpenditureCategory? {
-        let total = categoryItems.reduce(0.0) { $0 + $1.amount }
-        guard total > 0 else { return nil }
-        var accumulated: Double = 0
-        for item in categoryItems {
-            accumulated += item.amount
-            if angle <= accumulated / total * 360 {
-                return item.category
-            }
-        }
-        return nil
-    }
-    
-    // 分类颜色
-    private static let palette: [Color] = [
-        Color(red: 0.18, green: 0.60, blue: 1.0),
-        Color(red: 0.30, green: 0.78, blue: 0.44),
-        Color(red: 1.0,  green: 0.60, blue: 0.10),
-        Color(red: 0.75, green: 0.35, blue: 1.0),
-        Color(red: 1.0,  green: 0.30, blue: 0.30),
-        Color(red: 0.10, green: 0.75, blue: 0.85),
-        Color(red: 1.0,  green: 0.80, blue: 0.10),
-        Color(red: 0.55, green: 0.55, blue: 0.60),
-    ]
-    
-    private func colorForCategory(_ category: ExpenditureCategory) -> Color {
-        let idx = (ExpenditureCategory.allCases.firstIndex(of: category) ?? 0)
-        return Self.palette[idx % Self.palette.count]
-    }
     
     // MARK: - 空状态
     private var emptyState: some View {
@@ -650,21 +526,8 @@ struct CategoryRowView: View {
         return amount / total
     }
     
-    // 给每个分类一个固定的色调（基于 index，循环取色）
-    private static let palette: [Color] = [
-        Color(red: 0.18, green: 0.60, blue: 1.0),
-        Color(red: 0.30, green: 0.78, blue: 0.44),
-        Color(red: 1.0,  green: 0.60, blue: 0.10),
-        Color(red: 0.75, green: 0.35, blue: 1.0),
-        Color(red: 1.0,  green: 0.30, blue: 0.30),
-        Color(red: 0.10, green: 0.75, blue: 0.85),
-        Color(red: 1.0,  green: 0.80, blue: 0.10),
-        Color(red: 0.55, green: 0.55, blue: 0.60),
-    ]
-    
     private var barColor: Color {
-        let idx = (ExpenditureCategory.allCases.firstIndex(of: category) ?? 0)
-        return Self.palette[idx % Self.palette.count]
+        CategoryPalette.color(for: category)
     }
     
     private func formatAmount(_ v: Double) -> String {
@@ -715,7 +578,7 @@ struct CategoryRowView: View {
                         .frame(height: 4)
                         
                         // 百分比
-                        Text("\(Int((percentage * 100).rounded()))%")
+                        Text(AppNumberFormat.percent(percentage))
                             .font(.system(size: 11, weight: .medium, design: .rounded))
                             .foregroundStyle(.secondary)
                             .frame(width: 32, alignment: .trailing)

@@ -270,6 +270,10 @@
 "tendency.heatmap_less" = "少";
 "tendency.heatmap_more" = "多";
 "tendency.heatmap_bills" = "笔";
+"tendency.expense_categories" = "支出分类占比";
+"tendency.income_categories" = "收入分类占比";
+"tendency.category.empty" = "该区间暂无记录";
+"tendency.category.total" = "合计";
 "transaction.empty" = "当前还没有账单哦，记一笔吧！😄";
 "auth.apple_frontend_only" = "Apple 登录暂仅保留界面展示，未接入真实鉴权。";
 "auth.apple_failed" = "Apple 登录失败，请重试。";
@@ -346,8 +350,6 @@
 "bill.time_range.year" = "本年";
 
 /* Chart Display Types */
-"chart.type_line" = "折线图";
-"chart.type_bar" = "柱状图";
 "chart.type_pie" = "饼图";
 
 "mac.dashboard.total_income_cumulative" = "累计收入";

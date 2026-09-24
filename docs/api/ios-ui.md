@@ -25,9 +25,12 @@
 | `Views/Transaction/Bills/{Expenditure,Income}CategoryItemView.swift` | 分类按钮 | 分类选择项 |
 | `Views/Transaction/Budget/BudgetView.swift` | `BudgetView`、`CategoryRowView` | 预算页：环形进度 + 分类列表/饼图 |
 | `Views/Transaction/Budget/BudgetCardView.swift` | `BudgetCardView` | 预算卡片（本月支出聚合） |
-| `Views/Tendency/TendencyView.swift` | `TendencyView` | 趋势页：支出/收入卡片 + 热力图 |
-| `Views/Tendency/TrendCard.swift` | `TrendCard` | 可复用趋势卡片（5 档跨度 + 图表切换） |
-| `Views/Tendency/TendencyChartView.swift` | `TendencyChartView` | 折线/柱状图（Swift Charts） |
+| `Views/Tendency/TendencyView.swift` | `TendencyView` | 趋势页：支出趋势 → 支出分类占比 → 收入趋势 → 收入分类占比 → 热力图 |
+| `Views/Tendency/TrendCard.swift` | `TrendCard` | 可复用趋势卡片（5 档跨度 + 柱状图） |
+| `Views/Tendency/TendencyChartView.swift` | `TendencyChartView` | 柱状图（Swift Charts；原折线图已移除） |
+| `Views/Tendency/CategoryPieCard.swift` | `CategoryPieCard` | 分类占比卡片（标题 + 独立跨度选择器 + 饼图） |
+| `Views/Common/CategoryPieView.swift` | `CategoryPieView` | 分类占比环形图（预算页与趋势页共用：点选高亮 + 明细列表 + 合计） |
+| `Views/Common/CategoryPalette.swift` | `CategoryPalette` / `CategoryKind` | 分类配色与展示名解析（预算页 / 趋势页共用） |
 | `Views/Tendency/TendencyHeatmapView.swift` | `TendencyHeatmapView` | 53 周热力图 |
 | `Views/Tendency/TendencyModels.swift` | `DailyAmount`、`SpanOption`、`ChartDisplayType`、`TendencyConstants` | 图表数据模型与常量 |
 | `Views/Profile/ProfileView.swift` | `ProfileView` | 个人中心（头像/昵称/邮箱/手机/密码） |
@@ -129,12 +132,23 @@ struct NumberPad: View {
 |------|----|------|
 | `DailyAmount` | `:11` | `Identifiable` 数据点（`date` + `value`） |
 | `SpanOption` | `:19` | 跨度选项（`Identifiable & Hashable`，含 `days`） |
-| `ChartDisplayType` | `:35` | `.line` / `.bar` 等图表类型 |
-| `TendencyConstants` | `:49` | 图表配色与尺寸常量 |
+| `TendencyConstants` | `:35` | 图表配色与尺寸常量（`chartTypePickerWidth` 已随折线图移除） |
 
-`TrendCard`（`TrendCard.swift:10`）参数：`titleKey: LocalizedStringKey`、`accent: Color`、`billType: String`（`"expenditure"`/`"income"`）、`allSeries: [DailyAmount]`、`allBills: [Bill]`、`span`、`chartType`、`selectedDate`、`scrollPosition`（后四者为 `Binding`）。聚合逻辑在卡片内部：`displaySeries`（单日按小时、>31 天按月聚合）、`metricsSeries`、`hourlyTotal(hourStart:for:)`（`:166`）、`windowedSeries`、`aggregateByMonth`。
+`TrendCard`（`TrendCard.swift:10`）参数：`titleKey: LocalizedStringKey`、`accent: Color`、`billType: String`（`"expenditure"`/`"income"`）、`allSeries: [DailyAmount]`、`allBills: [Bill]`、`span`、`selectedDate`、`scrollPosition`（后三者为 `Binding`）。聚合逻辑在卡片内部：`displaySeries`（单日按小时、>31 天按月聚合）、`metricsSeries`、`hourlyTotal(hourStart:for:)`、`windowedSeries`、`aggregateByMonth`。**图表类型切换器已移除，只保留柱状图。**
 
-`TendencyView`（`TendencyView.swift:10`）持有 `@FetchRequest` 的 `allBills` 并把 `Array(allBills)` 传给两张 `TrendCard`；`TendencyHeatmapView`（`:11`）渲染 53 周热力图与月份标签。
+`CategoryPieCard`（`CategoryPieCard.swift:10`）参数：`titleKey`、`accent`、`kind: CategoryKind`、`billType`、`allBills`、`span`（`Binding`）；内部用 `CategoryBreakdown.slices(bills:type:days:)` 聚合后交给 `CategoryPieView`，切换跨度时通过 `.id(span.days)` 重置扇区选中态。
+
+`CategoryPieView`（`CategoryPieView.swift`）：
+
+| 成员 | 说明 |
+|------|------|
+| 参数 | `slices: [CategorySlice]`、`accent: Color`、`kind: CategoryKind`、`emptyKey: String` |
+| 环形图 | `SectorMark`（innerRadius 0.5、angularInset 1.5、cornerRadius 4）+ `chartAngleSelection` 点选高亮（未选中降为 0.4 透明度）+ 中心显示选中分类与金额 |
+| 明细列表 | 颜色点 / 分类名 / 金额 / 占比（`AppNumberFormat.percent`，最多两位小数）+ 底部合计行；无数据时显示 `emptyKey` 文案 |
+
+`TendencyView`（`TendencyView.swift:10`）持有 `@FetchRequest` 的 `allBills`，依次渲染支出趋势卡、支出分类占比卡、收入趋势卡、收入分类占比卡与 `TendencyHeatmapView`（53 周热力图）；两张饼图各自持有独立的 `SpanOption`。
+
+> 分类占比聚合逻辑 `CategoryBreakdown`（`iFinance/Models/CategoryBreakdown.swift`）是纯函数：窗口 = 最近 N 天（含今天），只统计指定 `type`、`category` 非空的账单，按金额降序（同额按 rawValue 升序），转账不计入；单测见 `iFinanceTests/CategoryBreakdownTests`。
 
 ## 6. 概况页（Home）
 

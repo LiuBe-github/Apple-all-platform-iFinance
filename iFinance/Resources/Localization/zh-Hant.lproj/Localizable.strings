@@ -216,6 +216,10 @@
 "tendency.heatmap_less" = "少";
 "tendency.heatmap_more" = "多";
 "tendency.heatmap_bills" = "筆";
+"tendency.expense_categories" = "支出分類佔比";
+"tendency.income_categories" = "收入分類佔比";
+"tendency.category.empty" = "該區間暫無記錄";
+"tendency.category.total" = "合計";
 "transaction.empty" = "當前還沒有帳單，記一筆吧！";
 
 "auth.apple_frontend_only" = "Apple 登入目前僅保留介面展示，尚未接入真實鑑權。";
@@ -346,8 +350,6 @@
 "bill.time_range.year" = "本年";
 
 /* Chart Display Types */
-"chart.type_line" = "折線圖";
-"chart.type_bar" = "柱狀圖";
 "chart.type_pie" = "餅圖";
 
 "mac.dashboard.total_income_cumulative" = "累計收入";
