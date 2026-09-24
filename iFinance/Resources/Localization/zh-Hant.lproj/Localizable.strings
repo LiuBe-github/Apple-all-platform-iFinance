@@ -4,6 +4,12 @@
 "tab.setting" = "設定";
 
 "home.title" = "概況";
+"home.period.title" = "週期概況";
+"home.period.this_month" = "本月";
+"home.period.last_month" = "上月";
+"home.period.this_year" = "本年";
+"home.quote.title" = "每日一言";
+"home.period.count_value" = "%d 筆";
 "transaction.title" = "帳本";
 
 "profile.title" = "個人設定";

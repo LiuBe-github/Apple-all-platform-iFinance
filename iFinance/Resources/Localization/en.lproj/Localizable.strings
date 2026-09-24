@@ -4,6 +4,12 @@
 "tab.setting" = "Settings";
 
 "home.title" = "Overview";
+"home.period.title" = "Period";
+"home.period.this_month" = "This Month";
+"home.period.last_month" = "Last Month";
+"home.period.this_year" = "This Year";
+"home.quote.title" = "Daily Quote";
+"home.period.count_value" = "%d bills";
 "transaction.title" = "Ledger";
 
 "profile.title" = "Profile";

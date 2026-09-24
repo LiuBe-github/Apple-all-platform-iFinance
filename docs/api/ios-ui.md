@@ -8,10 +8,11 @@
 | 文件 | 主要类型 | 职责 |
 |------|----------|------|
 | `Views/ContentView.swift` | `ContentView` | 四个 Tab 容器（home/transaction/tendency/setting） |
-| `Views/Home/HomeView.swift` | `HomeView` | 概况页：今日概况（主视觉）+ 每日一言 + 换一句/分享 |
+| `Views/Home/HomeView.swift` | `HomeView` | 概况页：今日概况（主视觉）+ 周期概况 + 每日一言卡 + 分享 |
 | `Views/Home/TodayBalanceCard.swift` | `TodayBalanceCard` | 今日概况大卡（日期 + 大号结余 + 收入/支出/笔数三栏） |
-| `Views/Home/SentenceCardView.swift` | `SentenceCardView` | 每日一言（纯文字行，已移除图片） |
-| `Views/Home/ShareCardView.swift` | `ShareCardView` | 分享用统计卡片（无图，ImageRenderer 渲染） |
+| `Views/Home/PeriodSummaryCard.swift` | `PeriodSummaryCard` | 周期概况卡（本月 / 上月 / 本年 三行明细） |
+| `Views/Home/SentenceCardView.swift` | `SentenceCardView` | 每日一言卡（毛玻璃卡 + 右上角「换一句」） |
+| `Views/Home/ShareCardView.swift` | `ShareCardView` | 分享用统计卡片（含三个区间摘要，ImageRenderer 渲染） |
 | `Views/Home/ShareSheet.swift` | `ShareSheet` | `UIActivityViewController` 包装 |
 | `Views/Transaction/TransactionView.swift` | `TransactionView`、`SearchSheet` | 记账 Tab：预算卡片 + 账单卡片 + 搜索页 |
 | `Views/Transaction/TransactionRowView.swift` | `TransactionRowView` | 单条账单行 |
@@ -126,8 +127,20 @@ struct NumberPad: View {
 |------|----------|
 | `HomeView`（`HomeView.swift:20`） | `@FetchRequest` 今日账单（`date` 区间 + `createdBy`）；从 `Bundle` 读取 `EconomicQuotes.json` 解析 `[DailySentence]`；`@State` 维护当前名言与 `quoteOpacity`；「换一句」只更换名言（不再加载图片） |
 | `TodayBalanceCard`（`TodayBalanceCard.swift:11`） | 输入今日收入/支出/结余/笔数；主视觉为 40pt 大号结余（`.appAmountStyle` + `.appNumericTransition`），下方三栏统计 |
-| `SentenceCardView`（`SentenceCardView.swift:11`） | 参数：`sentence: DailySentence`；纯文字（引言 + 作者），无背景与图片 |
-| `ShareCardView`（`ShareCardView.swift:11`） | 参数：`sentence` + 统计值 + `dateText`（**无 backgroundImage**）；`ImageRenderer` 以 375×460 输出分享图 |
+| `PeriodSummaryCard`（`PeriodSummaryCard.swift:10`） | 参数：`periods: [PeriodSummary]`；每行 = 区间名 + 笔数 / 收入 + 支出 / 结余（盈绿亏损红） |
+| `SentenceCardView`（`SentenceCardView.swift:11`） | 参数：`sentence: DailySentence` + 可选回调 `onChangeQuote`（显示右上角「换一句」按钮）；毛玻璃卡样式 |
+| `ShareCardView`（`ShareCardView.swift:11`） | 参数：`sentence` + `periods` + 统计值 + `dateText`（**无 backgroundImage**）；`ImageRenderer` 以 375×560 输出分享图 |
+
+**区间数据**（`iFinance/Models/PeriodSummary.swift`）：
+
+| 类型 | 说明 |
+|------|------|
+| `SummaryPeriod` | `.thisMonth` / `.lastMonth` / `.thisYear`，提供本地化 `titleKey` |
+| `PeriodRanges` | 由 `make(calendar:now:)` 生成今日 / 本月 / 上月 / 本年的 `Range<Date>`；`fetchWindow` 覆盖「本年 + 上月」（1 月时含去年 12 月） |
+| `PeriodSummary` | 单区间 `income`/`expense`/`count`/`balance` |
+| `PeriodSummary.make(bills:ranges:periods:)` | 聚合纯函数；`transfer` 计入笔数但不计入收支 |
+
+`HomeView` 的取数：Core Data 版用「今日 + 窗口」两次 `@FetchRequest`（自定义 `init()` 构造窗口谓词）；SwiftData 版在已按用户过滤的 `@Query` 结果上做内存窗口过滤，两版聚合共用同一套纯函数。
 | `ShareSheet`（`ShareSheet.swift:12`） | `UIViewControllerRepresentable` 包装 `UIActivityViewController` |
 
 > 首页原「名言随机风景图 + 三级图片缓存」能力已移除（2026-09）：`ImageLoader` / `ImageCache` / `ImageDownsampler` 三个文件与 `DailySentence.picture2` 字段均已删除，运行时不再发起网络图片请求。

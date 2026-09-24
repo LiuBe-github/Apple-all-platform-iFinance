@@ -284,3 +284,70 @@ struct PrivacyShieldTests {
         }
     }
 }
+
+// MARK: - 概况页区间聚合（本月 / 上月 / 本年）
+
+@MainActor
+@Suite(.serialized)
+struct PeriodSummaryTests {
+
+    private let calendar = Calendar(identifier: .gregorian)
+
+    private func date(_ year: Int, _ month: Int, _ day: Int) -> Date {
+        calendar.date(from: DateComponents(year: year, month: month, day: day, hour: 12))!
+    }
+
+    @Test
+    func aggregationAcrossMonthAndYearBoundary() throws {
+        let ctx = SwiftDataTestContext()
+        let now = date(2026, 1, 15)
+        let ranges = PeriodRanges.make(calendar: calendar, now: now)
+
+        // 本月（2026-01）
+        ctx.makeBill(amount: 100, type: "expenditure", date: date(2026, 1, 10))
+        ctx.makeBill(amount: 500, type: "income", date: date(2026, 1, 12))
+        // 上月（2025-12）
+        ctx.makeBill(amount: 300, type: "expenditure", date: date(2025, 12, 20))
+        // 更早（2025-11）→ 不计入任何区间
+        ctx.makeBill(amount: 999, type: "expenditure", date: date(2025, 11, 5))
+        try ctx.context.save()
+
+        let bills = try ctx.context.fetch(FetchDescriptor<Bill>())
+        let summaries = PeriodSummary.make(bills: bills, ranges: ranges)
+
+        let thisMonth = summaries.first { $0.period == .thisMonth }
+        let lastMonth = summaries.first { $0.period == .lastMonth }
+        let thisYear = summaries.first { $0.period == .thisYear }
+
+        #expect(thisMonth?.income == 500)
+        #expect(thisMonth?.expense == 100)
+        #expect(thisMonth?.count == 2)
+        #expect(thisMonth?.balance == 400)
+
+        #expect(lastMonth?.expense == 300)
+        #expect(lastMonth?.count == 1)
+        #expect(lastMonth?.balance == -300)
+
+        #expect(thisYear?.income == 500)
+        #expect(thisYear?.expense == 100, "去年 11 月的支出不应计入本年")
+    }
+
+    @Test
+    func transferCountsButHasNoAmount() throws {
+        let ctx = SwiftDataTestContext()
+        let now = date(2026, 3, 10)
+        let ranges = PeriodRanges.make(calendar: calendar, now: now)
+
+        ctx.makeBill(amount: 200, type: "expenditure", date: date(2026, 3, 2))
+        ctx.makeBill(amount: 50, type: "transfer", date: date(2026, 3, 3))
+        try ctx.context.save()
+
+        let bills = try ctx.context.fetch(FetchDescriptor<Bill>())
+        let summaries = PeriodSummary.make(bills: bills, ranges: ranges)
+        let thisMonth = summaries.first { $0.period == .thisMonth }
+
+        #expect(thisMonth?.count == 2)
+        #expect(thisMonth?.expense == 200)
+        #expect(thisMonth?.income == 0)
+    }
+}

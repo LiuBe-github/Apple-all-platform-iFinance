@@ -686,7 +686,9 @@ final class LocalizationRegressionTests: XCTestCase {
     private let languages = ["zh-Hans", "zh-Hant", "en", "ja"]
     private let criticalKeys = [
         "common.ok", "common.confirm", "common.cancel",
-        "home.title", "home.change_quote", "home.surplus", "home.income_label"
+        "home.title", "home.change_quote", "home.surplus", "home.income_label",
+        "home.period.title", "home.period.this_month", "home.period.last_month",
+        "home.period.this_year", "home.period.count_value", "home.quote.title"
     ]
 
     private func localized(_ key: String, language: String) -> String? {
@@ -704,6 +706,110 @@ final class LocalizationRegressionTests: XCTestCase {
                 XCTAssertNotEqual(value, key, "\(language) 的 \(key) 未配置译文（界面会显示原始 key）")
             }
         }
+    }
+}
+
+// MARK: - 概况页区间聚合（本月 / 上月 / 本年）
+
+@MainActor
+final class PeriodSummaryTests: XCTestCase {
+
+    private var persistenceController: PersistenceController!
+    private var context: NSManagedObjectContext!
+    private let calendar = Calendar(identifier: .gregorian)
+
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        persistenceController = PersistenceController(inMemory: true)
+        context = persistenceController.container.viewContext
+    }
+
+    override func tearDownWithError() throws {
+        context = nil
+        persistenceController = nil
+        try super.tearDownWithError()
+    }
+
+    private func date(_ year: Int, _ month: Int, _ day: Int) -> Date {
+        calendar.date(from: DateComponents(year: year, month: month, day: day, hour: 12))!
+    }
+
+    @discardableResult
+    private func makeBill(_ amount: Decimal, type: String, on date: Date) -> Bill {
+        let bill = Bill(context: context)
+        bill.id = UUID()
+        bill.amount = NSDecimalNumber(decimal: amount)
+        bill.type = type
+        bill.category = "测试"
+        bill.date = date
+        bill.createdBy = "test@example.com"
+        bill.createdAt = date
+        bill.updatedAt = date
+        return bill
+    }
+
+    /// 跨年场景：1 月时「上月」应取到去年 12 月，去年 11 月不计入本年
+    func testAggregationAcrossMonthAndYearBoundary() throws {
+        let now = date(2026, 1, 15)
+        let ranges = PeriodRanges.make(calendar: calendar, now: now)
+
+        // 本月（2026-01）
+        makeBill(100, type: "expenditure", on: date(2026, 1, 10))
+        makeBill(500, type: "income", on: date(2026, 1, 12))
+        // 上月（2025-12）
+        makeBill(300, type: "expenditure", on: date(2025, 12, 20))
+        // 更早（2025-11）→ 不属于本年，也不属于上月
+        makeBill(999, type: "expenditure", on: date(2025, 11, 5))
+        try context.save()
+
+        let bills = try context.fetch(Bill.fetchRequest())
+        let summaries = PeriodSummary.make(bills: bills, ranges: ranges)
+
+        let thisMonth = try XCTUnwrap(summaries.first { $0.period == .thisMonth })
+        XCTAssertEqual(thisMonth.income, 500)
+        XCTAssertEqual(thisMonth.expense, 100)
+        XCTAssertEqual(thisMonth.count, 2)
+        XCTAssertEqual(thisMonth.balance, 400)
+
+        let lastMonth = try XCTUnwrap(summaries.first { $0.period == .lastMonth })
+        XCTAssertEqual(lastMonth.income, 0)
+        XCTAssertEqual(lastMonth.expense, 300)
+        XCTAssertEqual(lastMonth.count, 1)
+        XCTAssertEqual(lastMonth.balance, -300)
+
+        let thisYear = try XCTUnwrap(summaries.first { $0.period == .thisYear })
+        XCTAssertEqual(thisYear.income, 500)
+        XCTAssertEqual(thisYear.expense, 100, "去年 11 月的支出不应计入本年")
+        XCTAssertEqual(thisYear.count, 2)
+    }
+
+    /// 转账计入笔数，但不计入收入 / 支出
+    func testTransferCountsButHasNoAmount() throws {
+        let now = date(2026, 3, 10)
+        let ranges = PeriodRanges.make(calendar: calendar, now: now)
+
+        makeBill(200, type: "expenditure", on: date(2026, 3, 2))
+        makeBill(50, type: "transfer", on: date(2026, 3, 3))
+        try context.save()
+
+        let bills = try context.fetch(Bill.fetchRequest())
+        let summaries = PeriodSummary.make(bills: bills, ranges: ranges)
+        let thisMonth = try XCTUnwrap(summaries.first { $0.period == .thisMonth })
+
+        XCTAssertEqual(thisMonth.count, 2, "转账应计入笔数")
+        XCTAssertEqual(thisMonth.expense, 200, "转账不计入支出")
+        XCTAssertEqual(thisMonth.income, 0)
+    }
+
+    /// 取数窗口必须覆盖「本月 + 上月 + 本年」
+    func testFetchWindowCoversThisYearAndLastMonth() {
+        let january = PeriodRanges.make(calendar: calendar, now: date(2026, 1, 15))
+        XCTAssertLessThanOrEqual(january.fetchWindow.lowerBound, january.lastMonth.lowerBound)
+        XCTAssertLessThanOrEqual(january.fetchWindow.lowerBound, january.thisYear.lowerBound)
+        XCTAssertEqual(january.fetchWindow.upperBound, january.today.upperBound)
+
+        let july = PeriodRanges.make(calendar: calendar, now: date(2026, 7, 20))
+        XCTAssertEqual(july.fetchWindow.lowerBound, july.thisYear.lowerBound, "非 1 月时窗口起点应为本年 1 月 1 日")
     }
 }
 

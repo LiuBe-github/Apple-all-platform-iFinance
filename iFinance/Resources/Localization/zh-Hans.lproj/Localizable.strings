@@ -4,6 +4,12 @@
 "tab.setting" = "设置";
 
 "home.title" = "概况";
+"home.period.title" = "周期概况";
+"home.period.this_month" = "本月";
+"home.period.last_month" = "上月";
+"home.period.this_year" = "本年";
+"home.quote.title" = "每日一言";
+"home.period.count_value" = "%d 笔";
 "transaction.title" = "账本";
 
 "header.add_bill" = "记一笔！";

@@ -37,6 +37,21 @@ struct HomeView: View {
         }
     }
 
+    // MARK: - 区间统计（本月 / 上月 / 本年）
+    /// 统计窗口（视图创建时确定一次）
+    private let ranges = PeriodRanges.make()
+
+    /// 本月 / 上月 / 本年汇总
+    /// SwiftData 版与今日卡一致：在已按用户过滤的结果上做内存过滤，避免额外的谓词翻译差异。
+    private var periodSummaries: [PeriodSummary] {
+        let window = ranges.fetchWindow
+        let windowBills = userBills.filter { bill in
+            guard let date = bill.date else { return false }
+            return window.contains(date)
+        }
+        return PeriodSummary.make(bills: windowBills, ranges: ranges)
+    }
+
     // MARK: - UI State
     @State private var sentences: [DailySentence] = []
     @State private var currentSentence: DailySentence?
@@ -96,54 +111,45 @@ struct HomeView: View {
                             .padding(.horizontal, AppSpacing.screen)
                             .transition(AppMotion.resolvedTransition(AppMotion.riseIn, reduceMotion: reduceMotion))
 
-                            if let s = currentSentence {
-                                Spacer(minLength: AppSpacing.xl)
+                            Spacer(minLength: AppSpacing.lg)
 
-                                // ── 每日一言（纯文字行） ──
-                                SentenceCardView(sentence: s)
-                                    .id(s.id)
-                                    .padding(.horizontal, AppSpacing.screen)
-                                    .opacity(quoteOpacity)
+                            // ── 周期概况（本月 / 上月 / 本年） ──
+                            PeriodSummaryCard(periods: periodSummaries)
+                                .padding(.horizontal, AppSpacing.screen)
+                                .transition(AppMotion.resolvedTransition(AppMotion.riseIn, reduceMotion: reduceMotion))
+
+                            if let s = currentSentence {
+                                Spacer(minLength: AppSpacing.lg)
+
+                                // ── 每日一言卡 ──
+                                SentenceCardView(sentence: s) {
+                                    guard !isRefreshing else { return }
+                                    HapticManager.shared.medium()
+                                    refresh()
+                                }
+                                .id(s.id)
+                                .padding(.horizontal, AppSpacing.screen)
+                                .opacity(quoteOpacity)
                             }
 
                             Spacer(minLength: AppSpacing.section)
 
-                            // ── 操作按钮 ──
-                            HStack(spacing: AppSpacing.section) {
-                                Button {
-                                    guard !isRefreshing else { return }
-                                    HapticManager.shared.medium()
-                                    refresh()
-                                } label: {
-                                    Image(systemName: "arrow.clockwise")
-                                        .font(.system(size: 17, weight: .medium))
-                                        .rotationEffect(.degrees(refreshAngle))
-                                        .frame(width: 50, height: 50)
-                                        .background(.ultraThinMaterial, in: Circle())
-                                        .overlay(Circle().stroke(.white.opacity(0.5), lineWidth: 0.8))
-                                        .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: 2)
-                                }
-                                .foregroundStyle(.primary)
-                                .disabled(isRefreshing)
-                                .buttonStyle(ScaleButtonStyle())
-                                .accessibilityLabel(String(localized: "home.change_quote"))
-
-                                Button {
-                                    HapticManager.shared.light()
-                                    shareBounceTrigger += 1
-                                    renderAndShare()
-                                } label: {
-                                    Image(systemName: "square.and.arrow.up")
-                                        .font(.system(size: 17, weight: .medium))
-                                        .frame(width: 50, height: 50)
-                                        .background(.ultraThinMaterial, in: Circle())
-                                        .overlay(Circle().stroke(.white.opacity(0.5), lineWidth: 0.8))
-                                        .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: 2)
-                                        .symbolEffect(.bounce, value: shareBounceTrigger)
-                                }
-                                .foregroundStyle(.primary)
-                                .buttonStyle(ScaleButtonStyle())
+                            // ── 分享按钮 ──
+                            Button {
+                                HapticManager.shared.light()
+                                shareBounceTrigger += 1
+                                renderAndShare()
+                            } label: {
+                                Image(systemName: "square.and.arrow.up")
+                                    .font(.system(size: 17, weight: .medium))
+                                    .frame(width: 50, height: 50)
+                                    .background(.ultraThinMaterial, in: Circle())
+                                    .overlay(Circle().stroke(.white.opacity(0.5), lineWidth: 0.8))
+                                    .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: 2)
+                                    .symbolEffect(.bounce, value: shareBounceTrigger)
                             }
+                            .foregroundStyle(.primary)
+                            .buttonStyle(ScaleButtonStyle())
                             .padding(.bottom, AppSpacing.xl)
                         }
                     }
@@ -253,11 +259,12 @@ struct HomeView: View {
         guard let sentence = currentSentence else { return }
 
         let cardWidth: CGFloat = 375
-        let cardHeight: CGFloat = 460
+        let cardHeight: CGFloat = 560
 
         let renderer = ImageRenderer(
             content: ShareCardView(
                 sentence: sentence,
+                periods: periodSummaries,
                 dailyBalance: todayBalance,
                 incomeTotal: todayIncome,
                 expenseTotal: todayExpense,

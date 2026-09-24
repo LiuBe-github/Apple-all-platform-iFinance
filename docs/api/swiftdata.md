@@ -11,6 +11,7 @@
 | `iFinanceSwiftData/App/iFinanceSwiftDataApp.swift` | App 入口：认证路由、生物锁遮罩、主题与语言注入（**不**注册 WCSession） |
 | `iFinanceSwiftData/Data/Bill.swift` | `@Model` 账单实体 + `amountDouble` / `amountString` 兼容属性 |
 | `iFinanceSwiftData/Data/UserProfile.swift` | `@Model` 用户实体（凭证、资料、预算、头像） |
+| `iFinanceSwiftData/Data/PeriodSummary.swift` | 概况页区间统计（`SummaryPeriod` / `PeriodRanges` / `PeriodSummary`，与 iOS 版同名同义） |
 | `iFinanceSwiftData/Data/Persistence.swift` | SwiftData 容器 `PersistenceController` + 用户隔离谓词 + `ModelContainer.viewContext` 兼容扩展 |
 | `iFinanceSwiftData/Data/{Expenditure,Income}Category.swift` `ThemeMode.swift` `DailySentence.swift` `TransactionCategory.swift` | 与 iOS 版一致的数据模型/协议（复制） |
 | `iFinanceSwiftData/Manager/AuthManager.swift` | SwiftData 版认证管理器（API 与 Core Data 版一致） |
