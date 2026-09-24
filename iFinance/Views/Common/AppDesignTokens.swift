@@ -60,6 +60,8 @@ enum AppLayout {
     static let chartHeightRegular: CGFloat = 190
     /// 热力图单元格
     static let heatmapCell: CGFloat = 12
+    /// 进入后台时整页隐私模糊的半径（仅在开启应用锁时生效）
+    static let privacyBlurRadius: CGFloat = 20
 }
 
 // MARK: - 字体（语义字体，跟随 Dynamic Type）

@@ -236,3 +236,51 @@ struct PasswordHashingTests {
         #expect(hash != AuthManager.hashPassword(password: "p@ss2", salt: "s1"))
     }
 }
+
+// MARK: - 隐私遮罩（进入后台整页模糊）
+
+/// 覆盖「仅在用户开启应用锁时才启用后台模糊」的开关逻辑
+/// 使用 `.serialized` 避免并行用例互相修改 UserDefaults
+@MainActor
+@Suite(.serialized)
+struct PrivacyShieldTests {
+
+    private static let lockKey = "BiometricLockEnabled"
+
+    private func withLockSetting(_ enabled: Bool, _ body: (BiometricLockManager) -> Void) {
+        let manager = BiometricLockManager.shared
+        let original = UserDefaults.standard.bool(forKey: Self.lockKey)
+        UserDefaults.standard.set(enabled, forKey: Self.lockKey)
+        body(manager)
+        UserDefaults.standard.set(original, forKey: Self.lockKey)
+        manager.deactivatePrivacyShield()
+    }
+
+    @Test
+    func shieldIgnoredWhenLockDisabled() {
+        withLockSetting(false) { manager in
+            manager.activatePrivacyShield()
+            #expect(manager.isPrivacyShieldActive == false)
+            #expect(manager.shouldBlurForPrivacy == false)
+        }
+    }
+
+    @Test
+    func shieldActivatedWhenLockEnabled() {
+        withLockSetting(true) { manager in
+            manager.activatePrivacyShield()
+            #expect(manager.isPrivacyShieldActive)
+            #expect(manager.shouldBlurForPrivacy)
+        }
+    }
+
+    @Test
+    func deactivateClearsShield() {
+        withLockSetting(true) { manager in
+            manager.activatePrivacyShield()
+            #expect(manager.isPrivacyShieldActive)
+            manager.deactivatePrivacyShield()
+            #expect(manager.isPrivacyShieldActive == false)
+        }
+    }
+}

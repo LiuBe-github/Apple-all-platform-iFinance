@@ -9,6 +9,9 @@ import Foundation
 import LocalAuthentication
 import Combine
 import SwiftUI
+import os.log
+
+private let lockLogger = Logger(subsystem: "com.liube.ifinance.swiftdata", category: "BiometricLock")
 
 // MARK: - 锁定状态
 
@@ -42,6 +45,9 @@ final class BiometricLockManager: ObservableObject {
 
     /// 正在执行生物识别验证
     @Published private(set) var isAuthenticating: Bool = false
+
+    /// 隐私遮罩是否激活（进入后台时整页高斯模糊，防止应用切换器泄露内容）
+    @Published private(set) var isPrivacyShieldActive: Bool = false
 
     /// 生物识别类型（FaceID / TouchID / None）
     private(set) var biometricType: LABiometryType = .none
@@ -125,6 +131,31 @@ final class BiometricLockManager: ObservableObject {
         needsRelock && isLockEnabled
     }
 
+    /// 是否应当对整页内容应用隐私高斯模糊
+    /// 条件：用户开启了应用锁，且（处于后台遮罩态 或 已锁定）
+    var shouldBlurForPrivacy: Bool {
+        isLockEnabled && (isPrivacyShieldActive || isLocked)
+    }
+
+    /// 进入非活跃 / 后台时启用隐私遮罩（**仅在用户开启应用锁时生效**）
+    func activatePrivacyShield() {
+        guard isLockEnabled else {
+            isPrivacyShieldActive = false
+            lockLogger.debug("隐私遮罩：未开启应用锁，跳过")
+            return
+        }
+        guard !isPrivacyShieldActive else { return }
+        isPrivacyShieldActive = true
+        lockLogger.notice("隐私遮罩：已启用（进入后台/非活跃，整页高斯模糊）")
+    }
+
+    /// 回到前台且无需锁定（或已完成解锁）时解除隐私遮罩
+    func deactivatePrivacyShield() {
+        guard isPrivacyShieldActive else { return }
+        isPrivacyShieldActive = false
+        lockLogger.notice("隐私遮罩：已解除")
+    }
+
     /// 执行生物识别解锁
     /// - Returns: true 表示解锁成功，false 表示失败或取消
     @discardableResult
@@ -145,6 +176,7 @@ final class BiometricLockManager: ObservableObject {
             if success {
                 state = .unlocked
                 isLocked = false
+                isPrivacyShieldActive = false
                 lastUnlockTime = Date()
             }
             return success
@@ -229,6 +261,7 @@ final class BiometricLockManager: ObservableObject {
         isLockEnabled = false
         state = .unlocked
         isLocked = false
+        isPrivacyShieldActive = false
         needsRelock = false
     }
 

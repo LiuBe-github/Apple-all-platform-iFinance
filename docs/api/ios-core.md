@@ -74,10 +74,13 @@ UserDefaults key：`AuthIsLoggedIn`、`AuthLastActiveAt`、`AuthLastLoginIdentif
 | 成员 | 签名 | 说明 |
 |------|------|------|
 | `isLocked` / `isAuthenticating` | `@Published private(set)` | UI 状态 |
+| `isPrivacyShieldActive` | `@Published private(set)` | 隐私遮罩状态（进入后台/非活跃时为 true） |
 | `biometricType` | `private(set) var: LABiometryType` | Face ID / Touch ID / none |
 | `isBiometricAvailable` / `biometricDisplayName` / `biometricIconName` | 计算属性 | 供设置页展示 |
+| `shouldBlurForPrivacy` | 计算属性 | `isLockEnabled && (isPrivacyShieldActive \|\| isLocked)`，驱动整页高斯模糊 |
 | `requestLock()` | `func` | 幂等：未启用/已锁定/解锁冷却 5s 内直接返回 |
 | `markNeedsRelock()` / `shouldLockNow` | `func` / `var` | 后台标记与前台消费 |
+| `activatePrivacyShield()` / `deactivatePrivacyShield()` | `func` | 后台立即遮挡 / 前台（或解锁后）解除；**仅在 `isLockEnabled` 为 true 时生效** |
 | `authenticate()` | `@discardableResult func async -> Bool` | `evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics)` |
 | `enableLock()` / `disableLock()` | `@discardableResult func async -> Bool` | 开关（需先验证身份） |
 | `evaluateBiometricCapability()` | `func` | 刷新 `biometricType` |

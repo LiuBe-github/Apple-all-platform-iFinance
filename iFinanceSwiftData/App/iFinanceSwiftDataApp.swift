@@ -41,6 +41,7 @@ struct iFinanceSwiftDataApp: App {
             Group {
                 if authManager.isAuthenticated {
                     ContentView()
+                        .appPrivacyShield(biometricLock.shouldBlurForPrivacy)
                         .overlay {
                             if biometricLock.isLocked && biometricLock.isLockEnabled {
                                 AppLockOverlayView(lockManager: biometricLock)
@@ -50,6 +51,7 @@ struct iFinanceSwiftDataApp: App {
                         }
                 } else {
                     LoginView()
+                        .appPrivacyShield(biometricLock.shouldBlurForPrivacy)
                 }
             }
             .environmentObject(authManager)
@@ -72,11 +74,15 @@ struct iFinanceSwiftDataApp: App {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                             biometricLock.requestLock()
                         }
+                    } else {
+                        biometricLock.deactivatePrivacyShield()
                     }
                 case .background:
                     biometricLock.markNeedsRelock()
-                    fallthrough
+                    biometricLock.activatePrivacyShield()
+                    authManager.handleAppWillResignActive()
                 case .inactive:
+                    biometricLock.activatePrivacyShield()
                     authManager.handleAppWillResignActive()
                 @unknown default:
                     break

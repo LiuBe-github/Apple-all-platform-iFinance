@@ -38,6 +38,7 @@
 | `Views/Common/AppVisualStyle.swift` | `AppBackgroundView`、`ScaleButtonStyle`、`ShimmerView` + `View` 扩展 | 全项目视觉统一 |
 | `Views/Common/AppDesignTokens.swift` | `AppSpacing`、`AppRadius`、`AppLayout`、`AppTypography` | 布局/间距/圆角/字体 token（HIG 尺度） |
 | `Views/Common/AppMotion.swift` | `AppMotion` + `appAnimation` / `appEntrance` / `appPressable` | 动画节奏 token（含 Reduce Motion 降级） |
+| `Views/Common/AppPrivacyShield.swift` | `AppPrivacyShield` + `.appPrivacyShield(_:)` | 进入后台时的整页高斯模糊遮罩（仅开启应用锁时启用） |
 
 ## 2. 根容器：`ContentView`（`Views/ContentView.swift:11`）
 
@@ -65,6 +66,8 @@ enum Tab { case home, transaction, tendency, setting }
 | 修饰器 | `.appAmountStyle(size:weight:)`、`.appContentWidth(_:)`、`.appCardPadding(cozy:)`、`.appAnimation(_:value:)`、`.appEntrance(index:visible:)`、`.appPressable()` | 统一挂载点 |
 
 `appAnimation` / `appEntrance` 会自动读取 `\.accessibilityReduceMotion`：开启「减弱动态效果」时，标准/强调档降级为 `easeOut(0.15)`，位移类转场通过 `AppMotion.resolvedTransition(_:reduceMotion:)` 退化为纯淡入淡出。
+
+`.appPrivacyShield(_:)`（`AppPrivacyShield.swift`）用于后台隐私保护：`true` 时对整页内容应用 `AppLayout.privacyBlurRadius`（20pt）高斯模糊并叠加 `.regularMaterial` 覆盖层（「降低透明度」开启时提高不透明度），同时 `accessibilityHidden(true)`；切换不加动画，确保进入后台瞬间的快照即为模糊态。是否启用由 `BiometricLockManager.shouldBlurForPrivacy` 决定——**未开启应用锁时完全不生效**。
 
 | API | 签名 | 说明 |
 |-----|------|------|

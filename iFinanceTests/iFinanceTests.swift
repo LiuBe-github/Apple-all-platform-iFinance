@@ -632,3 +632,48 @@ final class iFinanceTests: XCTestCase {
         XCTAssertEqual(amt, 0.0, "nil amount 应返回 0.0")
     }
 }
+
+// MARK: - 隐私遮罩（进入后台整页模糊）测试
+
+/// 覆盖「仅在用户开启应用锁时才启用后台模糊」这一开关逻辑
+@MainActor
+final class PrivacyShieldTests: XCTestCase {
+
+    private let lockKey = "BiometricLockEnabled"
+
+    /// 在指定开关状态下执行断言，结束后恢复原始设置
+    private func withLockSetting(_ enabled: Bool, _ body: (BiometricLockManager) -> Void) {
+        let manager = BiometricLockManager.shared
+        let original = UserDefaults.standard.bool(forKey: lockKey)
+        UserDefaults.standard.set(enabled, forKey: lockKey)
+        body(manager)
+        UserDefaults.standard.set(original, forKey: lockKey)
+        manager.deactivatePrivacyShield()
+    }
+
+    func testShieldIgnoredWhenLockDisabled() {
+        withLockSetting(false) { manager in
+            manager.activatePrivacyShield()
+            XCTAssertFalse(manager.isPrivacyShieldActive, "未开启应用锁时不应启用隐私遮罩")
+            XCTAssertFalse(manager.shouldBlurForPrivacy, "未开启应用锁时不应模糊页面")
+        }
+    }
+
+    func testShieldActivatedWhenLockEnabled() {
+        withLockSetting(true) { manager in
+            manager.activatePrivacyShield()
+            XCTAssertTrue(manager.isPrivacyShieldActive, "开启应用锁后进入后台应立即启用隐私遮罩")
+            XCTAssertTrue(manager.shouldBlurForPrivacy, "开启应用锁后应模糊页面内容")
+        }
+    }
+
+    func testDeactivateClearsShield() {
+        withLockSetting(true) { manager in
+            manager.activatePrivacyShield()
+            XCTAssertTrue(manager.isPrivacyShieldActive)
+
+            manager.deactivatePrivacyShield()
+            XCTAssertFalse(manager.isPrivacyShieldActive, "回到前台后应解除隐私遮罩")
+        }
+    }
+}

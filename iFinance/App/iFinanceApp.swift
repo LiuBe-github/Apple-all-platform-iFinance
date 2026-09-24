@@ -40,6 +40,7 @@ struct iFinanceApp: App {
             Group {
                 if authManager.isAuthenticated {
                     ContentView()
+                        .appPrivacyShield(biometricLock.shouldBlurForPrivacy)
                         .overlay {
                             // 生物识别锁屏遮罩（仅当已启用 + 已锁定时显示）
                             if biometricLock.isLocked && biometricLock.isLockEnabled {
@@ -50,6 +51,7 @@ struct iFinanceApp: App {
                         }
                 } else {
                     LoginView()
+                        .appPrivacyShield(biometricLock.shouldBlurForPrivacy)
                 }
             }
             .environmentObject(authManager)
@@ -81,13 +83,21 @@ struct iFinanceApp: App {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                             biometricLock.requestLock()
                         }
+                    } else {
+                        // 无需锁定（未开启应用锁 / 无待锁定标记）→ 立即解除隐私遮罩
+                        biometricLock.deactivatePrivacyShield()
                     }
 
                 case .background:
                     // 进入后台：标记待锁定，下次前台会消费此标记
                     biometricLock.markNeedsRelock()
-                    fallthrough
+                    // 立即开启隐私遮罩（仅在开启应用锁时生效），避免多任务快照泄露内容
+                    biometricLock.activatePrivacyShield()
+                    authManager.handleAppWillResignActive()
+
                 case .inactive:
+                    // 非活跃（来电、控制中心、应用切换中）同样遮挡
+                    biometricLock.activatePrivacyShield()
                     authManager.handleAppWillResignActive()
                 @unknown default:
                     break
