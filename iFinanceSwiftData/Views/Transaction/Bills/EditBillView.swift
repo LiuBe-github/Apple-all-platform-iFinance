@@ -17,7 +17,8 @@ struct EditBillView: View {
     @State private var amountString = ""
     @State private var selectedType = "expenditure"
     @State private var note = ""
-    @State private var category = ""
+    /// 已选分类 rawValue（nil 表示未选择）
+    @State private var categoryRawValue: String?
     @State private var selectedDate = Date()
     // MARK: - State for alert
     @State private var showingAlert = false
@@ -30,7 +31,7 @@ struct EditBillView: View {
         _amountString = State(initialValue: bill.amount == nil ? "" : bill.amountString)
         _selectedType = State(initialValue: bill.type ?? "expenditure")
         _note = State(initialValue: bill.note ?? "")
-        _category = State(initialValue: bill.category ?? "")
+        _categoryRawValue = State(initialValue: BillEditRules.normalizedCategory(bill.category, for: bill.type ?? "expenditure"))
         _selectedDate = State(initialValue: bill.date ?? Date())
     }
     
@@ -39,9 +40,9 @@ struct EditBillView: View {
             Form {
                 Section("bill.date") {
                     DatePicker(
-                        "bill.select_date",
+                        "bill.select_datetime",
                         selection: $selectedDate,
-                        displayedComponents: .date
+                        displayedComponents: [.date, .hourAndMinute]
                     )
                 }
                 
@@ -64,12 +65,31 @@ struct EditBillView: View {
                     Picker("bill.type_picker", selection: $selectedType) {
                         Text("bill.type_expenditure").tag("expenditure")
                         Text("bill.type_income").tag("income")
+                        Text("bill.type_transfer").tag("transfer")
                     }
                     .pickerStyle(SegmentedPickerStyle())
+                    .onChange(of: selectedType) { _, newType in
+                        // 类型改变后原分类不再适用：支出/收入清空（需重选），转账固定为 transfer
+                        categoryRawValue = BillEditRules.categoryAfterTypeChange(to: newType)
+                    }
                 }
                 
                 Section("bill.category") {
-                    TextField("bill.category_placeholder", text: $category)
+                    if selectedType == BillEditRules.transferType {
+                        // 转账没有分类，固定展示「转账」
+                        HStack(spacing: AppSpacing.md) {
+                            Image(systemName: "arrow.left.arrow.right")
+                                .foregroundStyle(.secondary)
+                            Text(L10n.string("bill.type_transfer"))
+                                .foregroundStyle(.secondary)
+                        }
+                    } else {
+                        NavigationLink {
+                            CategoryPickerView(type: selectedType, selectedRawValue: $categoryRawValue)
+                        } label: {
+                            categoryRowLabel
+                        }
+                    }
                 }
                 
                 Section("bill.note") {
@@ -115,7 +135,41 @@ struct EditBillView: View {
     
     // 验证输入是否有效（至少金额要能转成数字）
     private var isValidInput: Bool {
-        !amountString.isEmpty && Double(amountString) != nil
+        guard !amountString.isEmpty, let value = Double(amountString), value > 0 else { return false }
+        // 分类必须与当前类型匹配（转账固定 transfer）
+        return BillEditRules.isValid(categoryForSaving, for: selectedType)
+    }
+
+    /// 保存时写入的分类
+    private var categoryForSaving: String? {
+        selectedType == BillEditRules.transferType ? BillEditRules.transferCategory : categoryRawValue
+    }
+
+    /// 分类行内容：已选显示图标 + 本地化名称，未选显示占位
+    private var categoryRowLabel: some View {
+        HStack(spacing: AppSpacing.md) {
+            if let raw = categoryRawValue, !raw.isEmpty {
+                Image(systemName: categoryIcon(for: raw))
+                    .foregroundStyle(selectedType == "income" ? .green : .red)
+                Text(categoryDisplayName(for: raw))
+                    .foregroundStyle(.primary)
+            } else {
+                Image(systemName: "square.grid.2x2")
+                    .foregroundStyle(.secondary)
+                Text(L10n.string("bill.category_unselected"))
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private func categoryIcon(for rawValue: String) -> String {
+        if selectedType == "income" { return IncomeCategory(rawValue: rawValue)?.icon ?? "tag" }
+        return ExpenditureCategory(rawValue: rawValue)?.icon ?? "tag"
+    }
+
+    private func categoryDisplayName(for rawValue: String) -> String {
+        if selectedType == "income" { return IncomeCategory(rawValue: rawValue)?.localizedDisplayName ?? rawValue }
+        return ExpenditureCategory(rawValue: rawValue)?.localizedDisplayName ?? rawValue
     }
     
     private func saveBill() {
@@ -129,7 +183,7 @@ struct EditBillView: View {
         bill.amount = Decimal(amountDouble)
         bill.type = selectedType
         bill.note = note
-        bill.category = category
+        bill.category = categoryForSaving
         bill.date = selectedDate
         
         // 保存上下文

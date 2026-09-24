@@ -293,6 +293,36 @@ struct PrivacyShieldTests {
 
 // MARK: - 分类占比聚合（趋势页饼图）
 
+// MARK: - 编辑账单的类型 / 分类联动规则（与 iOS 版同名实现）
+
+@MainActor
+@Suite(.serialized)
+struct BillEditRulesTests {
+
+    @Test
+    func categoryAfterTypeChange() {
+        #expect(BillEditRules.categoryAfterTypeChange(to: "expenditure") == nil)
+        #expect(BillEditRules.categoryAfterTypeChange(to: "income") == nil)
+        #expect(BillEditRules.categoryAfterTypeChange(to: "transfer") == "transfer")
+    }
+
+    @Test
+    func validityPerType() {
+        #expect(BillEditRules.isValid("餐饮", for: "expenditure"))
+        #expect(BillEditRules.isValid("餐饮", for: "income") == false)
+        #expect(BillEditRules.isValid("工资", for: "income"))
+        #expect(BillEditRules.isValid("transfer", for: "transfer"))
+        #expect(BillEditRules.isValid(nil, for: "expenditure") == false)
+    }
+
+    @Test
+    func normalizationForExistingBills() {
+        #expect(BillEditRules.normalizedCategory("餐饮", for: "income") == nil)
+        #expect(BillEditRules.normalizedCategory("餐饮", for: "expenditure") == "餐饮")
+        #expect(BillEditRules.normalizedCategory(nil, for: "transfer") == "transfer")
+    }
+}
+
 @MainActor
 @Suite(.serialized)
 struct CategoryBreakdownTests {

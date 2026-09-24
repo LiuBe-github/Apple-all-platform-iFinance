@@ -140,7 +140,6 @@
 "bill.type" = "类型";
 "bill.type_picker" = "账单类型";
 "bill.category" = "分类";
-"bill.category_placeholder" = "例如：餐饮、交通、工资";
 "bill.note" = "备注";
 "bill.note_placeholder" = "可选备注";
 "bill.delete" = "删除此账单";
@@ -358,6 +357,8 @@
 /* Budget Chart */
 "bill.amount_legend" = "金额";
 "bill.category_legend" = "分类";
+"bill.select_category" = "选择分类";
+"bill.category_unselected" = "请选择分类";
 "budget.chart_type" = "图表类型";
 
 /* Settings */

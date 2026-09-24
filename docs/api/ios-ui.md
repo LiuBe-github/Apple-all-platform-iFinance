@@ -18,6 +18,8 @@
 | `Views/Transaction/TransactionRowView.swift` | `TransactionRowView` | 单条账单行 |
 | `Views/Transaction/Bills/AddBillView.swift` | `AddBillView` | 新增账单（数字键盘 + 分类） |
 | `Views/Transaction/Bills/EditBillView.swift` | `EditBillView` | 编辑 / 删除账单 |
+| `Views/Transaction/Bills/CategoryPickerView.swift` | `CategoryPickerView` | 分类选择页（只列当前类型的分类，点选回写并返回） |
+| `Views/Transaction/Bills/BillEditRules.swift` | `BillEditRules` | 编辑页类型/分类联动规则（纯函数） |
 | `Views/Transaction/Bills/BillsCardView.swift` | `TimeRange`、`BillsCardView` | 账单列表：时间范围 / 分类 / 备注筛选 |
 | `Views/Transaction/Bills/NumberPad.swift` | `NumberPad` | 自定义数字键盘主体（含备注、日期） |
 | `Views/Transaction/Bills/NumberPadLogic.swift` | `NumberPadExpression` | 键盘表达式纯逻辑（追加数字/小数点、运算符切换、退格、百分比），独立可测 |
@@ -119,6 +121,13 @@ struct NumberPad: View {
 |------|---------------|------|
 | `AddBillView`（`Bills/AddBillView.swift:12`） | `@Environment(\.modelContext)`（iOS 版为 `managedObjectContext`） | 组装 `Bill` 并 `save()`；成功/失败触发 Haptic |
 | `EditBillView`（`Bills/EditBillView.swift:11`） | `init(bill: Bill)` | 表单态在 `init` 中由 bill 初始化，保存时写回属性并 `save()` |
+
+**编辑页规则（2026-09 起）**：
+
+- 类型为「支出 / 收入 / 转账」三段；**切换类型会清空分类**（转账固定为 `"transfer"`），未选择分类前保存按钮置灰；
+- 分类行是推入式选择页 `CategoryPickerView`（只列当前类型的分类网格，点选后写回 rawValue 并自动返回）；转账账单的分类行只读显示「转账」；
+- 打开旧账单时用 `BillEditRules.normalizedCategory(_:for:)` 归一化：跨类型脏数据（如「收入 + 餐饮」）按未选择处理；
+- 日期为 `[.date, .hourAndMinute]` 紧凑式选择器（可精确到年月日时分），标签用 `bill.select_datetime`。
 | `BillsCardView`（`Bills/BillsCardView.swift:48`） | `@FetchRequest(...billUserPredicate)`、`selectedCategory: Binding<String?>?`、`selectedNote: Binding<String?>?` | `TimeRange`（`:12`）提供本日/本周/本月/本年；筛选在内存完成 |
 | `TransactionView`（`TransactionView.swift:11`） | `@State`：`showingAddBillView`、`showProfile`、`showingSearch`、`selectedCategory`、`selectedNote` | 组合预算卡与账单卡；`SearchSheet`（`:145`）维护历史关键词 |
 | `BudgetView`（`Budget/BudgetView.swift:13`） | `@FetchRequest` 本月支出、`authManager.monthlyBudget`、`chartAngleSelection` 选中态 | 列表/饼图切换、预算编辑 |

@@ -151,7 +151,6 @@
 "bill.type_picker" = "明細タイプ";
 "bill.view_picker" = "表示";
 "bill.category" = "カテゴリ";
-"bill.category_placeholder" = "例：食費、交通、給与";
 "bill.note" = "メモ";
 "bill.note_add" = "メモを追加...";
 "bill.note_placeholder" = "任意";
@@ -358,6 +357,8 @@
 /* Budget Chart */
 "bill.amount_legend" = "金額";
 "bill.category_legend" = "カテゴリ";
+"bill.select_category" = "カテゴリを選択";
+"bill.category_unselected" = "カテゴリを選択してください";
 "budget.chart_type" = "グラフタイプ";
 
 /* Settings */

@@ -741,6 +741,37 @@ final class LocalizationRegressionTests: XCTestCase {
 
 // MARK: - 分类占比聚合（趋势页饼图）
 
+// MARK: - 编辑账单的类型 / 分类联动规则
+
+@MainActor
+final class BillEditRulesTests: XCTestCase {
+
+    func testCategoryAfterTypeChange() {
+        XCTAssertNil(BillEditRules.categoryAfterTypeChange(to: "expenditure"), "切到支出应清空分类")
+        XCTAssertNil(BillEditRules.categoryAfterTypeChange(to: "income"), "切到收入应清空分类")
+        XCTAssertEqual(BillEditRules.categoryAfterTypeChange(to: "transfer"), "transfer", "转账分类固定")
+    }
+
+    func testValidityPerType() {
+        XCTAssertTrue(BillEditRules.isValid("餐饮", for: "expenditure"))
+        XCTAssertFalse(BillEditRules.isValid("餐饮", for: "income"), "收入不能使用餐饮分类")
+        XCTAssertTrue(BillEditRules.isValid("工资", for: "income"))
+        XCTAssertFalse(BillEditRules.isValid("工资", for: "expenditure"))
+        XCTAssertTrue(BillEditRules.isValid("transfer", for: "transfer"))
+        XCTAssertFalse(BillEditRules.isValid("餐饮", for: "transfer"))
+        XCTAssertFalse(BillEditRules.isValid(nil, for: "expenditure"))
+        XCTAssertFalse(BillEditRules.isValid("", for: "expenditure"))
+        XCTAssertFalse(BillEditRules.isValid("不存在的分类", for: "expenditure"))
+    }
+
+    func testNormalizationForExistingBills() {
+        XCTAssertNil(BillEditRules.normalizedCategory("餐饮", for: "income"), "跨类型脏数据按未选择处理")
+        XCTAssertEqual(BillEditRules.normalizedCategory("餐饮", for: "expenditure"), "餐饮")
+        XCTAssertEqual(BillEditRules.normalizedCategory(nil, for: "transfer"), "transfer")
+        XCTAssertEqual(BillEditRules.normalizedCategory("餐饮", for: "transfer"), "transfer")
+    }
+}
+
 @MainActor
 final class CategoryBreakdownTests: XCTestCase {
 

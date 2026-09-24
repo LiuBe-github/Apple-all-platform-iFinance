@@ -151,7 +151,6 @@
 "bill.type_picker" = "帳單類型";
 "bill.view_picker" = "視圖";
 "bill.category" = "分類";
-"bill.category_placeholder" = "例如：餐飲、交通、工資";
 "bill.note" = "備註";
 "bill.note_add" = "添加備註...";
 "bill.note_placeholder" = "可選備註";
@@ -358,6 +357,8 @@
 /* Budget Chart */
 "bill.amount_legend" = "金額";
 "bill.category_legend" = "分類";
+"bill.select_category" = "選擇分類";
+"bill.category_unselected" = "請選擇分類";
 "budget.chart_type" = "圖表類型";
 
 /* Settings */

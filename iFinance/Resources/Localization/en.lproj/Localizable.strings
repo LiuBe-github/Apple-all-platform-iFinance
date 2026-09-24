@@ -151,7 +151,6 @@
 "bill.type_picker" = "Bill Type";
 "bill.view_picker" = "View";
 "bill.category" = "Category";
-"bill.category_placeholder" = "e.g. Food, Transport, Salary";
 "bill.note" = "Note";
 "bill.note_add" = "Add note...";
 "bill.note_placeholder" = "Optional note";
@@ -358,6 +357,8 @@
 /* Budget Chart */
 "bill.amount_legend" = "Amount";
 "bill.category_legend" = "Category";
+"bill.select_category" = "Select Category";
+"bill.category_unselected" = "Please select a category";
 "budget.chart_type" = "Chart Type";
 
 /* Settings */
