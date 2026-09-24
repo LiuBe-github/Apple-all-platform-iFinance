@@ -1,19 +1,8 @@
 {
   "images" : [
     {
-      "filename" : "64ee27a2a6c6eb5da836cbb2f84ee7c1.jpg",
-      "idiom" : "universal",
-      "scale" : "1x"
-    },
-    {
-      "filename" : "64ee27a2a6c6eb5da836cbb2f84ee7c1 1.jpg",
-      "idiom" : "universal",
-      "scale" : "2x"
-    },
-    {
-      "filename" : "64ee27a2a6c6eb5da836cbb2f84ee7c1 2.jpg",
-      "idiom" : "universal",
-      "scale" : "3x"
+      "filename" : "MyWeChat.jpg",
+      "idiom" : "universal"
     }
   ],
   "info" : {
