@@ -7,9 +7,17 @@
 
 import SwiftUI
 internal import CoreData
+import os
 
 @main
 struct iFinanceApp: App {
+    /// 进程启动时间基准（DEBUG 启动耗时打点用）
+    private static let launchUptime = ProcessInfo.processInfo.systemUptime
+
+    init() {
+        _ = Self.launchUptime
+    }
+
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -75,17 +83,24 @@ struct iFinanceApp: App {
             .onAppear {
                 // 让系统的本地化解析跟随 App 内语言（修正老版本遗留的不一致）
                 LocalizationSync.syncIfNeeded()
-                // 开屏动画：正常 1.8s，开启「减弱动态效果」时 0.8s
-                let splashDuration: TimeInterval = reduceMotion ? 0.8 : 1.8
+                // 开屏动画：正常 1.2s，开启「减弱动态效果」时 0.6s（与首帧加载并行，不阻塞数据）
+                let splashDuration: TimeInterval = reduceMotion ? 0.6 : 1.2
                 DispatchQueue.main.asyncAfter(deadline: .now() + splashDuration) {
                     withAnimation(.easeOut(duration: 0.35)) { showSplash = false }
                 }
+                #if DEBUG
+                let launchMs = Int((ProcessInfo.processInfo.systemUptime - Self.launchUptime) * 1000)
+                Logger(subsystem: "com.liube.ifinance", category: "Launch")
+                    .notice("首帧就绪：\(launchMs, privacy: .public)ms")
+                #endif
                 authManager.bootstrap()
                 biometricLock.evaluateBiometricCapability()
                 // 启动时尝试锁定（requestLock 是幂等的：未启用/已锁定/冷却期 = 空操作）
                 biometricLock.requestLock()
-                // 激活 Watch 连接，接收手表端发来的账单数据
-                WatchSessionManager.shared.activate()
+                // 首帧之后再激活 Watch 连接（不阻塞冷启动）
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                    WatchSessionManager.shared.activate()
+                }
                 // 通知功能已暂时禁用
                 // Task {
                 //     _ = await NotificationManager.shared.requestAuthorization()

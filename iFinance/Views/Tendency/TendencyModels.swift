@@ -9,9 +9,11 @@ import Foundation
 
 /// 每日/每小时金额数据点
 struct DailyAmount: Identifiable {
-    let id = UUID()
     let date: Date
     let value: Double
+
+    /// 稳定 id：用日期而不是每次新建的 UUID，避免图表重绘时全量 diff
+    var id: Date { date }
 }
 
 // MARK: - 时间跨度选项

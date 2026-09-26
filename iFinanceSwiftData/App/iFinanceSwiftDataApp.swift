@@ -8,9 +8,17 @@
 
 import SwiftUI
 import SwiftData
+import os
 
 @main
 struct iFinanceSwiftDataApp: App {
+    /// 进程启动时间基准（DEBUG 启动耗时打点用）
+    private static let launchUptime = ProcessInfo.processInfo.systemUptime
+
+    init() {
+        _ = Self.launchUptime
+    }
+
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -75,11 +83,16 @@ struct iFinanceSwiftDataApp: App {
             .onAppear {
                 // 让系统的本地化解析跟随 App 内语言（修正老版本遗留的不一致）
                 LocalizationSync.syncIfNeeded()
-                // 开屏动画：正常 1.8s，开启「减弱动态效果」时 0.8s
-                let splashDuration: TimeInterval = reduceMotion ? 0.8 : 1.8
+                // 开屏动画：正常 1.2s，开启「减弱动态效果」时 0.6s（与首帧加载并行）
+                let splashDuration: TimeInterval = reduceMotion ? 0.6 : 1.2
                 DispatchQueue.main.asyncAfter(deadline: .now() + splashDuration) {
                     withAnimation(.easeOut(duration: 0.35)) { showSplash = false }
                 }
+                #if DEBUG
+                let launchMs = Int((ProcessInfo.processInfo.systemUptime - Self.launchUptime) * 1000)
+                Logger(subsystem: "com.liube.ifinance.swiftdata", category: "Launch")
+                    .notice("首帧就绪：\(launchMs, privacy: .public)ms")
+                #endif
                 authManager.bootstrap()
                 biometricLock.evaluateBiometricCapability()
                 biometricLock.requestLock()

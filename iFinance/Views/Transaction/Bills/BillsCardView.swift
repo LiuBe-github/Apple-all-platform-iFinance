@@ -90,17 +90,21 @@ struct BillsCardView: View {
     }
     
     var body: some View {
-        VStack(spacing: AppSpacing.md) {
+        // 每次渲染只做一次过滤 + 分组（原先 body 内引用两次会导致重复计算）
+        let groups = groupedBills
+        return VStack(spacing: AppSpacing.md) {
             // 时间范围选择器
             timeRangePicker
             
             // 账单列表
             Group {
-                if groupedBills.isEmpty {
+                if groups.isEmpty {
                     emptyState
                 } else {
-                    ForEach(groupedBills, id: \.date) { group in
-                        DayGroupCard(date: group.date, bills: group.bills)
+                    LazyVStack(spacing: AppSpacing.md) {
+                        ForEach(groups, id: \.date) { group in
+                            DayGroupCard(date: group.date, bills: group.bills)
+                        }
                     }
                 }
             }

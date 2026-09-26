@@ -24,6 +24,9 @@ struct CategoryOption: Identifiable, Hashable {
 @MainActor
 enum CategoryResolver {
 
+    /// 一级分类选项缓存（key = 类型；数据版本变化时失效）
+    private static var optionsCache: [CategoryKind: (revision: Int, options: [CategoryOption])] = [:]
+
     // MARK: - 路径
 
     /// 拆分「父/子」复合路径
@@ -127,6 +130,16 @@ enum CategoryResolver {
 
     /// 一级分类选项（内置在前、自定义在后）
     static func topLevelOptions(kind: CategoryKind) -> [CategoryOption] {
+        let revision = CategoryStore.shared.revision
+        if let cached = optionsCache[kind], cached.revision == revision {
+            return cached.options
+        }
+        let options = buildTopLevelOptions(kind: kind)
+        optionsCache[kind] = (revision, options)
+        return options
+    }
+
+    private static func buildTopLevelOptions(kind: CategoryKind) -> [CategoryOption] {
         var options: [CategoryOption] = []
         switch kind {
         case .expenditure:

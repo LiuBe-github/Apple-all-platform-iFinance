@@ -285,8 +285,12 @@ final class iFinanceTests: XCTestCase {
     func testExpenditureCategoryIcons() {
         XCTAssertEqual(ExpenditureCategory.foodAndBeverage.icon, "fork.knife")
         XCTAssertEqual(ExpenditureCategory.shopping.icon, "cart")
-        XCTAssertEqual(ExpenditureCategory.digital.icon, "phone")
-        XCTAssertEqual(ExpenditureCategory.medical.icon, "heart")
+        // 图标体系重排后：数码 / 通讯不再共用 phone，交通 / 汽车不再共用 car
+        XCTAssertEqual(ExpenditureCategory.digital.icon, "laptopcomputer.and.iphone")
+        XCTAssertEqual(ExpenditureCategory.communication.icon, "antenna.radiowaves.left.and.right")
+        XCTAssertEqual(ExpenditureCategory.traffic.icon, "road.lanes")
+        XCTAssertEqual(ExpenditureCategory.car.icon, "car.side")
+        XCTAssertEqual(ExpenditureCategory.medical.icon, "cross.case")
     }
 
     func testExpenditureCategoryLocalizedDisplayName() {
@@ -299,8 +303,8 @@ final class iFinanceTests: XCTestCase {
 
     func testIncomeCategoryAllCases() {
         let all = IncomeCategory.allCases
-        // 枚举中共有 11 个 case
-        XCTAssertEqual(all.count, 11)
+        // 枚举中共有 12 个 case（新增「生活费」）
+        XCTAssertEqual(all.count, 12)
     }
 
     func testIncomeCategoryRawValues() {
@@ -313,6 +317,7 @@ final class iFinanceTests: XCTestCase {
         XCTAssertEqual(IncomeCategory.salary.icon, "wallet.bifold")
         XCTAssertEqual(IncomeCategory.bonus.icon, "dollarsign.circle")
         XCTAssertEqual(IncomeCategory.unexpectedIncom.icon, "exclamationmark.bubble")
+        XCTAssertEqual(IncomeCategory.livingAllowance.icon, "banknote")
     }
 
     // MARK: - TimeRange 日期范围测试

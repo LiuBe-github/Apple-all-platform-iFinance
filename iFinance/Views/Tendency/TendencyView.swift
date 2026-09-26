@@ -13,11 +13,21 @@ struct TendencyView: View {
     
     // MARK: - Core Data
     
-    @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \Bill.date, ascending: true)],
-        predicate: PersistenceController.billUserPredicate,
-        animation: .default
-    ) private var allBills: FetchedResults<Bill>
+    /// 只取最近 24 个月的账单：覆盖年视图、总收支 12 个月窗口与横向回看，避免全量取数
+    @FetchRequest private var allBills: FetchedResults<Bill>
+
+    init() {
+        let calendar = Calendar.current
+        let monthStart = calendar.date(from: calendar.dateComponents([.year, .month], from: Date())) ?? Date()
+        let windowStart = calendar.date(byAdding: .month, value: -24, to: monthStart) ?? Date.distantPast
+        let request: NSFetchRequest<Bill> = Bill.fetchRequest()
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \Bill.date, ascending: true)]
+        request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+            PersistenceController.billUserPredicate,
+            NSPredicate(format: "date >= %@", windowStart as NSDate)
+        ])
+        _allBills = FetchRequest(fetchRequest: request, animation: .default)
+    }
     
     // MARK: - 视图状态
     

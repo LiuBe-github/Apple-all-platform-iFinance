@@ -12,6 +12,7 @@
 #   scripts/run-on-device.sh -d 00008140-XXXXXXXX   # 指定设备 UDID（xcrun devicectl list devices 可查看）
 #   scripts/run-on-device.sh --console              # 启动后附着控制台输出
 #   scripts/run-on-device.sh --no-build             # 跳过构建，直接安装已有产物
+#   scripts/run-on-device.sh --release              # 用 Release 配置构建（真机运行更快，编译略慢）
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -20,6 +21,7 @@ SCHEME="iFinance"
 DEVICE=""
 CONSOLE=0
 DO_BUILD=1
+BUILD_CONFIG="Debug"
 
 usage() { sed -n '2,20p' "$0"; }
 
@@ -29,6 +31,7 @@ while [[ $# -gt 0 ]]; do
     -d|--device) DEVICE="${2:?缺少设备 UDID}"; shift 2 ;;
     --console) CONSOLE=1; shift ;;
     --no-build) DO_BUILD=0; shift ;;
+    --release) BUILD_CONFIG="Release"; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "未知参数：$1"; usage; exit 1 ;;
   esac
@@ -58,11 +61,11 @@ echo "📱 目标设备：$DEVICE"
 if [[ "$DO_BUILD" -eq 1 ]]; then
   echo "▶︎ 构建 $SCHEME（增量）…"
   t0=$(date +%s)
-  xcodebuild build -project iFinance.xcodeproj -scheme "$SCHEME" -destination "$DEST" -quiet
+  xcodebuild build -project iFinance.xcodeproj -scheme "$SCHEME" -destination "$DEST" -configuration "$BUILD_CONFIG" -quiet
   echo "   ✔ 构建耗时 $(( $(date +%s) - t0 ))s"
 fi
 
-SETTINGS="$(xcodebuild -project iFinance.xcodeproj -scheme "$SCHEME" -destination "$DEST" -showBuildSettings 2>/dev/null)"
+SETTINGS="$(xcodebuild -project iFinance.xcodeproj -scheme "$SCHEME" -destination "$DEST" -configuration "$BUILD_CONFIG" -showBuildSettings 2>/dev/null)"
 APP_PATH="$(printf '%s\n' "$SETTINGS" | awk -v target="$SCHEME" '
   /^Build settings for action build and target/ { inTarget = ($0 ~ ("target \"" target "\"")) }
   inTarget && / TARGET_BUILD_DIR = / { dir = $2 }

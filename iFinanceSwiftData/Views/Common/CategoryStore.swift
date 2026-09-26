@@ -80,6 +80,9 @@ final class CategoryStore: ObservableObject {
 
     @Published private(set) var items: [CustomCategory] = []
 
+    /// 数据版本号：每次载入/写入 +1，供解析层做缓存失效
+    private(set) var revision: Int = 0
+
     private let defaults: UserDefaults
     private var loadedAccountKey: String?
 
@@ -108,6 +111,7 @@ final class CategoryStore: ObservableObject {
         } else {
             items = []
         }
+        revision &+= 1
         seedIfNeeded()
     }
 
@@ -137,6 +141,7 @@ final class CategoryStore: ObservableObject {
     private func persist() {
         guard let data = try? JSONEncoder().encode(items) else { return }
         defaults.set(data, forKey: storageKey)
+        revision &+= 1
     }
 
     // MARK: - 查询

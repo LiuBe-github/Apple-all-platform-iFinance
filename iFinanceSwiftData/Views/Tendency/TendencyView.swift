@@ -13,8 +13,20 @@ struct TendencyView: View {
     
     // MARK: - 数据查询（SwiftData）
     
-    @Query(filter: PersistenceController.billUserPredicate, sort: \Bill.date, animation: .default)
-    private var allBills: [Bill]
+    /// 只取最近 24 个月的账单（覆盖年视图、总收支 12 个月窗口与横向回看）
+    @Query private var allBills: [Bill]
+
+    init() {
+        let calendar = Calendar.current
+        let monthStart = calendar.date(from: calendar.dateComponents([.year, .month], from: Date())) ?? Date()
+        let windowStart = calendar.date(byAdding: .month, value: -24, to: monthStart) ?? Date.distantPast
+        let identifier = PersistenceController.currentUserIdentifier
+        // 注意：#Predicate 里不能用 `??`，用强制解包（账单的 date 在写入时必填）
+        let predicate = #Predicate<Bill> { bill in
+            bill.createdBy == identifier && bill.date! >= windowStart
+        }
+        _allBills = Query(filter: predicate, sort: \Bill.date, animation: .default)
+    }
     
     // MARK: - 视图状态
     
