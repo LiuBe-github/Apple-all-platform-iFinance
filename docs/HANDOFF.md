@@ -22,7 +22,7 @@ xcodebuild build -project iFinance.xcodeproj -scheme iFinance \
 | 项 | 状态 |
 |----|------|
 | 分支 / 远端 | `codex/platform-18-27`，起点 `main` @ `fd6b1fb`，**未推送远端** |
-| 提交数 | 30 次（… 28 分类冷启动修复 · 29 趋势图 scrub 改造 · 30 图表对齐 Apple 规范 R1–R22；完整台账见 [memory/work-history.md](../memory/work-history.md)） |
+| 提交数 | 31 次（… 29 趋势图 scrub 改造 · 30 图表对齐 Apple 规范 R1–R22 · 31 配色回退为原色；完整台账见 [memory/work-history.md](../memory/work-history.md)） |
 | 工作区 | 干净（交接前仅存在本轮已提交的改动） |
 | 代码规模 | `iFinance` 12,779 行 · `iFinanceSwiftData` 12,445 行 · `MaciFinance` 3,663 行 · `WatchiFinance Watch App` 723 行 |
 | 测试规模 | `iFinanceTests` 15 个 XCTestCase / 97 个用例 · `iFinanceSwiftDataTests` 38 个用例 · `MaciFinanceTests` 30 个用例 |
@@ -149,6 +149,7 @@ scripts/run-on-device.sh -s iFinance --release
 | OI-42 | 第五轮改动后的备注条间距（验收：底边距键盘 ≤ 8pt、页面不位移）与总收支图零轴方向、分类红绿配色**待人工确认** | 🟡 | 在 Xcode / 真机确认 |
 | OI-45 | 趋势图 scrub 的真机验收项（240fps 慢动作、触觉计数、Reduce Motion、Dynamic Type、VoiceOver、页面滚动/返回手势）**未验证**；贴边滚动为 200ms 步进近似 | 🟡 | 按 PRD TDY-07 清单在真机逐条确认 |
 | OI-46 / OI-47 | macOS 统计页未接入图表规范（R14/R20 未达成）；图表规范的真机验收项（240fps 并排、VoiceOver 实读、触觉计数、深色 / 提高对比度 / 减弱动态 / Dynamic Type 四环境、FKA）未验证 | 🟡 | 见 PRD TDY-08 验收清单与 memory/open-items |
+| OI-48 | R16 未采用（用户取舍）：默认配色为改版前原色，橙 / 黄 / 青对浅色卡片对比度约 2.2–2.6:1；**不要擅自改默认配色**，如需增强只能在系统「提高对比度」开关下切变体 | ⚪ | 保持现状 |
 | OI-13/14 | iOS 上界已可运行（27.0 模拟器）；**watchOS 27** 与下界（macOS 15 / watchOS 11）仍仅编译级验证 | 🟡 | watchOS 27 / 下界需真机或对应系统验证后回填 PRD 与 memory |
 
 ## 9. 接手人自检清单

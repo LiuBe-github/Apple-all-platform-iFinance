@@ -67,17 +67,22 @@ struct ChartGuidelineTests {
     // MARK: - R16
 
     @Test
-    func colorsMeetContrastAndBalance() {
-        for rgb in ChartSeriesStyle.seriesLight {
-            #expect(rgb.contrastRatio(against: ChartSeriesStyle.lightCardBackground) >= 3.0)
+    func paletteKeepsOriginalValues() {
+        let expected: [(Double, Double, Double)] = [
+            (0.18, 0.60, 1.00), (0.30, 0.78, 0.44), (1.00, 0.60, 0.10), (0.75, 0.35, 1.00),
+            (1.00, 0.30, 0.30), (0.10, 0.75, 0.85), (1.00, 0.80, 0.10), (0.55, 0.55, 0.60)
+        ]
+        #expect(ChartSeriesStyle.seriesLight.count == expected.count)
+        for (index, pair) in expected.enumerated() {
+            let rgb = ChartSeriesStyle.seriesLight[index]
+            #expect(abs(rgb.red - pair.0) < 1e-9)
+            #expect(abs(rgb.green - pair.1) < 1e-9)
+            #expect(abs(rgb.blue - pair.2) < 1e-9)
         }
-        for rgb in ChartSeriesStyle.seriesDark {
-            #expect(rgb.contrastRatio(against: ChartSeriesStyle.darkCardBackground) >= 3.0)
-        }
-        let light = ChartSeriesStyle.seriesLight.map(\.relativeLuminance)
-        let dark = ChartSeriesStyle.seriesDark.map(\.relativeLuminance)
-        #expect((light.max() ?? 0) - (light.min() ?? 0) < 0.10)
-        #expect((dark.max() ?? 0) - (dark.min() ?? 0) < 0.10)
+        #expect(ChartSeriesStyle.seriesDark == ChartSeriesStyle.seriesLight)
+        #expect(ChartSeriesStyle.expenseLight == ChartRGB(red: 1.0, green: 0.27, blue: 0.23))
+        #expect(ChartSeriesStyle.incomeLight == ChartRGB(red: 0.18, green: 0.78, blue: 0.44))
+        #expect(HeatmapRamp.light[4] == ChartRGB(red: 0.15, green: 0.42, blue: 0.86))
     }
 
     @Test

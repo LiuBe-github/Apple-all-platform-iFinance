@@ -32,6 +32,7 @@
 | OI-45 | 趋势图 scrub 的**真机验收项未完成**：240fps 慢动作逐条核对契约 1–5、触觉次数（扫过 6 点 = 6 次）、Reduce Motion 无位移/缩放、Dynamic Type 最大档浮层不截断、VoiceOver 中文朗读、页面纵向滚动与返回手势不被拦截；另：贴边自动滚动为 200ms 步进近似（D-64），手感可能不如 Health 连续 | 🟡 | 真机按 PRD TDY-07 验收清单逐条确认；若贴边手感不足，再评估启用原生 `chartScrollableAxes` 并验证选择手势共存 |
 | OI-46 | **macOS 统计页未接入图表规范**：`MaciFinance/Views/StatisticsView.swift` 折线图无 `chartForegroundStyleScale` / 图例 / 线型区分，颜色仍硬编码红绿（R14、R20 未达成）；动画仍是 `.spring(...)` 而非 AppMotion token | 🟡 | 需要三端一致时按 iOS 的 `ChartSeriesStyle` + `chartForegroundStyleScale` + legend 补最小改动（用户本轮明确不动 macOS） |
 | OI-47 | 图表规范的真机验收项未完成（与 OI-45 同批执行）：240fps 慢动作并排比对、VoiceOver 实读图表逐点标签与摘要、触觉计数、深色 / 提高对比度 / 减弱动态效果 / Dynamic Type 最大档四环境无截断无低对比；FKA（全键盘访问）可行性未验证 | 🟡 | 按 PRD TDY-08 的验收清单在真机逐条确认，结果回填 memory |
+| OI-48 | **R16 未采用（用户取舍）**：默认配色回到改版前的原色后，8 色中的橙 / 黄 / 青对浅色卡片对比度低于 3:1（约 2.2–2.6:1），深色模式沿用同一组原色；可辨识性依赖形状 / 符号 + 文字图例。若将来要做无障碍增强，**只能在系统「提高对比度」开关下切换变体**，不要改默认配色 | ⚪ | 保持现状；若你希望我改默认色，请先看色板对比再决定 |
 
 ## C. 验证欠账（环境限制导致）
 

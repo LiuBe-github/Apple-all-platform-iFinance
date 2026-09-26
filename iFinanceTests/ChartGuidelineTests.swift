@@ -118,33 +118,34 @@ final class ChartGuidelineTests: XCTestCase {
 
     // MARK: - R16：配色对比度与明度均衡
 
-    func testSeriesColorsMeetContrastAgainstCardBackground() {
-        for (index, rgb) in ChartSeriesStyle.seriesLight.enumerated() {
-            XCTAssertGreaterThanOrEqual(
-                rgb.contrastRatio(against: ChartSeriesStyle.lightCardBackground), 3.0,
-                "R16：浅色系列 #\(index) 对卡片对比度不足"
-            )
+    /// R16 取舍（用户 2026-09-27 决定）：**保留改版前的原始配色**，不做明度均衡。
+    /// 因此这里锁定颜色取值而不是对比度阈值，避免后续被"顺手优化"改成偏暗的色板。
+    func testSeriesPaletteKeepsOriginalValues() {
+        let expected: [(Double, Double, Double)] = [
+            (0.18, 0.60, 1.00), (0.30, 0.78, 0.44), (1.00, 0.60, 0.10), (0.75, 0.35, 1.00),
+            (1.00, 0.30, 0.30), (0.10, 0.75, 0.85), (1.00, 0.80, 0.10), (0.55, 0.55, 0.60)
+        ]
+        XCTAssertEqual(ChartSeriesStyle.seriesLight.count, expected.count, "系列板仍应是 8 色")
+        for (index, pair) in expected.enumerated() {
+            let rgb = ChartSeriesStyle.seriesLight[index]
+            XCTAssertEqual(rgb.red, pair.0, accuracy: 1e-9, "第 \(index) 色被改动")
+            XCTAssertEqual(rgb.green, pair.1, accuracy: 1e-9, "第 \(index) 色被改动")
+            XCTAssertEqual(rgb.blue, pair.2, accuracy: 1e-9, "第 \(index) 色被改动")
         }
-        for (index, rgb) in ChartSeriesStyle.seriesDark.enumerated() {
-            XCTAssertGreaterThanOrEqual(
-                rgb.contrastRatio(against: ChartSeriesStyle.darkCardBackground), 3.0,
-                "R16：深色系列 #\(index) 对卡片对比度不足"
-            )
-        }
+        XCTAssertEqual(ChartSeriesStyle.seriesDark, ChartSeriesStyle.seriesLight, "深浅模式沿用同一组原色")
     }
 
-    func testSemanticColorsMeetContrastInBothSchemes() {
-        XCTAssertGreaterThanOrEqual(ChartSeriesStyle.expenseLight.contrastRatio(against: ChartSeriesStyle.lightCardBackground), 3.0)
-        XCTAssertGreaterThanOrEqual(ChartSeriesStyle.incomeLight.contrastRatio(against: ChartSeriesStyle.lightCardBackground), 3.0)
-        XCTAssertGreaterThanOrEqual(ChartSeriesStyle.expenseDark.contrastRatio(against: ChartSeriesStyle.darkCardBackground), 3.0)
-        XCTAssertGreaterThanOrEqual(ChartSeriesStyle.incomeDark.contrastRatio(against: ChartSeriesStyle.darkCardBackground), 3.0)
+    func testSemanticColorsKeepOriginalValues() {
+        XCTAssertEqual(ChartSeriesStyle.expenseLight, ChartRGB(red: 1.0, green: 0.27, blue: 0.23))
+        XCTAssertEqual(ChartSeriesStyle.incomeLight, ChartRGB(red: 0.18, green: 0.78, blue: 0.44))
+        XCTAssertEqual(ChartSeriesStyle.expenseDark, ChartSeriesStyle.expenseLight)
+        XCTAssertEqual(ChartSeriesStyle.incomeDark, ChartSeriesStyle.incomeLight)
     }
 
-    func testSeriesLightnessIsBalancedWithinBand() {
-        let light = ChartSeriesStyle.seriesLight.map(\.relativeLuminance)
-        let dark = ChartSeriesStyle.seriesDark.map(\.relativeLuminance)
-        XCTAssertLessThan((light.max() ?? 0) - (light.min() ?? 0), 0.10, "R16：浅色系列明度差应小于 0.10")
-        XCTAssertLessThan((dark.max() ?? 0) - (dark.min() ?? 0), 0.10, "R16：深色系列明度差应小于 0.10")
+    func testHeatmapRampKeepsOriginalLevels() {
+        XCTAssertEqual(HeatmapRamp.light[4], ChartRGB(red: 0.15, green: 0.42, blue: 0.86))
+        XCTAssertEqual(HeatmapRamp.light[2], ChartRGB(red: 0.56, green: 0.75, blue: 0.98))
+        XCTAssertEqual(HeatmapRamp.dark, HeatmapRamp.light, "默认色阶深浅共用原色（提高对比度变体仅在系统开关下生效）")
     }
 
     func testHeatmapRampLightnessIsMonotonic() {

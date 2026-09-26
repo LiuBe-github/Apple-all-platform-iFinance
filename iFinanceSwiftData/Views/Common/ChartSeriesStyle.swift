@@ -3,8 +3,9 @@
 //  iFinance
 //
 //  图表系列语义色与「不以颜色为唯一区分手段」的形状通道。
-//  - R16：8 色系列的相对亮度收在同一感知带（浅色 L≈0.20、深色 L≈0.44），
-//         对卡片背景对比度浅色 ≥3.7:1、深色 ≥7.9:1；色相沿用原有 8 色血统。
+//  - R16：**保留改版前的原始配色**（用户明确要求「我要原来的颜色」，不接受明度均衡后的变暗观感）；
+//         因此浅色 / 深色使用同一组原色，对比度目标（≥3:1）不再是本项目的验收项，
+//         改由「形状 / 符号 + 文字图例」保证可辨识（R14）。
 //  - R17：本 App 为「红＝支出、绿＝收入」的记账惯例，与国内股票「红涨绿跌」相反，
 //         因此图例必须带文字（收入 / 支出），不能只靠颜色。
 //  - R14：系统「不以颜色为唯一区分手段」开启时，用形状 / 符号区分系列。
@@ -78,36 +79,30 @@ enum ChartSeriesStyle {
 
     // MARK: - 语义色
 
-    static let expenseLight = ChartRGB(red: 0xD6 / 255, green: 0x3D / 255, blue: 0x3D / 255)
-    static let expenseDark = ChartRGB(red: 0xF5 / 255, green: 0x8B / 255, blue: 0x8B / 255)
-    static let incomeLight = ChartRGB(red: 0x19 / 255, green: 0x8E / 255, blue: 0x44 / 255)
-    static let incomeDark = ChartRGB(red: 0x28 / 255, green: 0xC6 / 255, blue: 0x62 / 255)
-    static let unknownLight = ChartRGB(red: 0x7B / 255, green: 0x81 / 255, blue: 0x8E / 255)
-    static let unknownDark = ChartRGB(red: 0xA9 / 255, green: 0xAD / 255, blue: 0xB6 / 255)
+    /// 支出红（原值 `Color(red: 1.0, green: 0.27, blue: 0.23)`）
+    static let expenseLight = ChartRGB(red: 1.0, green: 0.27, blue: 0.23)
+    static let expenseDark = expenseLight
+    /// 收入绿（原值 `Color(red: 0.18, green: 0.78, blue: 0.44)`）
+    static let incomeLight = ChartRGB(red: 0.18, green: 0.78, blue: 0.44)
+    static let incomeDark = incomeLight
+    static let unknownLight = ChartRGB(red: 0.55, green: 0.55, blue: 0.60)
+    static let unknownDark = unknownLight
 
     // MARK: - 8 色系列板（色相沿用原调色板，明度收进同一带）
 
+    /// 改版前的 8 色循环调色板（原样保留；深浅模式共用）
     static let seriesLight: [ChartRGB] = [
-        ChartRGB(red: 0x37 / 255, green: 0x79 / 255, blue: 0xE4 / 255), // 蓝
-        ChartRGB(red: 0x19 / 255, green: 0x8E / 255, blue: 0x44 / 255), // 绿
-        ChartRGB(red: 0xAB / 255, green: 0x6E / 255, blue: 0x08 / 255), // 橙
-        ChartRGB(red: 0xA3 / 255, green: 0x52 / 255, blue: 0xEF / 255), // 紫
-        ChartRGB(red: 0xE0 / 255, green: 0x40 / 255, blue: 0x40 / 255), // 红
-        ChartRGB(red: 0x04 / 255, green: 0x87 / 255, blue: 0x9E / 255), // 青
-        ChartRGB(red: 0x9B / 255, green: 0x76 / 255, blue: 0x05 / 255), // 黄褐
-        ChartRGB(red: 0x75 / 255, green: 0x7B / 255, blue: 0x89 / 255)  // 灰
+        ChartRGB(red: 0.18, green: 0.60, blue: 1.0),   // 蓝
+        ChartRGB(red: 0.30, green: 0.78, blue: 0.44),  // 绿
+        ChartRGB(red: 1.0,  green: 0.60, blue: 0.10),  // 橙
+        ChartRGB(red: 0.75, green: 0.35, blue: 1.0),   // 紫
+        ChartRGB(red: 1.0,  green: 0.30, blue: 0.30),  // 红
+        ChartRGB(red: 0.10, green: 0.75, blue: 0.85),  // 青
+        ChartRGB(red: 1.0,  green: 0.80, blue: 0.10),  // 黄
+        ChartRGB(red: 0.55, green: 0.55, blue: 0.60)   // 灰
     ]
 
-    static let seriesDark: [ChartRGB] = [
-        ChartRGB(red: 0x87 / 255, green: 0xB2 / 255, blue: 0xF9 / 255),
-        ChartRGB(red: 0x33 / 255, green: 0xCA / 255, blue: 0x6A / 255),
-        ChartRGB(red: 0xF5 / 255, green: 0x9F / 255, blue: 0x0C / 255),
-        ChartRGB(red: 0xCD / 255, green: 0x9D / 255, blue: 0xFA / 255),
-        ChartRGB(red: 0xF6 / 255, green: 0x97 / 255, blue: 0x97 / 255),
-        ChartRGB(red: 0x2D / 255, green: 0xC2 / 255, blue: 0xDB / 255),
-        ChartRGB(red: 0xDE / 255, green: 0xAA / 255, blue: 0x08 / 255),
-        ChartRGB(red: 0xAE / 255, green: 0xB1 / 255, blue: 0xB9 / 255)
-    ]
+    static let seriesDark = seriesLight
 
     // MARK: - 取色
 
