@@ -1,7 +1,7 @@
 "tab.home" = "Home";
 "tab.transaction" = "Ledger";
 "tab.tendency" = "Trends";
-"tab.setting" = "Settings";
+"tab.setting" = "Me";
 "tab.todo" = "To-Do";
 
 "home.title" = "Overview";

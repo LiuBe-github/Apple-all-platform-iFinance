@@ -1,7 +1,7 @@
 "tab.home" = "ホーム";
 "tab.transaction" = "家計簿";
 "tab.tendency" = "トレンド";
-"tab.setting" = "設定";
+"tab.setting" = "マイ";
 "tab.todo" = "やること";
 
 "home.title" = "概要";

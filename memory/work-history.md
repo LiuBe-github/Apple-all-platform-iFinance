@@ -44,6 +44,8 @@
 | 33 | `c803e02` | feat(ios) | **M2 待办与备忘标签页**：Tab 枚举新增 `todo` 插在「账本」与「趋势」之间（首页/账本/待办/趋势/设置 仍 5 项）；新增 `Views/Todo/` 五个文件（分段切换、六分组列表、勾选完成、滑动删除、清除已完成二次确认、待办/备忘编辑 sheet）；纯逻辑补 `TodoRecurrence.nextDraft` 与 `TodoTagRules`；四语言 80 条文案一次性落地 | 两版 iOS 构建 exit=0；`iFinanceTests` **153 条**、`iFinanceSwiftDataTests` **58 条**全绿；本地化审计四 target 通过（569 key）；iPhone 16 两版启动冒烟正常 |
 | 34 | `b0feeff` | feat(ios) | **M3 资产页**（账本页右上角入口，不占标签位）：总资产卡（较上次变化金额/百分比 + 负债合计 + 净资产 + 账户数）→ 按账户类型聚合的环形图（点选高亮 + 中心读数 + 明细列表兼图例）→ 分类型账户列表（组内余额降序、负数红色、点行编辑、滑动删除）；`AssetEditSheet`（类型九宫格 / ± 切换负数余额 / 计入总资产 / 删除二次确认）；账户增删改保存后按当天 upsert 一条 `AssetSnapshot` | 四端构建 exit=0；`iFinanceTests` 153 条（含 AssetBreakdownTests 6 条）、`iFinanceSwiftDataTests` 58 条、`MaciFinanceTests` 30 条全绿；本地化审计四 target 通过；两版 App 在 iPhone 16 / iOS 18.6 启动冒烟无崩溃 |
 
+| 35 | *(最新一次提交)* | feat(ios) | 标签栏末项由「设置」更名为「我的」（四语言：我的 / 我的 / Me / マイ），图标从齿轮改为**用户头像缩略图**（`.renderingMode(.original)` + 圆形裁切 + 新增 `AppLayout.tabBarIcon` = 25pt；未设置头像时回落 `person.crop.circle.fill`）；ContentView 注入 `authManager`，预览补 `environmentObject` | 两版 iOS 构建 exit=0；`iFinanceTests` 153 条、`iFinanceSwiftDataTests` 58 条全绿；本地化审计四 target 通过；两版 App 在 iPhone 16 / iOS 18.6 安装启动无崩溃（首帧 1012ms / 585ms）。**标签栏头像观感与「有头像 / 无头像」两种状态待人工确认（见 OI-49）** |
+
 ## 验证方式说明（沿用本轮约定）
 
 1. **四端编译**：`iFinance`、`iFinanceSwiftData`、`MaciFinance`、`WatchiFinance Watch App`（后两端只确认未被牵连）。

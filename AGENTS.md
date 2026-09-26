@@ -74,7 +74,7 @@ docs/                     项目记忆与接口文档（改动接口后同步更
    - 内置分类 = 枚举 rawValue（支出 25 类 / 收入 12 类，转账固定 `"transfer"`）；
    - 自定义分类 = 用户输入的**名称**；二级分类 = `父/子` 复合路径（如 `交通/地铁`），分隔符固定 `"/"` 且名称里禁止出现。
    编辑页的类型切换、旧数据归一化与保存校验统一走 `BillEditRules` → `CategoryResolver.isValid(_:kind:)`（`Views/Common/CategoryResolver.swift`），**不要再用自由文本输入分类**；展示名/图标/配色一律通过 `CategoryResolver` 解析，不要直接 `ExpenditureCategory(rawValue:)` 反查。
-10. **标签栏固定 5 项**：首页 / 账本 / **待办** / 趋势 / 设置。待办与备忘在同一个 Tab 内用分段切换（`Views/Todo/TodoTabView.swift`）；**资产不占标签位**，入口是账本页右上角（头像左侧）的按钮（`Views/Asset/AssetView.swift`）。不要把新页面加成第 6 个 Tab。
+10. **标签栏固定 5 项**：首页 / 账本 / **待办** / 趋势 / **我的**（末项标签名为 `tab.setting` = 我的 · Me · マイ，图标是用户头像、无头像时回落 `person.crop.circle.fill`）。待办与备忘在同一个 Tab 内用分段切换（`Views/Todo/TodoTabView.swift`）；**资产不占标签位**，入口是账本页右上角（头像左侧）的按钮（`Views/Asset/AssetView.swift`）。不要把新页面加成第 6 个 Tab。
 11. **待办 / 备忘 / 资产的数据隔离**：查询必须叠加 `PersistenceController` 的 `todoUserPredicate` / `todoTagUserPredicate` / `memoUserPredicate` / `assetAccountUserPredicate` / `assetSnapshotUserPredicate`；写入必带 `createdBy`（与 `updatedBy`）。文案命名空间是 `todo.` / `memo.` / `asset.`，Tab 用 `tab.todo`。
 12. **SwiftData 删除待办必须走对象图删除**：`TodoItem.tags` 是非可选多对多，`context.delete(model:where:)` 会抛 `mandatory MTM nullify inverse`（`NSCocoaErrorDomain` 134050）且被 `try?` 静默吞掉，数据实际删不掉；只有逐个 `context.delete(_:)` 才会级联子任务并清理关系（见 `AuthManager.deleteTodoAndAssetData`）。
 13. **SwiftData 测试夹具必须持有容器**：禁止 `PersistenceController(inMemory: true).container.mainContext` 这种临时实例写法（容器随即销毁，`insert` 直接 SIGTRAP）；用局部 `let controller = ...` 或夹具类持有。

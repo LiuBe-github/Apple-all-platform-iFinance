@@ -58,6 +58,8 @@ enum AppLayout {
     static let chartHeightRegular: CGFloat = 190
     /// 热力图单元格
     static let heatmapCell: CGFloat = 12
+    /// 标签栏图标（「我的」标签用头像时的圆形直径）
+    static let tabBarIcon: CGFloat = 25
     /// 进入后台时整页隐私模糊的半径（仅在开启应用锁时生效）
     static let privacyBlurRadius: CGFloat = 20
 }
