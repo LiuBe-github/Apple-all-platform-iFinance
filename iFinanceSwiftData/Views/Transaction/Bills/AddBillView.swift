@@ -38,32 +38,29 @@ struct AddBillView: View {
     
     var body: some View {
         NavigationStack {
-            ZStack(alignment: .bottom) {
-                // 主要内容区域（可滚动）
-                ScrollView {
-                    VStack(alignment: .leading) {
-                        Group {
-                            if transactionType == .expenditure {
-                                ExpenditureCategoryGrid(selection: $selectedExpenditureCategory)
-                                    .equatable()
-                            } else if transactionType == .income {
-                                IncomeCategoryGrid(selection: $selectedIncomeCategory)
-                                    .equatable()
-                            } else {
-                                transferForm
-                            }
+            // 主要内容区域（可滚动）
+            ScrollView {
+                VStack(alignment: .leading) {
+                    Group {
+                        if transactionType == .expenditure {
+                            ExpenditureCategoryGrid(selection: $selectedExpenditureCategory)
+                                .equatable()
+                        } else if transactionType == .income {
+                            IncomeCategoryGrid(selection: $selectedIncomeCategory)
+                                .equatable()
+                        } else {
+                            transferForm
                         }
-                        .id(transactionType)
-                        .transition(.opacity.combined(with: .move(edge: .bottom)))
-                        .appAnimation(AppMotion.standard, value: transactionType)
-                        
-                        // 占位符，确保内容不会被底部键盘遮挡
-                        Color.clear
-                            .frame(height: 300) // 键盘高度的占位
                     }
+                    .id(transactionType)
+                    .transition(.opacity.combined(with: .move(edge: .bottom)))
+                    .appAnimation(AppMotion.standard, value: transactionType)
                 }
-                
-                // 固定在底部的数字键盘
+            }
+            // 键盘弹出时不顶走页面（备注条由 NumberPad 自行浮到键盘上方）
+            .ignoresSafeArea(.keyboard, edges: .bottom)
+            // 数字键盘固定在底部；由系统为滚动内容预留等高内边距（修复最后一排分类被遮挡）
+            .safeAreaInset(edge: .bottom, spacing: 0) {
                 if showNumberPad {
                     NumberPad(
                         displayText: $displayText,
@@ -73,12 +70,12 @@ struct AddBillView: View {
                         selectedDate: $selectedDate
                     ) {
                         saveBill()
-                        // 解析显示文本获取最终数值
-                        // let result = parseExpression(displayText)
                     }
                     .transition(.move(edge: .bottom))
-                    .background(Color(UIColor.systemBackground))
-                    .padding(.bottom, -20)
+                    .background(alignment: .bottom) {
+                        Color(UIColor.systemGroupedBackground)
+                            .ignoresSafeArea(edges: .bottom)
+                    }
                 }
             }
             .toolbar {

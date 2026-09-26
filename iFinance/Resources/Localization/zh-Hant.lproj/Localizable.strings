@@ -74,7 +74,7 @@
 "tendency.expense" = "支出趨勢";
 "tendency.income" = "收入趨勢";
 "tendency.last_year" = "近一年連續數據";
-"tendency.drag_hint" = "在圖表上拖動可查看任意日期數據";
+"tendency.drag_hint" = "按住柱子看數值 · 拖動空白處換時間";
 "tendency.no_data" = "當前無數據可渲染";
 "tendency.avg" = "均值";
 "tendency.total" = "總額";
@@ -291,6 +291,7 @@
 "cat.inc.tax" = "退稅";
 "cat.inc.unexpected" = "意外收入";
 "cat.inc.other" = "其他";
+"cat.inc.allowance" = "生活費";
 
 /* Search */
 "search.title" = "搜尋帳單";

@@ -21,6 +21,18 @@ struct TendencyChartView: View {
     
     @Binding var selectedDate: Date?
     @Binding var scrollPosition: Date
+
+    // MARK: - 手势状态
+
+    /// 手势模式：命中柱子 = 只切换数值；落在空白处 = 横向滚动时间窗口
+    private enum DragMode {
+        case none
+        case select
+        case scroll
+    }
+
+    @State private var dragMode: DragMode = .none
+    @State private var dragStartScroll: Date?
     
     // MARK: - 格式化器（静态缓存）
     
@@ -288,29 +300,99 @@ struct TendencyChartView: View {
             Rectangle()
                 .fill(.clear)
                 .contentShape(Rectangle())
-                .simultaneousGesture(
+                .gesture(
                     DragGesture(minimumDistance: 0)
                         .onChanged { value in
                             guard let frame = proxy.plotFrame else { return }
                             let plotOrigin = geometry[frame].origin
                             let plotSize = geometry[frame].size
+                            guard plotSize.width > 0, plotSize.height > 0 else { return }
                             let x = value.location.x - plotOrigin.x
                             let y = value.location.y - plotOrigin.y
-                            
-                            guard x >= 0, x <= plotSize.width, y >= 0, y <= plotSize.height,
-                                  let date: Date = proxy.value(atX: x, as: Date.self),
-                                  let nearest = series.min(by: { abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date)) }) else {
-                                return
+
+                            if dragMode == .none {
+                                dragMode = resolveDragMode(x: x, y: y, plotSize: plotSize, proxy: proxy)
+                                dragStartScroll = scrollPosition
                             }
-                            
-                            let px = proxy.position(forX: nearest.date) ?? x
-                            let dx = px - x
-                            if dx * dx <= TendencyConstants.touchDetectionRadius * TendencyConstants.touchDetectionRadius {
-                                selectedDate = nearest.date
+
+                            switch dragMode {
+                            case .select:
+                                guard x >= 0, x <= plotSize.width, y >= 0, y <= plotSize.height else { return }
+                                updateSelection(at: x, proxy: proxy)
+                            case .scroll:
+                                guard let base = dragStartScroll else { return }
+                                scrollWindow(from: base, translation: value.translation.width, plotWidth: plotSize.width)
+                            case .none:
+                                break
                             }
+                        }
+                        .onEnded { _ in
+                            dragMode = .none
+                            dragStartScroll = nil
                         }
                 )
         }
+    }
+
+    // MARK: - 手势判定与处理
+
+    /// 只有「月 / 6 个月 / 年」档位支持空白处横向滚动；日 / 周保持仅选中数值
+    private var supportsHorizontalScroll: Bool {
+        visibleDays >= 30
+    }
+
+    private func resolveDragMode(x: CGFloat, y: CGFloat, plotSize: CGSize, proxy: ChartProxy) -> DragMode {
+        guard supportsHorizontalScroll else { return .select }
+        let insideVertically = y >= 0 && y <= plotSize.height
+        if insideVertically, isNearDataPoint(x: x, proxy: proxy) {
+            return .select
+        }
+        return .scroll
+    }
+
+    /// 是否按在柱子附近（横向距离在触摸半径内）
+    private func isNearDataPoint(x: CGFloat, proxy: ChartProxy) -> Bool {
+        guard let date: Date = proxy.value(atX: x, as: Date.self),
+              let nearest = series.min(by: {
+                  abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date))
+              }),
+              let px = proxy.position(forX: nearest.date) else {
+            return false
+        }
+        return abs(px - x) <= TendencyConstants.touchDetectionRadius
+    }
+
+    private func updateSelection(at x: CGFloat, proxy: ChartProxy) {
+        guard let date: Date = proxy.value(atX: x, as: Date.self),
+              let nearest = series.min(by: {
+                  abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date))
+              }),
+              let px = proxy.position(forX: nearest.date) else {
+            return
+        }
+        let dx = px - x
+        if dx * dx <= TendencyConstants.touchDetectionRadius * TendencyConstants.touchDetectionRadius {
+            selectedDate = nearest.date
+        }
+    }
+
+    /// 手指拖动换算成时间窗口位移（往右拖 = 看更早的数据）
+    private func scrollWindow(from base: Date, translation: CGFloat, plotWidth: CGFloat) {
+        guard plotWidth > 0 else { return }
+        let daysShift = -Double(translation / plotWidth) * Double(visibleDays)
+        let proposed = base.addingTimeInterval(daysShift * 86_400)
+        scrollPosition = clampedScrollDate(proposed)
+    }
+
+    /// 不滚出数据范围（最早数据 ~ 今天）
+    private func clampedScrollDate(_ date: Date) -> Date {
+        let today = Date().startOfDay
+        let earliest = series.first?.date.startOfDay ?? today
+        let latest = min(today, series.last?.date.startOfDay ?? today)
+        let day = date.startOfDay
+        if day < earliest { return earliest }
+        if day > latest { return latest }
+        return day
     }
     
     // MARK: - 辅助视图

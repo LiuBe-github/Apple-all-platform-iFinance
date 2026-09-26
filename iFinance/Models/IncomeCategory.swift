@@ -20,6 +20,7 @@ enum IncomeCategory: String, CaseIterable, TransactionCategory {
     case refundTax = "退税"
     case unexpectedIncom = "意外收入"
     case other = "其他"
+    case livingAllowance = "生活费"
 
     var localizedKey: String {
         switch self {
@@ -34,6 +35,7 @@ enum IncomeCategory: String, CaseIterable, TransactionCategory {
         case .refundTax: return "cat.inc.tax"
         case .unexpectedIncom: return "cat.inc.unexpected"
         case .other: return "cat.inc.other"
+        case .livingAllowance: return "cat.inc.allowance"
         }
     }
 
@@ -55,6 +57,7 @@ enum IncomeCategory: String, CaseIterable, TransactionCategory {
         case .refundTax: return "dollarsign.arrow.trianglehead.counterclockwise.rotate.90"
         case .unexpectedIncom: return "exclamationmark.bubble"
         case .other: return "ellipsis"
+        case .livingAllowance: return "banknote"
         
         }
     }

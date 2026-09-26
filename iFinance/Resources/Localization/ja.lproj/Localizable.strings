@@ -74,7 +74,7 @@
 "tendency.expense" = "支出トレンド";
 "tendency.income" = "収入トレンド";
 "tendency.last_year" = "過去1年の連続データ";
-"tendency.drag_hint" = "チャートをドラッグして任意日の値を確認";
+"tendency.drag_hint" = "バーを長押しで数値表示 ・ 空白をドラッグでスクロール";
 "tendency.no_data" = "描画するデータがありません";
 "tendency.avg" = "平均";
 "tendency.total" = "合計";
@@ -291,6 +291,7 @@
 "cat.inc.tax" = "税金還付";
 "cat.inc.unexpected" = "臨時収入";
 "cat.inc.other" = "その他";
+"cat.inc.allowance" = "生活費";
 
 /* Search */
 "search.title" = "検索";

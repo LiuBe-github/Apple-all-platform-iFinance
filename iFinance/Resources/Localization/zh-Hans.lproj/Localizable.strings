@@ -157,7 +157,7 @@
 "tendency.span_month" = "月";
 "tendency.span_6month" = "6个月";
 "tendency.span_year" = "年";
-"tendency.drag_hint" = "在图表上拖动可查看任意日期数据";
+"tendency.drag_hint" = "按住柱子看数值 · 拖动空白处换时间";
 "tendency.no_data" = "当前无数据可渲染";
 "tendency.avg" = "均值";
 "tendency.total" = "总额";
@@ -200,6 +200,7 @@
 "cat.inc.tax" = "退税";
 "cat.inc.unexpected" = "意外收入";
 "cat.inc.other" = "其他";
+"cat.inc.allowance" = "生活费";
 
 "auth.provider_wechat" = "微信";
 "auth.provider_qq" = "QQ";

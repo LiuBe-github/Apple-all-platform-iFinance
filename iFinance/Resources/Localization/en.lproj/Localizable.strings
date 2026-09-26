@@ -74,7 +74,7 @@
 "tendency.expense" = "Expense Trend";
 "tendency.income" = "Income Trend";
 "tendency.last_year" = "Continuous data for last year";
-"tendency.drag_hint" = "Drag on chart to inspect any date";
+"tendency.drag_hint" = "Hold a bar for values · Drag empty area to scroll";
 "tendency.no_data" = "No data to render";
 "tendency.avg" = "Average";
 "tendency.total" = "Total";
@@ -291,6 +291,7 @@
 "cat.inc.tax" = "Tax Refund";
 "cat.inc.unexpected" = "Unexpected Income";
 "cat.inc.other" = "Other";
+"cat.inc.allowance" = "Living Allowance";
 
 /* Search */
 "search.title" = "Search";
