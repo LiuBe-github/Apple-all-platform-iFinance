@@ -46,6 +46,8 @@
 
 | 35 | *(最新一次提交)* | feat(ios) | 标签栏末项由「设置」更名为「我的」（四语言：我的 / 我的 / Me / マイ），图标从齿轮改为**用户头像缩略图**（`.renderingMode(.original)` + 圆形裁切 + 新增 `AppLayout.tabBarIcon` = 25pt；未设置头像时回落 `person.crop.circle.fill`）；ContentView 注入 `authManager`，预览补 `environmentObject` | 两版 iOS 构建 exit=0；`iFinanceTests` 153 条、`iFinanceSwiftDataTests` 58 条全绿；本地化审计四 target 通过；两版 App 在 iPhone 16 / iOS 18.6 安装启动无崩溃（首帧 1012ms / 585ms）。**标签栏头像观感与「有头像 / 无头像」两种状态待人工确认（见 OI-49）** |
 
+| 36 | `010fc88` | fix(ios) | **修「整个标签栏被头像铺满」**：`.tabItem` 里 `Image(uiImage:).resizable()` 没有固有尺寸，会被 TabView 拉伸；改为 `AvatarImageCache.thumbnail(for:diameter:)` 离屏渲染固定点尺寸的圆形缩略图位图（aspect fill → 居中裁圆 → 像素随 scale、点尺寸固定，按「数据哈希 + 直径」缓存），`ContentView` 不再用 `.resizable()/.frame/.clipShape`；新增两版 `AvatarThumbnailTests` 锁住点尺寸约束 | 两版 iOS 构建 exit=0；`iFinanceTests` **156 条**（含新增 3 条）、`iFinanceSwiftDataTests` 58 条（Swift Testing）+ 3 条（XCTest）全绿；本地化审计四 target 通过；iPhone 16 / iOS 18.6 重新安装启动无崩溃（首帧 899ms）。**带真实头像的观感仍需人工确认（OI-58）** |
+
 ## 验证方式说明（沿用本轮约定）
 
 1. **四端编译**：`iFinance`、`iFinanceSwiftData`、`MaciFinance`、`WatchiFinance Watch App`（后两端只确认未被牵连）。
