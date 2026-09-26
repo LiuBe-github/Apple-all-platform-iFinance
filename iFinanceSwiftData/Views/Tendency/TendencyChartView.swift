@@ -6,7 +6,10 @@
 import SwiftUI
 import Charts
 
-/// 趋势柱状图视图（原折线图已移除）
+/// 趋势柱状图视图（原折线图已移除）。
+/// 交互：Apple Health 式 scrub —— 原生 `chartXSelection` 负责「按下即选 / 拖动吸附 / 松手清空」，
+/// 指示线与浮层由 `chartOverlay` 绘制（松手按 `AppMotion.quick` 淡出），
+/// 贴边继续按住时按日历步长自动滚动时间窗口。日志见 `ScrubSupport.swift` 顶部说明。
 struct TendencyChartView: View {
     @Environment(\.colorScheme) private var colorScheme
     
@@ -16,23 +19,16 @@ struct TendencyChartView: View {
     let accent: Color
     let visibleDays: Int
     let isHourly: Bool
+    /// 完整数据范围（贴边自动滚动时用于夹取窗口位置）
+    let scrollBounds: ClosedRange<Date>
     
     // MARK: - 交互状态
     
     @Binding var selectedDate: Date?
     @Binding var scrollPosition: Date
 
-    // MARK: - 手势状态
-
-    /// 手势模式：命中柱子 = 只切换数值；落在空白处 = 横向滚动时间窗口
-    private enum DragMode {
-        case none
-        case select
-        case scroll
-    }
-
-    @State private var dragMode: DragMode = .none
-    @State private var dragStartScroll: Date?
+    /// 松手后仍用于绘制浮层淡出（selectedDate 变 nil 时不立刻移除视图）
+    @State private var lastSelectedDate: Date?
     
     // MARK: - 格式化器（静态缓存）
     
@@ -61,6 +57,7 @@ struct TendencyChartView: View {
         accent: Color,
         visibleDays: Int,
         isHourly: Bool = false,
+        scrollBounds: ClosedRange<Date>,
         selectedDate: Binding<Date?>,
         scrollPosition: Binding<Date>
     ) {
@@ -68,6 +65,7 @@ struct TendencyChartView: View {
         self.accent = accent
         self.visibleDays = visibleDays
         self.isHourly = isHourly
+        self.scrollBounds = scrollBounds
         self._selectedDate = selectedDate
         self._scrollPosition = scrollPosition
     }
@@ -95,6 +93,13 @@ struct TendencyChartView: View {
                     .frame(height: TendencyConstants.chartHeight)
                     .appAnimation(AppMotion.standard, value: series.count)
             }
+        }
+        .onChange(of: selectedDate) { oldValue, newValue in
+            handleSelectionChange(from: oldValue, to: newValue)
+        }
+        // 选中项贴住窗口边缘时自动滚动时间窗口（契约 4）
+        .task(id: edgeHold) {
+            await runEdgeAutoScroll()
         }
     }
     
@@ -151,39 +156,23 @@ struct TendencyChartView: View {
         Chart {
             ForEach(series) { point in
                 BarMark(
-                    x: .value("date", point.date),
-                    y: .value("amount", point.value)
+                    x: .value(L10n.string("tendency.a11y.date"), point.date),
+                    y: .value(L10n.string("tendency.a11y.amount"), point.value)
                 )
                 .foregroundStyle(accent.gradient)
                 .cornerRadius(4)
-                .opacity(barOpacity(for: point))
-            }
-            
-            if let focus = selectedPoint {
-                RuleMark(x: .value("focus", focus.date))
-                    .foregroundStyle(.secondary.opacity(0.35))
-                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
-                
-                PointMark(
-                    x: .value("focus-date", focus.date),
-                    y: .value("focus-value", focus.value)
-                )
-                .symbolSize(90)
-                .foregroundStyle(accent)
-                .annotation(position: .top, alignment: .center) {
-                    annotationLabel(value: focus.value)
-                        .transition(.scale(scale: 0.6).combined(with: .opacity))
-                }
             }
         }
-        .chartScrollableAxes(.horizontal)
-        .chartScrollPosition(x: $scrollPosition)
+        // 原生 scrub：按下即选、拖动吸附最近数据点、松手把绑定置空
+        .chartXSelection(value: $selectedDate)
+        // 窗口由 scrollPosition 驱动（domain 固定为当前窗口），因此不使用
+        // chartScrollableAxes / chartScrollPosition：避免与原生选择手势争抢拖动（详见 ScrubSupport.swift 顶部说明）
         .chartXVisibleDomain(length: visibleLength)
         .chartXScale(domain: viewDateRange)
         .chartXAxis { axisMarksContent }
         .chartYAxis { yAxisMarksContent }
         .chartOverlay { proxy in
-            chartGestureOverlay(proxy: proxy)
+            scrubOverlay(proxy: proxy)
         }
         .chartPlotStyle { plot in
             plot.background(
@@ -191,7 +180,11 @@ struct TendencyChartView: View {
                     .fill(accent.opacity(0.06))
             )
         }
-        .appAnimation(AppMotion.standard, value: selectedDate)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(L10n.string("tendency.a11y.chart"))
+        .accessibilityValue(accessibilityValueText)
+        .accessibilityHint(L10n.string("tendency.a11y.hint"))
+        .appAnimation(AppMotion.quick, value: selectedDate)
         .padding(.horizontal, TendencyConstants.chartHorizontalPadding)
     }
     
@@ -292,141 +285,133 @@ struct TendencyChartView: View {
         }
     }
     
-    // MARK: - 手势处理
-    
+    // MARK: - Scrub 绘制（指示线 + 浮层）
+
     @ViewBuilder
-    private func chartGestureOverlay(proxy: ChartProxy) -> some View {
+    private func scrubOverlay(proxy: ChartProxy) -> some View {
         GeometryReader { geometry in
-            Rectangle()
-                .fill(.clear)
-                .contentShape(Rectangle())
-                .gesture(
-                    DragGesture(minimumDistance: 0)
-                        .onChanged { value in
-                            guard let frame = proxy.plotFrame else { return }
-                            let plotOrigin = geometry[frame].origin
-                            let plotSize = geometry[frame].size
-                            guard plotSize.width > 0, plotSize.height > 0 else { return }
-                            let x = value.location.x - plotOrigin.x
-                            let y = value.location.y - plotOrigin.y
+            if let frame = proxy.plotFrame {
+                let plotRect = geometry[frame]
+                // 松手后仍用 lastSelectedDate 画最后一帧，配合 AppMotion.quick 淡出
+                if let date = selectedDate ?? lastSelectedDate,
+                   let x = proxy.position(forX: date) {
+                    Rectangle()
+                        .fill(accent.opacity(0.45))
+                        .frame(width: 1, height: plotRect.height)
+                        .position(x: plotRect.minX + x, y: plotRect.midY)
 
-                            if dragMode == .none {
-                                dragMode = resolveDragMode(x: x, y: y, plotSize: plotSize, proxy: proxy)
-                                dragStartScroll = scrollPosition
-                            }
-
-                            switch dragMode {
-                            case .select:
-                                guard x >= 0, x <= plotSize.width, y >= 0, y <= plotSize.height else { return }
-                                updateSelection(at: x, proxy: proxy)
-                            case .scroll:
-                                guard let base = dragStartScroll else { return }
-                                scrollWindow(from: base, translation: value.translation.width, plotWidth: plotSize.width)
-                            case .none:
-                                break
-                            }
-                        }
-                        .onEnded { _ in
-                            dragMode = .none
-                            dragStartScroll = nil
-                        }
-                )
+                    ScrubCallout(plotRect: plotRect, anchorX: x, isVisible: selectedDate != nil) {
+                        calloutContent(for: date)
+                    }
+                }
+            }
         }
     }
 
-    // MARK: - 手势判定与处理
+    @ViewBuilder
+    private func calloutContent(for date: Date) -> some View {
+        let point = series.min(by: {
+            abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date))
+        })
+        VStack(alignment: .leading, spacing: 2) {
+            Text(date.formatted(date: .abbreviated, time: .omitted))
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Text("¥\(formatAmount(point?.value ?? 0))")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
 
-    /// 只有「月 / 6 个月 / 年」档位支持空白处横向滚动；日 / 周保持仅选中数值
+    // MARK: - 选中变化：触觉门控 + 贴边判定
+
+    private func handleSelectionChange(from oldValue: Date?, to newValue: Date?) {
+        let dates = series.map(\.date)
+        let oldIndex = oldValue.flatMap { ScrubSelection.index(of: $0, in: dates) }
+        let newIndex = newValue.flatMap { ScrubSelection.index(of: $0, in: dates) }
+        if ScrubSelection.shouldTick(from: oldIndex, to: newIndex) {
+            HapticManager.shared.selectionChanged()
+        }
+        if let newValue { lastSelectedDate = newValue }
+    }
+
+    /// 贴边状态：-1 贴左（继续按住 → 往前翻）、1 贴右、0 不贴边；日 / 周档位不滚动
+    private var edgeHold: Int {
+        guard supportsHorizontalScroll, let selectedDate, !series.isEmpty else { return 0 }
+        let dates = series.map(\.date)
+        guard let index = ScrubSelection.index(of: selectedDate, in: dates) else { return 0 }
+        return ScrubSelection.edgeHold(index: index, count: dates.count)
+    }
+
+    /// 只有「月 / 6 个月 / 年」档位支持贴边滚动；日 / 周保持仅选中数值
     private var supportsHorizontalScroll: Bool {
         visibleDays >= 30
     }
 
-    private func resolveDragMode(x: CGFloat, y: CGFloat, plotSize: CGSize, proxy: ChartProxy) -> DragMode {
-        guard supportsHorizontalScroll else { return .select }
-        let insideVertically = y >= 0 && y <= plotSize.height
-        if insideVertically, isNearDataPoint(x: x, proxy: proxy) {
-            return .select
-        }
-        return .scroll
+    /// 序列是否为「按月聚合」（6 个月 / 年档），决定贴边滚动的步长
+    private var isMonthlySeries: Bool {
+        guard series.count > 1 else { return false }
+        return series[1].date.timeIntervalSince(series[0].date) > 20 * 86_400
     }
 
-    /// 是否按在柱子附近（横向距离在触摸半径内）
-    private func isNearDataPoint(x: CGFloat, proxy: ChartProxy) -> Bool {
-        guard let date: Date = proxy.value(atX: x, as: Date.self),
-              let nearest = series.min(by: {
-                  abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date))
-              }),
-              let px = proxy.position(forX: nearest.date) else {
-            return false
-        }
-        return abs(px - x) <= TendencyConstants.touchDetectionRadius
-    }
-
-    private func updateSelection(at x: CGFloat, proxy: ChartProxy) {
-        guard let date: Date = proxy.value(atX: x, as: Date.self),
-              let nearest = series.min(by: {
-                  abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date))
-              }),
-              let px = proxy.position(forX: nearest.date) else {
-            return
-        }
-        let dx = px - x
-        if dx * dx <= TendencyConstants.touchDetectionRadius * TendencyConstants.touchDetectionRadius {
-            selectedDate = nearest.date
+    /// 贴边继续按住时的窗口步进：原生选择手势不提供连续拖动增量，这里用 200ms 步进近似
+    private func runEdgeAutoScroll() async {
+        guard edgeHold != 0, supportsHorizontalScroll else { return }
+        while !Task.isCancelled {
+            try? await Task.sleep(nanoseconds: 200_000_000)
+            if Task.isCancelled { return }
+            let direction = edgeHold
+            guard direction != 0 else { return }
+            guard stepWindow(direction: direction) else { return }
         }
     }
 
-    /// 手指拖动换算成时间窗口位移（往右拖 = 看更早的数据）
-    private func scrollWindow(from base: Date, translation: CGFloat, plotWidth: CGFloat) {
-        guard plotWidth > 0 else { return }
-        let daysShift = -Double(translation / plotWidth) * Double(visibleDays)
-        let proposed = base.addingTimeInterval(daysShift * 86_400)
-        scrollPosition = clampedScrollDate(proposed)
+    /// 推进一档窗口（按月图 = 1 个月，按天图 = 1 天），返回是否真的移动
+    private func stepWindow(direction: Int) -> Bool {
+        let calendar = Calendar.current
+        let proposed: Date?
+        if isMonthlySeries {
+            proposed = calendar.date(byAdding: .month, value: direction, to: scrollPosition)
+        } else {
+            proposed = calendar.date(byAdding: .day, value: direction, to: scrollPosition)
+        }
+        guard let proposed else { return false }
+        let clamped = clampedScrollDate(proposed)
+        guard clamped != scrollPosition else { return false }
+        scrollPosition = clamped
+        // 选中态跟随新的窗口边缘，保持「贴边继续扫读」的体感
+        selectedDate = clamped
+        return true
     }
 
-    /// 不滚出数据范围（最早数据 ~ 今天）
+    /// 不滚出数据范围（完整数据范围 → 今天）
     private func clampedScrollDate(_ date: Date) -> Date {
         let today = Date().startOfDay
-        let earliest = series.first?.date.startOfDay ?? today
-        let latest = min(today, series.last?.date.startOfDay ?? today)
+        let earliest = scrollBounds.lowerBound.startOfDay
+        let latest = min(today, scrollBounds.upperBound.startOfDay)
+        guard earliest <= latest else { return latest }
         let day = date.startOfDay
         if day < earliest { return earliest }
         if day > latest { return latest }
         return day
     }
-    
-    // MARK: - 辅助视图
-    
-    @ViewBuilder
-    private func annotationLabel(value: Double) -> some View {
-        Text("¥\(formatAmount(value))")
-            .font(.caption2)
-            .fontWeight(.semibold)
-            .foregroundStyle(colorScheme == .dark ? .white : .black)
-            .padding(.vertical, AppSpacing.xs)
-            .padding(.horizontal, AppSpacing.sm)
-            .background(
-                Capsule()
-                    .fill(colorScheme == .dark ? Color.black.opacity(0.78) : Color.white.opacity(0.95))
-            )
-            .overlay(
-                Capsule()
-                    .strokeBorder(.white.opacity(colorScheme == .dark ? 0.25 : 0.75), lineWidth: 0.8)
-            )
-            .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
+
+    // MARK: - 无障碍
+
+    private var accessibilityValueText: String {
+        guard let point = selectedPoint else {
+            let total = series.reduce(0) { $0 + $1.value }
+            return String(format: L10n.string("tendency.a11y.summary"), formatAmount(total))
+        }
+        return String(format: L10n.string("tendency.a11y.selected"),
+                      point.date.formatted(date: .abbreviated, time: .omitted),
+                      formatAmount(point.value))
     }
     
     // MARK: - 数据处理
-    
-    /// 柱状图非选中柱的淡化处理（小时视图按小时精确对比）
-    private func barOpacity(for point: DailyAmount) -> Double {
-        guard let selected = selectedDate else { return 1 }
-        if isHourly {
-            return point.date == selected ? 1 : 0.45
-        }
-        return Calendar.current.isDate(point.date, inSameDayAs: selected) ? 1 : 0.45
-    }
-    
+
     private func selectedText(for point: DailyAmount) -> String {
         let dateText = point.date.formatted(date: .abbreviated, time: .omitted)
         return "\(dateText)  ·  ¥\(formatAmount(point.value))"

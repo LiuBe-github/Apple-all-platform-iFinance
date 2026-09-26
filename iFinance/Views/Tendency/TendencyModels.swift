@@ -63,9 +63,6 @@ enum TendencyConstants {
     
     /// 图表水平内边距
     static let chartHorizontalPadding: CGFloat = 6
-    
-    /// 触摸检测半径
-    static let touchDetectionRadius: CGFloat = 26
 }
 
 // MARK: - 日期扩展

@@ -496,6 +496,7 @@ final class iFinanceTests: XCTestCase {
             accent: .red,
             visibleDays: 7,
             isHourly: false,
+            scrollBounds: (series.map(\.date).min() ?? today)...(series.map(\.date).max() ?? today),
             selectedDate: .constant(nil),
             scrollPosition: .constant(today)
         )
@@ -600,6 +601,7 @@ final class iFinanceTests: XCTestCase {
             accent: .blue,
             visibleDays: 30,
             isHourly: false,
+            scrollBounds: today...today,
             selectedDate: .constant(nil),
             scrollPosition: .constant(today)
         )

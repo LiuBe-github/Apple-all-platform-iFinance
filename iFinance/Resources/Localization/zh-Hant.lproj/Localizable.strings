@@ -74,7 +74,7 @@
 "tendency.expense" = "支出趨勢";
 "tendency.income" = "收入趨勢";
 "tendency.last_year" = "近一年連續數據";
-"tendency.drag_hint" = "按住柱子看數值 · 拖動空白處換時間";
+"tendency.drag_hint" = "按住圖表滑動查看數值";
 "tendency.no_data" = "當前無數據可渲染";
 "tendency.avg" = "均值";
 "tendency.total" = "總額";
@@ -521,3 +521,13 @@
 "tendency.net.income" = "收入";
 "tendency.net.expense" = "支出";
 "tendency.net.net" = "淨額";
+
+// MARK: - 趨勢頁 scrub（按住掃讀）無障礙文案
+"tendency.a11y.chart" = "趨勢圖";
+"tendency.a11y.hint" = "按住並拖動可查看各時間點數值";
+"tendency.a11y.date" = "時間";
+"tendency.a11y.amount" = "金額";
+"tendency.a11y.summary" = "區間合計 ¥%@";
+"tendency.a11y.selected" = "選取 %@：¥%@";
+"tendency.net.a11y.summary" = "區間合計：收入 ¥%1$@，支出 ¥%2$@，淨額 ¥%3$@";
+"tendency.net.a11y.selected" = "%1$@：收入 ¥%2$@，支出 ¥%3$@，淨額 ¥%4$@";

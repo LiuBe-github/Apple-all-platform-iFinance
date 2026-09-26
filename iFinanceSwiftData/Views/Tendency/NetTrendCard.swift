@@ -100,14 +100,8 @@ struct NetTrendCard: View {
     @Binding var scrollPosition: Date
     @Binding var selectedDate: Date?
 
-    @State private var dragMode: DragMode = .none
-    @State private var dragStartScroll: Date?
-
-    private enum DragMode {
-        case none
-        case select
-        case scroll
-    }
+    /// 松手后仍用于绘制浮层淡出（selectedDate 变 nil 时不立刻移除视图）
+    @State private var lastSelectedDate: Date?
 
     private static let amountFormatter: NumberFormatter = {
         let f = NumberFormatter()
@@ -291,22 +285,20 @@ struct NetTrendCard: View {
         Chart {
             ForEach(visiblePoints) { point in
                 BarMark(
-                    x: .value("date", point.date, unit: isMonthly ? .month : .day),
-                    y: .value("amount", point.income)
+                    x: .value(L10n.string("tendency.a11y.date"), point.date, unit: isMonthly ? .month : .day),
+                    y: .value(L10n.string("tendency.a11y.amount"), point.income)
                 )
                 .foregroundStyle(Color.green.gradient)
                 .position(by: .value("kind", "income"))
                 .cornerRadius(2)
-                .opacity(barOpacity(for: point))
 
                 BarMark(
-                    x: .value("date", point.date, unit: isMonthly ? .month : .day),
-                    y: .value("amount", point.expenseBarValue)
+                    x: .value(L10n.string("tendency.a11y.date"), point.date, unit: isMonthly ? .month : .day),
+                    y: .value(L10n.string("tendency.a11y.amount"), point.expenseBarValue)
                 )
                 .foregroundStyle(Color.red.gradient)
                 .position(by: .value("kind", "expense"))
                 .cornerRadius(2)
-                .opacity(barOpacity(for: point))
             }
 
             RuleMark(y: .value("zero", 0))
@@ -340,7 +332,7 @@ struct NetTrendCard: View {
             }
         }
         .chartOverlay { proxy in
-            chartGestureOverlay(proxy: proxy)
+            scrubOverlay(proxy: proxy)
         }
         .chartPlotStyle { plot in
             plot.background(
@@ -348,109 +340,151 @@ struct NetTrendCard: View {
                     .fill(Color.secondary.opacity(0.05))
             )
         }
+        // 原生 scrub：按下即选、拖动吸附最近数据点、松手把绑定置空
+        .chartXSelection(value: $selectedDate)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(L10n.string("tendency.net.title"))
+        .accessibilityValue(accessibilityValueText)
+        .accessibilityHint(L10n.string("tendency.a11y.hint"))
         .padding(.horizontal, TendencyConstants.chartHorizontalPadding)
-        .appAnimation(AppMotion.standard, value: selectedDate)
+        .appAnimation(AppMotion.quick, value: selectedDate)
+        .onChange(of: selectedDate) { oldValue, newValue in
+            handleSelectionChange(from: oldValue, to: newValue)
+        }
+        .task(id: edgeHold) {
+            await runEdgeAutoScroll()
+        }
     }
 
-    // MARK: - 手势（按柱子选中 / 空白处横向滚动）
+    // MARK: - Scrub 绘制（指示线 + 浮层）
 
     @ViewBuilder
-    private func chartGestureOverlay(proxy: ChartProxy) -> some View {
+    private func scrubOverlay(proxy: ChartProxy) -> some View {
         GeometryReader { geometry in
-            Rectangle()
-                .fill(.clear)
-                .contentShape(Rectangle())
-                .gesture(
-                    DragGesture(minimumDistance: 0)
-                        .onChanged { value in
-                            guard let frame = proxy.plotFrame else { return }
-                            let plotOrigin = geometry[frame].origin
-                            let plotSize = geometry[frame].size
-                            guard plotSize.width > 0, plotSize.height > 0 else { return }
-                            let x = value.location.x - plotOrigin.x
-                            let y = value.location.y - plotOrigin.y
+            if let frame = proxy.plotFrame {
+                let plotRect = geometry[frame]
+                // 松手后仍用 lastSelectedDate 画最后一帧，配合 AppMotion.quick 淡出
+                if let date = selectedDate ?? lastSelectedDate,
+                   let x = proxy.position(forX: date) {
+                    Rectangle()
+                        .fill(Color.secondary.opacity(0.5))
+                        .frame(width: 1, height: plotRect.height)
+                        .position(x: plotRect.minX + x, y: plotRect.midY)
 
-                            if dragMode == .none {
-                                dragMode = resolveDragMode(x: x, y: y, plotSize: plotSize, proxy: proxy)
-                                dragStartScroll = scrollPosition
-                            }
-
-                            switch dragMode {
-                            case .select:
-                                guard x >= 0, x <= plotSize.width, y >= 0, y <= plotSize.height else { return }
-                                updateSelection(at: x, proxy: proxy)
-                            case .scroll:
-                                guard let base = dragStartScroll else { return }
-                                scrollWindow(from: base, translation: value.translation.width, plotWidth: plotSize.width)
-                            case .none:
-                                break
-                            }
-                        }
-                        .onEnded { _ in
-                            dragMode = .none
-                            dragStartScroll = nil
-                        }
-                )
+                    ScrubCallout(plotRect: plotRect, anchorX: x, isVisible: selectedDate != nil) {
+                        calloutContent(for: date)
+                    }
+                }
+            }
         }
     }
 
-    private func resolveDragMode(x: CGFloat, y: CGFloat, plotSize: CGSize, proxy: ChartProxy) -> DragMode {
-        let insideVertically = y >= 0 && y <= plotSize.height
-        if insideVertically, isNearDataPoint(x: x, proxy: proxy) {
-            return .select
-        }
-        return .scroll
-    }
-
-    private func isNearDataPoint(x: CGFloat, proxy: ChartProxy) -> Bool {
-        guard let date: Date = proxy.value(atX: x, as: Date.self),
-              let nearest = visiblePoints.min(by: {
-                  abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date))
-              }),
-              let px = proxy.position(forX: nearest.date) else {
-            return false
-        }
-        return abs(px - x) <= TendencyConstants.touchDetectionRadius
-    }
-
-    private func updateSelection(at x: CGFloat, proxy: ChartProxy) {
-        guard let date: Date = proxy.value(atX: x, as: Date.self),
-              let nearest = visiblePoints.min(by: {
-                  abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date))
-              }),
-              let px = proxy.position(forX: nearest.date) else {
-            return
-        }
-        let dx = px - x
-        if dx * dx <= TendencyConstants.touchDetectionRadius * TendencyConstants.touchDetectionRadius {
-            selectedDate = nearest.date
+    @ViewBuilder
+    private func calloutContent(for date: Date) -> some View {
+        let point = selectedPoint ?? visiblePoints.min(by: {
+            abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date))
+        })
+        VStack(alignment: .leading, spacing: 2) {
+            Text(calloutDateText(for: date))
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            if let point {
+                calloutRow(titleKey: "tendency.net.income", value: point.income, color: .green)
+                calloutRow(titleKey: "tendency.net.expense", value: point.expense, color: .red)
+                calloutRow(titleKey: "tendency.net.net", value: point.net, color: point.net >= 0 ? .green : .red)
+            }
         }
     }
 
-    private func scrollWindow(from base: Date, translation: CGFloat, plotWidth: CGFloat) {
-        guard plotWidth > 0, let first = points.first?.date, let last = points.last?.date else { return }
+    private func calloutRow(titleKey: String, value: Double, color: Color) -> some View {
+        HStack(spacing: AppSpacing.xs) {
+            Circle()
+                .fill(color)
+                .frame(width: 6, height: 6)
+            Text(LocalizedStringKey(titleKey))
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+            Text("¥\(formatAmount(value))")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.primary)
+        }
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private func calloutDateText(for date: Date) -> String {
+        isMonthly
+            ? date.formatted(.dateTime.year().month())
+            : date.formatted(.dateTime.month().day())
+    }
+
+    // MARK: - 选中变化：触觉门控 + 贴边判定
+
+    private func handleSelectionChange(from oldValue: Date?, to newValue: Date?) {
+        let dates = visiblePoints.map(\.date)
+        let oldIndex = oldValue.flatMap { ScrubSelection.index(of: $0, in: dates) }
+        let newIndex = newValue.flatMap { ScrubSelection.index(of: $0, in: dates) }
+        if ScrubSelection.shouldTick(from: oldIndex, to: newIndex) {
+            HapticManager.shared.selectionChanged()
+        }
+        if let newValue { lastSelectedDate = newValue }
+    }
+
+    /// 贴边状态：-1 贴左、1 贴右、0 不贴边
+    private var edgeHold: Int {
+        guard let selectedDate, !visiblePoints.isEmpty else { return 0 }
+        let dates = visiblePoints.map(\.date)
+        guard let index = ScrubSelection.index(of: selectedDate, in: dates) else { return 0 }
+        return ScrubSelection.edgeHold(index: index, count: dates.count)
+    }
+
+    /// 贴边继续按住时的窗口步进：原生选择手势不提供连续拖动增量，这里用 200ms 步进近似
+    private func runEdgeAutoScroll() async {
+        guard edgeHold != 0 else { return }
+        while !Task.isCancelled {
+            try? await Task.sleep(nanoseconds: 200_000_000)
+            if Task.isCancelled { return }
+            let direction = edgeHold
+            guard direction != 0 else { return }
+            guard stepWindow(direction: direction) else { return }
+        }
+    }
+
+    /// 推进一档窗口（按月卡 = 1 个月，按天卡 = 1 天），返回是否真的移动
+    private func stepWindow(direction: Int) -> Bool {
+        guard let first = points.first?.date, let last = points.last?.date else { return false }
         let calendar = Calendar.current
-        let shiftRatio = -Double(translation / plotWidth)
         let proposed: Date
         if isMonthly {
-            let monthsShift = Int((shiftRatio * Double(span.days >= 365 ? 12 : 6)).rounded())
-            proposed = calendar.date(byAdding: .month, value: monthsShift, to: monthStart(base)) ?? base
+            proposed = calendar.date(byAdding: .month, value: direction, to: monthStart(scrollPosition)) ?? scrollPosition
         } else {
-            let daysShift = Int((shiftRatio * Double(span.days)).rounded())
-            proposed = calendar.date(byAdding: .day, value: daysShift, to: base.startOfDay) ?? base
+            proposed = calendar.date(byAdding: .day, value: direction, to: scrollPosition.startOfDay) ?? scrollPosition
         }
         let today = Date().startOfDay
         let upper = min(today, last)
-        if proposed < first { scrollPosition = first }
-        else if proposed > upper { scrollPosition = upper }
-        else { scrollPosition = proposed }
+        let clamped: Date
+        if proposed < first { clamped = first }
+        else if proposed > upper { clamped = upper }
+        else { clamped = proposed }
+        guard clamped != scrollPosition else { return false }
+        scrollPosition = clamped
+        // 选中态跟随新的窗口边缘，保持「贴边继续扫读」的体感
+        selectedDate = clamped
+        return true
     }
 
     // MARK: - 辅助
 
-    private func barOpacity(for point: NetTrendPoint) -> Double {
-        guard let selectedPoint else { return 1 }
-        return selectedPoint.date == point.date ? 1 : 0.35
+    private var accessibilityValueText: String {
+        guard let point = selectedPoint else {
+            let income = visiblePoints.reduce(0) { $0 + $1.income }
+            let expense = visiblePoints.reduce(0) { $0 + $1.expense }
+            return String(format: L10n.string("tendency.net.a11y.summary"),
+                          formatAmount(income), formatAmount(expense), formatAmount(income - expense))
+        }
+        return String(format: L10n.string("tendency.net.a11y.selected"),
+                      calloutDateText(for: point.date),
+                      formatAmount(point.income), formatAmount(point.expense), formatAmount(point.net))
     }
 
     private func monthStart(_ date: Date) -> Date {

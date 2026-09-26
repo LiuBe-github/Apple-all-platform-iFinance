@@ -157,7 +157,7 @@
 "tendency.span_month" = "月";
 "tendency.span_6month" = "6个月";
 "tendency.span_year" = "年";
-"tendency.drag_hint" = "按住柱子看数值 · 拖动空白处换时间";
+"tendency.drag_hint" = "按住图表滑动查看数值";
 "tendency.no_data" = "当前无数据可渲染";
 "tendency.avg" = "均值";
 "tendency.total" = "总额";
@@ -521,3 +521,13 @@
 "tendency.net.income" = "收入";
 "tendency.net.expense" = "支出";
 "tendency.net.net" = "净额";
+
+// MARK: - 趋势页 scrub（按住扫读）无障碍文案
+"tendency.a11y.chart" = "趋势图";
+"tendency.a11y.hint" = "按住并拖动可查看各时间点数值";
+"tendency.a11y.date" = "时间";
+"tendency.a11y.amount" = "金额";
+"tendency.a11y.summary" = "区间合计 ¥%@";
+"tendency.a11y.selected" = "选中 %@：¥%@";
+"tendency.net.a11y.summary" = "区间合计：收入 ¥%1$@，支出 ¥%2$@，净额 ¥%3$@";
+"tendency.net.a11y.selected" = "%1$@：收入 ¥%2$@，支出 ¥%3$@，净额 ¥%4$@";

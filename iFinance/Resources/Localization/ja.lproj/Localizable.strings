@@ -74,7 +74,7 @@
 "tendency.expense" = "支出トレンド";
 "tendency.income" = "収入トレンド";
 "tendency.last_year" = "過去1年の連続データ";
-"tendency.drag_hint" = "バーを長押しで数値表示 ・ 空白をドラッグでスクロール";
+"tendency.drag_hint" = "グラフを長押ししてドラッグで値を確認";
 "tendency.no_data" = "描画するデータがありません";
 "tendency.avg" = "平均";
 "tendency.total" = "合計";
@@ -521,3 +521,13 @@
 "tendency.net.income" = "収入";
 "tendency.net.expense" = "支出";
 "tendency.net.net" = "収支差";
+
+// MARK: - トレンド scrub のアクセシビリティ文言
+"tendency.a11y.chart" = "トレンドグラフ";
+"tendency.a11y.hint" = "長押ししてドラッグすると各時点の値を確認できます";
+"tendency.a11y.date" = "日付";
+"tendency.a11y.amount" = "金額";
+"tendency.a11y.summary" = "期間合計 ¥%@";
+"tendency.a11y.selected" = "%@ を選択：¥%@";
+"tendency.net.a11y.summary" = "期間合計：収入 ¥%1$@、支出 ¥%2$@、収支差 ¥%3$@";
+"tendency.net.a11y.selected" = "%1$@：収入 ¥%2$@、支出 ¥%3$@、収支差 ¥%4$@";

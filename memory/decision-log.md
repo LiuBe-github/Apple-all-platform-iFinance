@@ -139,3 +139,10 @@
 | 编号 | 决策 | 理由 / 约束 | 影响 |
 |------|------|-------------|------|
 | D-62 | `CategoryStore` 拆分「读取路径」与「发布路径」：新增 `currentItems`（首次访问同步从磁盘载入 + 播种，**不发布变更**，可在渲染期调用）与 `ensureLoaded(force:)`；`reload()` 只做「载入 + 补发布」；新增 `resetInMemoryCacheForTesting()` 模拟冷启动 | 用户反馈「重启后二级分类在账单页变成问号」：分类定义存 UserDefaults，但只有记账页/分类管理页会 `reload()`，账单列表重启后首个渲染时内存为空 → `CategoryResolver.isValid("交通/地铁")` 失败 → 未知分类兜底为问号。若直接在渲染期 publish `items` 又会触发 SwiftUI 的 "Publishing changes from within view updates" 隐患，因此把读取与发布分离 | `CategoryStore`（两版副本）、`CategoryStoreTests` 新增冷启动回归用例（两版） |
+
+## N. 趋势图 scrub 改造（2026-09-27 第七轮）
+
+| 编号 | 决策 | 理由 / 约束 | 影响 |
+|------|------|-------------|------|
+| D-63 | 单系列柱状图与双向柱状图统一改为 **Apple Health 式 scrub**：选择用原生 `chartXSelection(value:)`；指示线与浮层由 `chartOverlay` + `ScrubCallout` 绘制（只做透明度变化，`AppMotion.quick` = 0.18s 淡出）；触觉由 `ScrubSelection.shouldTick` 门控（跨数据点才 tick）；删除 `DragMode` 状态机、`touchDetectionRadius` 与柱状图淡化逻辑 | 用户给出 Health 实测契约（≤100ms 出现、吸附、跨点 tick、松手淡出、不打断页面滚动/返回手势）。原生选择手势本身就是为可滚动容器设计；自研手势会与页面 ScrollView / 返回手势争抢触摸 | `TendencyChartView`、`NetTrendCard`、新增 `ScrubSupport.swift`（两版逐字节相同副本）；`TrendCard` 传入完整数据范围 `scrollBounds`；新增 a11y 文案 8 条 |
+| D-64 | 契约 4（贴边继续拖动自动滚动）用「**选中项贴住窗口边缘 + Task 每 200ms 步进一档窗口**」近似，不支持 `chartScrollableAxes`/`chartScrollPosition` 原生滚动 | 原生 `chartXSelection` 只回传吸附后的 x 值，不暴露连续拖动增量；若为取增量再叠一个自研 `DragGesture`，会破坏契约 5（不打断页面滚动与返回手势）。因此保留当前「窗口由 `scrollPosition` 驱动 + 固定 domain」的模型，用贴边判定 + 定时步进逼近 Health 的贴边滚动 | 同上；已在 PRD TDY-07 与 open-items OI-45 标注为「近似实现，待真机手感确认」 |

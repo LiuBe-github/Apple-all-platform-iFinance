@@ -59,6 +59,15 @@ struct TrendCard: View {
             return windowedSeries(allSeries, days: span.days)
         }
     }
+
+    /// 完整数据范围（供图表贴边自动滚动夹取窗口位置）
+    private var scrollBounds: ClosedRange<Date> {
+        let today = Date().startOfDay
+        let first = (allSeries.first?.date ?? today).startOfDay
+        let last = min(today, (allSeries.last?.date ?? today).startOfDay)
+        guard first <= last else { return today...today }
+        return first...last
+    }
     
     // MARK: - 视图
     
@@ -102,6 +111,7 @@ struct TrendCard: View {
                 accent: accent,
                 visibleDays: span.days,
                 isHourly: span.days == 1,
+                scrollBounds: scrollBounds,
                 selectedDate: $selectedDate,
                 scrollPosition: $scrollPosition
             )

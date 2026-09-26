@@ -304,6 +304,8 @@ Watch 端前缀独立：`add.*`、`category.*`、`summary.*`、`history.*`、`ta
 
 > 键盘浮层约定（第五轮）：键盘上方的浮层只允许一个位移来源——要么交给系统避让，要么容器 `.ignoresSafeArea(.keyboard)` + 按 `keyboardWillChangeFrame` 的 `keyboardOverlap` 手动定位。记账页备注条采用后者（`AddBillView` 根级浮层），`NumberPad` 内不再保留任何键盘位移逻辑。
 
+> 趋势图 scrub 约定（第七轮）：单系列柱状图与双向柱状图统一使用原生 `chartXSelection(value:)`（按下即选 / 拖动吸附 / 松手清空）；指示线与浮层由 `chartOverlay` + `ScrubCallout` 绘制，只做透明度变化（`AppMotion.quick`），不做位移/缩放；触觉由 `ScrubSelection.shouldTick` 门控（跨数据点才 tick）。**不允许再引入自研 DragGesture**（会与页面滚动/返回手势争抢触摸）；贴边自动滚动用「选中项贴边 + Task 步进窗口」近似。
+
 | 能力 | 实现 | 位置 |
 |------|------|------|
 | 渐变背景 + 呼吸光斑 | `AppBackgroundView`（`TimelineView(.animation(minimumInterval: 1/30))` + 3 个漂移球体） | `iFinance/Views/Common/AppVisualStyle.swift:5` |

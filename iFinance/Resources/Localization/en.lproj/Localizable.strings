@@ -74,7 +74,7 @@
 "tendency.expense" = "Expense Trend";
 "tendency.income" = "Income Trend";
 "tendency.last_year" = "Continuous data for last year";
-"tendency.drag_hint" = "Hold a bar for values · Drag empty area to scroll";
+"tendency.drag_hint" = "Touch and drag on the chart to inspect values";
 "tendency.no_data" = "No data to render";
 "tendency.avg" = "Average";
 "tendency.total" = "Total";
@@ -521,3 +521,13 @@
 "tendency.net.income" = "Income";
 "tendency.net.expense" = "Expense";
 "tendency.net.net" = "Net";
+
+// MARK: - Trend scrub accessibility
+"tendency.a11y.chart" = "Trend chart";
+"tendency.a11y.hint" = "Touch and hold, then drag to inspect values";
+"tendency.a11y.date" = "Date";
+"tendency.a11y.amount" = "Amount";
+"tendency.a11y.summary" = "Period total ¥%@";
+"tendency.a11y.selected" = "Selected %@: ¥%@";
+"tendency.net.a11y.summary" = "Period total: income ¥%1$@, expense ¥%2$@, net ¥%3$@";
+"tendency.net.a11y.selected" = "%1$@: income ¥%2$@, expense ¥%3$@, net ¥%4$@";
