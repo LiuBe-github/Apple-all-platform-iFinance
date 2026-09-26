@@ -22,10 +22,10 @@ xcodebuild build -project iFinance.xcodeproj -scheme iFinance \
 | 项 | 状态 |
 |----|------|
 | 分支 / 远端 | `codex/platform-18-27`，起点 `main` @ `fd6b1fb`，**未推送远端** |
-| 提交数 | 22 次（第 20 次为本文件；第 21 次 `f082fce` 修 reset 脚本 Bundle ID；第 22 次为登录降级 + CSV 导入修复；台账见 [memory/work-history.md](../memory/work-history.md)） |
+| 提交数 | 26 次（20 本文件 · 21 `f082fce` reset 脚本 · 22 `262c4d0` 登录降级 + CSV 修复 · 23 `fc87ab3` 修复与图标批次 · 24 `a5d7129` 分类体系与总收支图 · 25 `9d2b147` 性能与构建 · 26 文档同步；台账见 [memory/work-history.md](../memory/work-history.md)） |
 | 工作区 | 干净（交接前仅存在本轮已提交的改动） |
-| 代码规模 | `iFinance` 10,694 行 · `iFinanceSwiftData` 10,432 行 · `MaciFinance` 3,663 行 · `WatchiFinance Watch App` 723 行 |
-| 测试规模 | `iFinanceTests` 12 个 XCTestCase / 78 个用例 · `iFinanceSwiftDataTests` 11 套件 / 28 个用例 · `MaciFinanceTests` 8 套件 / 30 个用例 |
+| 代码规模 | `iFinance` 12,779 行 · `iFinanceSwiftData` 12,445 行 · `MaciFinance` 3,663 行 · `WatchiFinance Watch App` 723 行 |
+| 测试规模 | `iFinanceTests` 15 个 XCTestCase / 97 个用例 · `iFinanceSwiftDataTests` 38 个用例 · `MaciFinanceTests` 30 个用例 |
 | 外部依赖 | **无**：无第三方库、无服务端、运行时不发网络请求，数据只存本地 |
 | 签名 | `DEVELOPMENT_TEAM = 77MC3D43Z4`、`CODE_SIGN_STYLE = Automatic` —— **接手人必须换成自己的 Team ID**（否则真机与部分构建会失败） |
 | 文档存量 | `AGENTS.md`、`README.md`、`docs/`（PRD + 项目记忆 + 7 份接口文档 + 本文件）、`memory/`（7 份会话记忆） |
@@ -81,6 +81,8 @@ xcodebuild build -project iFinance.xcodeproj -scheme iFinance \
 | 预算与分类占比 | `Views/Transaction/Budget/` + `Views/Common/CategoryPieView.swift` + `CategoryPalette.swift` |
 | 趋势页三件套 | `Views/Tendency/`（柱状 `TrendCard` → 分类饼图 `CategoryPieCard` → `TendencyHeatmapView`）；**折线图与图表类型切换器已删除** |
 | 视觉 / 动画 / 间距 token | `Views/Common/AppDesignTokens.swift`、`AppMotion.swift`、`AppVisualStyle.swift` |
+| 分类体系（自定义 / 二级 / 图标） | `Views/Common/CategoryStore.swift`、`CategoryResolver.swift`、`CategoryIconLibrary.swift` + `Views/Transaction/Bills/CategoryGridView.swift`、`CustomCategorySheet.swift`、`Views/Setting/CategoryManagementView.swift` |
+| 趋势页总收支双向柱状图 | `Views/Tendency/NetTrendCard.swift`（`NetTrendBuilder` 纯函数聚合） |
 | 多语言 | `Helper/LocalizationHelper.swift`（`L10n`、`LocalizationSync`）+ 各端 `.lproj` |
 | Watch 端 | `WatchiFinance Watch App/ContentView.swift` + `Models/WatchDataModel.swift` |
 | macOS 端 | `MaciFinance/`（独立 Core Data 库与视图实现） |
@@ -108,6 +110,10 @@ xcodebuild build -project iFinance.xcodeproj -scheme 'WatchiFinance Watch App' -
 xcodebuild test -project iFinance.xcodeproj -scheme iFinance          -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.6' -only-testing:iFinanceTests          -quiet
 xcodebuild test -project iFinance.xcodeproj -scheme iFinanceSwiftData -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.6' -only-testing:iFinanceSwiftDataTests -quiet
 xcodebuild test -project iFinance.xcodeproj -scheme MaciFinance       -destination 'platform=macOS'                               -only-testing:MaciFinanceTests       -quiet
+
+# 真机：快速部署（默认 Debug）/ Release 优化运行
+scripts/run-on-device.sh -s iFinance
+scripts/run-on-device.sh -s iFinance --release
 ```
 
 ## 7. 验证能力边界与已知工具链坑
@@ -136,6 +142,8 @@ xcodebuild test -project iFinance.xcodeproj -scheme MaciFinance       -destinati
 | OI-01 | **微信 / QQ 登录未真实接入**（已降级为「即将支持」提示 + AuthManager 拒绝建号，占位隐患已消除） | 🟡 | 真接入需要企业主体 + 服务端换 token，见 PRD §7.2 |
 | OI-05 | Watch 离线账单不会补传（不可达时只写本地缓存） | 🟡 | 已定方案：去掉 `isReachable` guard 直接走 `transferUserInfo` 系统队列（decision-log D-48） |
 | OI-02/03/04 | 邮箱验证码绑定、CloudKit 同步与本地通知（stub）、macOS CSV/JSON 导出 TODO | 🟡 | 前两项需付费账号/服务端，见 open-items 的 A 区 |
+| OI-30 | 自定义分类 / 二级分类仅 iOS 支持；定义不入 CSV，macOS 与其它设备显示为灰色纯文本 | 🟡 | 需要跨端一致时再评估（要动三份模型与 macOS 界面） |
+| OI-33 | 第四轮的键盘浮层、网格滚到底、图表手势、总收支图**观感未经人工确认** | 🟡 | 在 Xcode / 真机上按验收清单逐条过一遍 |
 | OI-13/14 | iOS 上界已可运行（27.0 模拟器）；**watchOS 27** 与下界（macOS 15 / watchOS 11）仍仅编译级验证 | 🟡 | watchOS 27 / 下界需真机或对应系统验证后回填 PRD 与 memory |
 
 ## 9. 接手人自检清单

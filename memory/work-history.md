@@ -1,8 +1,8 @@
 # 工作历史（codex/platform-18-27）
 
-> 分支起点：`main` @ `fd6b1fb` ｜ 当前共 **22 次提交**，`180 files changed, +19515 / −2106`（含本文件所在提交，实测值见 `git diff --shortstat main...HEAD`）
+> 分支起点：`main` @ `fd6b1fb` ｜ 当前共 **26 次提交**，`200 files changed, +24674 / −2369`（含本文件所在提交，实测值见 `git diff --shortstat main...HEAD`）
 > 分支未推送远端。每次完成新改动请**在表尾追加一行**；由于提交哈希在写入文件时尚未生成，最新一行用「*(最新一次提交)*」占位，**下次提交时把真实 SHA 回填到上一行**。
-> 历史行的 SHA 已核对：1~21 可直接用于 `git show`（第 22 行是当前提交的占位）。
+> 历史行的 SHA 已核对：1~25 可直接用于 `git show`（第 26 行是当前提交的占位）。
 
 ## 时间线
 
@@ -29,7 +29,11 @@
 | 19 | `8acaaed` | docs | 根据本次协作历史建立 `memory/` 记忆文件夹（7 份：索引 / 速查 / 决策 / 工作历史 / 待办 / 环境 / 协作约定） | 18 个 markdown 链接校验通过（仅文档改动，未跑构建） |
 | 20 | `74cb9e5` | docs | 新增 `docs/HANDOFF.md` 交接文档（接手清单、环境准备、十条铁律、代码地图、验证四件套、风险摘录）并接入 README / AGENTS / PROJECT_MEMORY / docs/api / memory 索引；修正 `work-history.md` 的提交数与统计偏差（补记第 11 行 `b275f02`） | 19 个 markdown 文件、0 失效链接（仅文档改动，未跑构建） |
 | 21 | `f082fce` | fix | 修复 `reset_ifinance_data.sh` 的 Bundle ID（12 处 `com.liube.iFinance` → `cn.liube.iFinance`），模拟器数据清理脚本恢复可用 | 脚本 diff 核对（未跑构建） |
-| 22 | *(最新一次提交)* | fix | 接手复核并落地第二轮改动：微信/QQ 登录降级「即将支持」+ `AuthManager.loginWithProvider` 拒绝非 Apple 建号（三端）；CSV 导入抽 `CSVImporter` 并补齐 `createdBy`/审计字段、修正 `en_US_POSIX` 拼写；**修 CRLF 换行解析**（Swift `"\r\n"` 是单个 Character，两版同步）；配套文案/文档/记忆更新 | 四端编译 exit=0；本地化审计四 target 通过；两版 App 在 iPhone 16 / iOS 18.6 与 **iPhone 17 / iOS 27.0（上界）** 安装启动冒烟正常（PID 存活、无崩溃）；**未跑全套单测**（用户指示"基本功能能用就行"），CSV 解析改用本地脚本验证 CRLF/LF/CR 三种换行 |
+| 22 | `262c4d0` | fix | 接手复核并落地第二轮改动：微信/QQ 登录降级「即将支持」+ `AuthManager.loginWithProvider` 拒绝非 Apple 建号（三端）；CSV 导入抽 `CSVImporter` 并补齐 `createdBy`/审计字段、修正 `en_US_POSIX` 拼写；**修 CRLF 换行解析**（Swift `"\r\n"` 是单个 Character，两版同步）；配套文案/文档/记忆更新 | 四端编译 exit=0；本地化审计四 target 通过；两版 App 在 iPhone 16 / iOS 18.6 与 **iPhone 17 / iOS 27.0（上界）** 安装启动冒烟正常（PID 存活、无崩溃）；**未跑全套单测**（用户指示"基本功能能用就行"），CSV 解析改用本地脚本验证 CRLF/LF/CR 三种换行 |
+| 23 | `fc87ab3` | fix | 批次一（修复与体验）：新增账单页分类网格最后一行被键盘遮挡（固定占位 → `safeAreaInset`）；图标体系重排（数码/通讯、交通/汽车等 10 处去重，收入新增「生活费」）；备注键盘不再顶走页面（键盘区折叠、金额+备注条浮到键盘上方）；柱状图手势拆分（按柱子选中 / 空白处横向滚动，日与周保持原行为） | 两版 iOS 编译 exit=0；新增图标单测 4 条通过；本地化审计通过；两版 App 启动冒烟正常；视觉细节待人工确认 |
+| 24 | `a5d7129` | feat | 批次二（分类体系）：新增 `CategoryStore`（UserDefaults JSON、按账号隔离、交通二级分类播种）、`CategoryResolver`（内置/自定义/「父/子」统一解析）、`CategoryIconLibrary`（105 枚精选符号 9 组）；记账页与编辑页分类网格改为可自定义 + 二级 chips；新增 `CustomCategorySheet` 与设置页「分类管理」（改名同步历史账单、删除保留账单）；趋势页置顶新增 `NetTrendCard` 总收支双向柱状图（月/6 个月/年） | 两版 iOS 编译 exit=0；新增单测 19 条全绿（图标 4 + 分类存储 11 + 总收支聚合 4）；本地化审计 468 key 通过；两版 App 启动冒烟正常 |
+| 25 | `9d2b147` | perf | 批次三（性能与构建）：趋势页取数加「最近 24 个月」窗口（Core Data 谓词 / SwiftData @Query）；`DailyAmount.id` 改为日期避免图表全量 diff；账单列表单次过滤分组 + LazyVStack；分类选项按 revision 缓存；开屏 1.8s→1.2s、Watch 连接延后到首帧后、DEBUG 启动耗时日志；`run-on-device.sh --release` | 四端编译 exit=0；iFinanceTests 关键 58 条全绿（含既有用例）；两版 App 在 iPhone 16 / iOS 18.6 启动冒烟正常 |
+| 26 | *(最新一次提交)* | docs | 同步文档与记忆：AGENTS（分类体系不变量、性能约定、坑表、测试规模）、PRD（分类管理 / 自定义分类 / 二级分类 / 总收支图）、PROJECT_MEMORY、docs/api（分类体系与趋势页）、HANDOFF 快照、memory（台账 / 决策 D-51~D-58 / 待办） | 19 个 markdown 文件 0 失效链接；`check_localization.py` 四 target 通过；另在 iPhone 17 / iOS 27.0（上界）冒烟两版 App 启动正常 |
 
 ## 验证方式说明（沿用本轮约定）
 

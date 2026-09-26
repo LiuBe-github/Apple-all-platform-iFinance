@@ -33,9 +33,11 @@ xcodebuild test -project iFinance.xcodeproj -scheme iFinanceSwiftData -destinati
 
 # 真机快速部署（跳过 Watch 部署与调试器附加，打印各阶段耗时）
 scripts/run-on-device.sh -s iFinance
+# 真机 Release 运行（编译略慢、运行明显更快；日常调试仍用默认 Debug）
+scripts/run-on-device.sh -s iFinance --release
 ```
 
-测试目标：`iFinanceTests`（XCTest，12 个测试类）、`iFinanceSwiftDataTests`（Swift Testing，10 个套件）、`MaciFinanceTests`（Swift Testing，9 个套件）、watch/UI 测试为模板占位。
+测试目标：`iFinanceTests`（XCTest，15 个测试类 / 97 用例）、`iFinanceSwiftDataTests`（Swift Testing，38 用例）、`MaciFinanceTests`（Swift Testing，30 用例）、watch/UI 测试为模板占位。
 测试统一使用 `PersistenceController(inMemory: true)`，不触碰磁盘数据。
 
 ## 目录地图
@@ -66,7 +68,10 @@ docs/                     项目记忆与接口文档（改动接口后同步更
 6. **金额**：Core Data 中是 `Decimal`，代码里用 `NSDecimalNumber` 赋值；Watch 传输用 `Double`。
 7. **禁用功能不要"顺手接上"**：`CloudKitSyncManager`、`NotificationManager` 是刻意保留的 stub（需付费开发者账号，所有系统调用已注释）；`iCloudSyncView` 入口仍在。
 8. **后台隐私遮罩**：进入后台/非活跃时由 `BiometricLockManager.activatePrivacyShield()` 触发、`.appPrivacyShield(_:)` 对整页做高斯模糊，**仅在用户开启应用锁（`BiometricLockEnabled`）时生效**；改动场景生命周期或锁状态机时不要破坏这条链路，新增页面无需单独处理（入口已统一包裹）。
-9. **账单类型与分类必须匹配**：`Bill.category` 只能取当前 `Bill.type` 对应枚举（支出 25 类 / 收入 11 类）的 rawValue；转账固定为 `"transfer"`。编辑页的类型切换、旧数据归一化与保存校验统一走 `BillEditRules`（`Views/Transaction/Bills/BillEditRules.swift`），**不要再用自由文本输入分类**；饼图、统计等按类型区分的地方同样依赖这条约定。
+9. **账单类型与分类必须匹配**：`Bill.category` 存**字符串**，取值规则：
+   - 内置分类 = 枚举 rawValue（支出 25 类 / 收入 12 类，转账固定 `"transfer"`）；
+   - 自定义分类 = 用户输入的**名称**；二级分类 = `父/子` 复合路径（如 `交通/地铁`），分隔符固定 `"/"` 且名称里禁止出现。
+   编辑页的类型切换、旧数据归一化与保存校验统一走 `BillEditRules` → `CategoryResolver.isValid(_:kind:)`（`Views/Common/CategoryResolver.swift`），**不要再用自由文本输入分类**；展示名/图标/配色一律通过 `CategoryResolver` 解析，不要直接 `ExpenditureCategory(rawValue:)` 反查。
 
 ## 代码风格
 
@@ -77,6 +82,10 @@ docs/                     项目记忆与接口文档（改动接口后同步更
 - 视觉统一走 `Views/Common/AppVisualStyle.swift` 的 `appGlassCard(cornerRadius:)` 与 `.scalePress`；触觉反馈走 `HapticManager.shared`（9 个方法），不要直接调 `UIImpactFeedbackGenerator`。
 - **新写 UI 一律用 token，不要再写魔法数字**：间距/圆角/宽度用 `AppDesignTokens.swift` 的 `AppSpacing` / `AppRadius` / `AppLayout`，字体用 `AppTypography`（语义字体，跟随 Dynamic Type；大号金额用 `.appAmountStyle(size:)`）；动画用 `AppMotion` 的 `quick` / `standard` / `emphasized` / `numeric`，并优先使用 `.appAnimation(_:value:)`、`.appEntrance(index:visible:)` 以自动遵循「减弱动态效果」。iPad 上的主内容用 `.appContentWidth()` 收敛宽度。
 - **性能约定**：背景动画只允许用 `AppBackgroundView`（内部走全局共享的 `AppBackgroundClock`，10fps、非活跃自动暂停），不要在新页面里再写 `TimelineView(.animation)`；头像解码统一走 `AvatarImageCache.shared.image(for:)`，不要在 body 里直接 `UIImage(data:)`；`NumberFormatter` / `DateFormatter` 一律声明为 `static let` 复用；百分比展示用 `AppNumberFormat.percent(_:)`（最多两位小数、去尾零）。
+  - 趋势页取数固定「最近 24 个月 + 当前账号」窗口（Core Data 谓词 / SwiftData `@Query`），不要改回全量取数；
+  - 图表数据点 id 用**日期**（`DailyAmount.id` / `NetTrendPoint.id`），不要用 `UUID()`，否则每次重绘都会全量 diff；
+  - 账单列表用 `LazyVStack` 按天懒加载；body 内不要重复调用同一计算属性（先 `let groups = groupedBills`）；
+  - 分类选择器的选项数组走 `CategoryResolver` 的版本缓存，数据变更后由 `CategoryStore.revision` 自动失效。
 - **趋势页结构**：支出趋势（柱状）→ 支出分类占比（饼图）→ 收入趋势（柱状）→ 收入分类占比（饼图）→ 热力图；**折线图与图表类型切换器已删除**，柱状图是唯一的时间趋势图。分类占比统一走 `CategoryBreakdown`（纯函数，按「最近 N 天」聚合）+ `CategoryPieView`（预算页共用），配色用 `CategoryPalette`。
 
 ## 关键数据流
@@ -89,6 +98,17 @@ Watch 概览 → requestSync → transferUserInfo(action: requestTodayBills)
 ```
 
 协议细节、payload 字段、扩展步骤见 [docs/api/data-and-sync.md](docs/api/data-and-sync.md)。
+
+## 分类体系速查（第四轮建立）
+
+| 想知道 | 看哪里 |
+|--------|--------|
+| 自定义分类 / 二级分类怎么存、怎么校验 | `Views/Common/CategoryStore.swift`（`CustomCategory`、增删改、`trafficSubcategoryPresets` 播种、上限与重名校验） |
+| 某个分类字符串怎么解析成名称 / 图标 / 配色 | `Views/Common/CategoryResolver.swift`（`displayName` / `icon` / `color` / `parentRaw` / `isValid` / `topLevelOptions`） |
+| 图标选择器有哪些可选符号 | `Views/Common/CategoryIconLibrary.swift`（9 组 105 枚） |
+| 记账页/编辑页的分类网格与「+ 自定义」 | `Views/Transaction/Bills/CategoryGridView.swift`、`CustomCategorySheet.swift` |
+| 设置页分类管理（改名/删除/二级分类） | `Views/Setting/CategoryManagementView.swift`（含 `SubcategoryManageView`，两版数据访问不同） |
+| 趋势页「总收支」双向柱状图 | `Views/Tendency/NetTrendCard.swift`（`NetTrendBuilder` 纯函数 + 卡片） |
 
 ## 已确认的坑（改代码前先读）
 
@@ -105,6 +125,9 @@ Watch 概览 → requestSync → transferUserInfo(action: requestTodayBills)
 | 真机部署慢 | 构建本身很快（增量 3～6s、全量约 24s），慢在部署阶段：iOS scheme 依赖 watch target（`Embed Watch Content`），配对手表时每次 Run 都会推送 Watch App，且 Xcode 会附加调试器。改用 `scripts/run-on-device.sh` 可绕过这两步；另注意设备需解锁且已信任电脑 |
 | 记账键盘输入 | 数字键盘的表达式逻辑在 `Views/Transaction/Bills/NumberPadLogic.swift`（`NumberPadExpression`，纯函数 + 单测）。**校验只能针对「当前数字段」（最后一个运算符之后的部分）**——曾经用整串 `displayText` 判断小数位，导致「小数点出现后运算符后面再也输不进数字」；`AddBillView.parseExpression` 负责求值 |
 | 文本解析换行 | Swift 中 `"\r\n"` 是**一个** Character：CSV/文本解析里 `ch == "\n"` 漏掉 CRLF，会把 Windows/Excel 导出的文件当成一整行（`CSVImporter.parseRows` 已修为覆盖 `\n` / `\r\n` / `\r`，新写解析逻辑请照此处理） |
+| 分类体系（第四轮新增） | 自定义分类与二级分类定义存在**本机 UserDefaults**（`CategoryStore`，按账号隔离，键 `custom_categories_v1_<账号>`），**不改三份数据模型**；账单里只存名字或 `父/子` 路径。改名会同步历史账单、删除不会（历史账单保留原分类名）。macOS / watchOS 不识别自定义分类，显示为灰色纯文本 |
+| 分类图标唯一性 | 一级分类图标在同一类型内不得重复、二级分类在同一父级下不得重复；新增/调整分类后必须跑 `iFinanceTests/CategoryIconTests`（同时校验符号在系统中真实存在） |
+| 模拟器启动失败 | `xcodebuild test` 偶发 `SBMainWorkspace` 拒绝启动并反复重试（日志刷 `failed to launch cn.liube.iFinance`）：先 `simctl boot` + `bootstatus -b` 手动拉起，仍失败就换一台模拟器设备（本机 iPhone 16 与 iPhone 16 Pro 可互为备份） |
 
 ## 文档维护约定
 

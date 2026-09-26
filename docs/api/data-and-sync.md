@@ -254,6 +254,7 @@ Watch 记账                iPhone
 | 导入校验 | `type ∈ {income, expenditure, transfer}`，行字段数 ≥ 5，金额用 `Decimal(string:)`（`en_US_POSIX`）；解析与映射逻辑在 `iFinance/Helper/CSVImporter.swift`（`parseRows` / `makeBill`），导入写入 `id/createdAt/createdBy/updatedAt/updatedBy`，记录归属当前账号 |
 | 换行兼容 | CRLF / LF / CR 均可解析（Swift 中 `"\r\n"` 是单个 Character，不能用 `ch == "\n"` 判断） |
 | SwiftData 版 | 同等修复：导入写入 `createdBy/updatedBy` 与审计字段，locale 为 `en_US_POSIX`（`iFinanceSwiftData/Views/Setting/SettingView.swift`） |
+| 自定义分类 | CSV 里 `category` 直接写账单存储值：内置分类为 rawValue，自定义分类为名称，二级分类为「父/子」（如 `交通/地铁`）。**分类定义本身不在 CSV 中**，导入端若没有同名分类会按未识别（灰色纯文本）展示 |
 | macOS | 未实现（`MaciFinance/Views/SettingsView.swift:158` 为 TODO） |
 
 ---

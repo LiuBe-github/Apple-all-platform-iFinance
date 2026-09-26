@@ -112,3 +112,16 @@
 |------|------|-------------|------|
 | D-49 | CSV 解析的换行判断改为同时覆盖 `\n` / `\r\n` / `\r`（两版同步） | 接手复核时跑出 `CSVImporterTests.testParseRowsHandlesQuotesEscapesAndCRLF` 失败：Swift 中 `"\r\n"` 是**一个** Character，原判断 `ch == "\n"` 命中不了，Windows/Excel 导出的 CSV 会被解析成单行、整份导入失败（旧实现同样有坑，抽 `CSVImporter` 时被测试钉出） | `iFinance/Helper/CSVImporter.swift`、`iFinanceSwiftData/Views/Setting/SettingView.swift`；新增 LF-only 回归用例；AGENTS 坑表「文本解析换行」 |
 | D-50 | 本轮验证强度按用户指示收窄：**不强制跑全套单测**，"基本功能能用即可" | 用户 2026-09-26 明确指示「这个别测试了吧，基本功能能用就行」；仍有四端编译 + 本地化审计 + 启动冒烟兜底，CSV 解析用本地脚本验证三种换行 | 验证记录口径见 [work-history.md](work-history.md) 第 22 行；后续大改动仍建议跑齐三套测试 |
+
+## K. 分类体系扩展与性能专项（2026-09-26 第四轮，三批次交付）
+
+| 编号 | 决策 | 理由 / 约束 | 影响 |
+|------|------|-------------|------|
+| D-51 | 图标体系**只用 SF Symbols 精选**（不引入图片资源）：内置分类重排为互不重复的图标，并用单测钉住「同类型内不重复 + 符号真实存在」 | 原实现数码/通讯共用 `phone`、交通/汽车共用 `car`；用户要求「先看官方图标库能否满足」——逐个核对系统符号库后确认够用 | `ExpenditureCategory` / `IncomeCategory` 图标映射、`iFinanceTests/CategoryIconTests.swift`（两版各一份） |
+| D-52 | 自定义分类存**本机 UserDefaults JSON（按账号隔离）**，账单 `category` 继续存字符串；二级分类用「父/子」复合路径 | 三份数据模型（iOS Core Data ×2 + SwiftData）改动成本与迁移风险高；`Bill.category` 已是字符串，复合路径可被现有 CSV、Watch 透传兼容 | `Views/Common/CategoryStore.swift`（两版副本）；不做模型迁移 |
+| D-53 | 二级分类**可选**（默认记到父分类），统计与饼图**按一级聚合**；内置「交通」预置 7 个子分类且可编辑 | 用户选择「可选：默认到父分类」「按父分类聚合」「预置 + 可编辑」 | `CategoryResolver`（`parentRaw`）、`CategoryBreakdown`、`BudgetView`、`CategoryGridView` 子分类 chips |
+| D-54 | 自定义分类**改名同步历史账单**、**删除保留历史账单**（只从选择器移除；旧名以纯文本 + 灰图标展示） | 用户选择「可改名/删除，历史账单保留」；因账单按名字存储，改名若不回填会出现新旧两个名字 | `CategoryStore.storedPath`、`CategoryManagementView.renameBills`（两版各自实现） |
+| D-55 | 入口分工：**记账页 sheet 快速新建**（名称/图标/主题色/二级分类）+ **设置页「分类管理」**（改名/换图标/换色/删除/二级分类增删改） | 用户选择「记账页新建 + 设置页管理」 | `CustomCategorySheet`、`CategoryManagementView`、`SettingView` 入口 |
+| D-56 | 趋势页新增「总收支」**双向双柱**（收入向上绿、支出向下红），跨度仅月 / 6 个月 / 年，转账不计入；点选显示收入/支出/净额 | 用户在问答中选择「双向双柱（收入/支出分开）」「月/6 个月/年三档」 | `NetTrendCard`、`NetTrendBuilder`、`TendencyView` 置顶卡片 |
+| D-57 | 趋势页取数窗口定为**最近 24 个月**（计划里写的是约 13 个月，实施时放宽） | 13 个月虽覆盖年视图，但会让「总收支」月度序列与横向回看缺数据；24 个月兼顾性能与回看体验 | `TendencyView` 的 Core Data 谓词 / SwiftData `@Query` |
+| D-58 | 真机提速提供 **Release 运行通道**（`scripts/run-on-device.sh --release`），Debug 配置保持 `-Onone` 不动 | 用户选择「另加优化运行通道」：调试体验与真机流畅度兼得 | `scripts/run-on-device.sh`；文档见 `AGENTS.md` / `docs/PROJECT_MEMORY.md` |

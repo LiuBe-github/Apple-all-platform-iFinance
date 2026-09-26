@@ -325,6 +325,15 @@ macOS 端有独立副本：`MaciFinance/Views/Common/AppVisualStyle.swift`（130
 
 ## 9. 代码约定（从现有代码归纳）
 
+### 9.1 分类体系（第四轮建立，iOS 两版）
+
+- **存储**：内置分类 = 枚举 rawValue；自定义分类 = 用户输入名称；二级分类 = `父/子` 复合路径（`CategoryStore.separator = "/"`，名称禁含该字符）。定义本身存在本机 `UserDefaults`（键 `custom_categories_v1_<账号>`、播种标记 `custom_categories_seeded_v1_<账号>`），**不落三份数据模型**，也不随 CSV 导出。
+- **解析**：`CategoryResolver` 是唯一入口——`displayName` / `icon` / `color` / `parentRaw`（聚合用）/ `isValid` / `topLevelOptions`（带版本缓存）；`CategoryKind`（支出/收入）同时提供 `billType` 与 `init?(billType:)`。
+- **图标**：`CategoryIconLibrary` 9 组 105 枚精选 SF Symbols；占用规则 = 一级分类在同一类型内不重复、二级分类在同一父级下不重复；`takenIcons(kind:parentKey:)` 提供占用集合。
+- **改名 / 删除**：改名会批量更新该账号历史账单里的名称与子路径（`CategoryManagementView.renameBills`，两版各自实现）；删除只从定义与选择器移除，历史账单保留原名并以灰色兜底样式展示。
+- **播种**：首次使用为内置「交通」写入 7 个二级分类（带 `builtInKey`，展示时跟随语言；用户改名后清空该 key）。
+- **统计口径**：`CategoryBreakdown` 与预算页按 `parentRaw` 聚合到一级分类；饼图沿用 `CategoryKind.displayName/color`。
+
 1. **文件头注释**：`// 文件名` + `// 目标名` + `// Created by 刘不易 on 日期`（部分新文件用 `WorkBuddy`）。
 2. **MARK 分节**：`// MARK: - 分类名` 贯穿全部文件，节顺序大致为「Published 状态 → 私有属性 → 初始化 → Public API → 私有辅助」。
 3. **单例 + ObservableObject**：所有 Manager 使用 `static let shared` + `private init`，`@MainActor` 修饰类。
@@ -344,6 +353,9 @@ macOS 端有独立副本：`MaciFinance/Views/Common/AppVisualStyle.swift`（130
 6. **遗留 scheme `Copy of iFinance`** 无对应 `.xcscheme` 文件，建议从工程中清理。
 7. **测试覆盖偏工具层**：UI 层与 Watch 端几乎无自动化测试（`WatchiFinance Watch AppTests` 仅模板用例）。
 8. **UI 测试在 Xcode 27 下崩溃**：`iFinanceUITestsLaunchTests` 在克隆模拟器上会触发 XCTest ↔ Swift Testing 互操作递归（栈深 900+）后 SIGSEGV，崩溃日志为 `~/Library/Logs/DiagnosticReports/iFinance-*.ips`；普通启动不受影响，日常验证请用 `-only-testing:iFinanceTests` 之类参数跳过 UI 测试。
+9. **自定义分类仅 iOS**：macOS / watchOS 无 `CategoryStore`，遇到自定义分类名或 `父/子` 路径时按「未识别」灰色纯文本展示；CSV 导入到 macOS 也不会还原分类定义。
+10. **分类管理能力边界**：不支持拖动排序；每类型最多 20 个自定义分类、每父最多 20 个二级分类；名称 1–8 字；饼图不支持下钻到二级分类。
+11. **模拟器偶发拒绝启动**：`xcodebuild test` 会出现 `SBMainWorkspace` 拒绝启动并反复重试（换一台模拟器设备可绕过，属工具链问题，与应用无关）。
 9. **watchOS 27 运行时不可用**：`xcodebuild -downloadPlatform watchOS` 返回 “not available for download”，watchOS 27 只能编译级验证（iOS 27.0 模拟器运行时已安装，可运行验证）。
 10. **下界不可运行**：macOS 15 / watchOS 11 无法在本机运行，采用「编译 + API 可用性审查」验证；若需真机结论需自行安装对应系统。
 11. **SwiftData 版与 Core Data 版视图代码双份维护**：同名 API 兼容层让复制成本很低，但视图改动需要同步两处（见 §4.7）。
@@ -366,7 +378,7 @@ macOS 端有独立副本：`MaciFinance/Views/Common/AppVisualStyle.swift`（130
 | 文档 | 内容 |
 |------|------|
 | [docs/HANDOFF.md](HANDOFF.md) | 交接文档：接手清单、环境准备、铁律、代码地图、验证标准、未完成事项 |
-| [memory/README.md](../memory/README.md) | 会话记忆：决策记录、工作历史（20 次提交）、待办与风险、环境与协作约定 |
+| [memory/README.md](../memory/README.md) | 会话记忆：决策记录、工作历史（26 次提交）、待办与风险、环境与协作约定 |
 | [docs/PRD.md](PRD.md) | 产品需求文档：功能需求与优先级、业务规则、非功能要求、验收清单、路线图 |
 | [docs/api/README.md](api/README.md) | 接口文档索引与通用约定 |
 | [docs/api/ios-core.md](api/ios-core.md) | iOS 核心层：入口、Persistence、Manager、Model、Helper |

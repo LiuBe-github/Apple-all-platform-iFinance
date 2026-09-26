@@ -109,6 +109,8 @@ Published 状态：`isAuthenticated`、`hasAccount`、`currentEmail`、`currentP
 
 ## 4. 视图层改造点
 
+> 第四轮（分类体系 + 性能）同步说明：`Views/Common/CategoryStore.swift`、`CategoryResolver.swift`、`CategoryIconLibrary.swift`、`CategoryPalette.swift`、`Views/Transaction/Bills/CategoryGridView.swift`、`CustomCategorySheet.swift`、`Views/Tendency/NetTrendCard.swift`、`TendencyModels.swift` 都是**与主版本逐字节相同的副本**（用 `cp` 同步）；只有 `Views/Setting/CategoryManagementView.swift` 因数据访问不同（`@Query` + `modelContext`）与主版本不同。`TendencyView` 的 `@Query` 已加「最近 24 个月」窗口谓词（`#Predicate` 内不能用 `??`，用强制解包 `bill.date! >= windowStart`）。
+
 视图层由 `iFinance/Views/**` 复制而来，主要机械替换：
 
 | Core Data 写法 | SwiftData 写法 | 位置示例 |

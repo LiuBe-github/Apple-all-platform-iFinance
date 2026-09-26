@@ -53,6 +53,8 @@
 | 改完文件要立刻编译 | 一次编辑把 `ProfileView` 尾部弄出重复函数，靠"大括号计数 + 编译"才发现 | 大改动后立即 `xcodebuild build` 验证，不要攒到最后 |
 | 单测断言要考虑环境残留 | `LocalizationSync` 测试最初假设 `AppleLanguages` 初始为 nil，但系统域会提供默认值，且模拟器残留 `app_language=ja` 导致偶发失败 | 断言前先置为确定状态；读取用 App 自身持久域（`persistentDomain(forName:)`） |
 | 时间/日期相关逻辑要覆盖跨年 | 周期概况的"上月"在 1 月会落到去年 12 月，必须显式测跨年 | 新增聚合逻辑必须有跨月/跨年用例 |
+| 同名副本改动要立即同步并编译 | 第四轮把 `CategoryStore` / `CategoryResolver` / `CategoryGridView` 等新文件先写主版本再 `cp` 到 SwiftData 版；忘记同步会直接编译失败（SwiftData 版并发检查更严，还会暴露 `@MainActor` 隔离问题） | 新增/修改共用文件后立刻 `diff -q` 核对副本，并两版都跑一次编译 |
+| 委托子 agent 前先确认消息可达 | 本环境两次 spawn 的子 agent 都只收到项目上下文、收不到任务正文，最终由主 agent 自己完成 | 若子 agent 回报「没有收到具体任务」，不要反复重试，直接接手；紧急路径不要依赖委托 |
 
 ## 6. 沟通模板（用户习惯的节奏）
 
