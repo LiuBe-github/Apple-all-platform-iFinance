@@ -78,13 +78,18 @@ final class CategoryStore: ObservableObject {
         ("cat.sub.cityrail", "tram.circle")
     ]
 
+    /// 视图观察用：只在增删改或视图生命周期 `reload()` 时发布
     @Published private(set) var items: [CustomCategory] = []
+
+    /// 读取用缓存：解析层（账单行 / 图表 / 选择器）随时读取，必要时同步从磁盘载入，渲染期不会发布变更
+    private var loadedItems: [CustomCategory] = []
+    private var loadedAccountKey: String?
+    private var isLoaded = false
 
     /// 数据版本号：每次载入/写入 +1，供解析层做缓存失效
     private(set) var revision: Int = 0
 
     private let defaults: UserDefaults
-    private var loadedAccountKey: String?
 
     private init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -100,28 +105,51 @@ final class CategoryStore: ObservableObject {
 
     // MARK: - 读取
 
-    /// 重新载入（账号切换或进入相关页面时调用；账号未变且已有数据时直接返回）
-    /// - Parameter force: 强制从 UserDefaults 重新读取（测试与账号切换场景）
+    /// 读取入口（解析层用）：需要时同步从磁盘载入，**不发布变更**，可在视图渲染过程中安全调用。
+    /// 这是修复「重启后二级分类显示问号」的关键：账单列表不再依赖别的页面先把数据读进内存。
+    var currentItems: [CustomCategory] {
+        ensureLoaded()
+        return loadedItems
+    }
+
+    /// 重新载入（账号切换或进入相关页面时调用）并补一次发布，驱动观察 `items` 的视图刷新
+    /// - Parameter force: 强制从 UserDefaults 重新读取（测试场景）
     func reload(force: Bool = false) {
-        if !force, loadedAccountKey == accountKey, !items.isEmpty { return }
-        loadedAccountKey = accountKey
+        ensureLoaded(force: force)
+        if items != loadedItems { items = loadedItems }
+    }
+
+    /// 仅测试：清空内存缓存以模拟「App 重启」（不动磁盘数据）
+    func resetInMemoryCacheForTesting() {
+        loadedItems = []
+        items = []
+        loadedAccountKey = nil
+        isLoaded = false
+    }
+
+    /// 确保内存缓存与当前账号一致（账号切换会自动重新载入）
+    private func ensureLoaded(force: Bool = false) {
+        let key = accountKey
+        guard force || !isLoaded || loadedAccountKey != key else { return }
+        loadedAccountKey = key
+        isLoaded = true
         if let data = defaults.data(forKey: storageKey),
            let decoded = try? JSONDecoder().decode([CustomCategory].self, from: data) {
-            items = decoded
+            loadedItems = decoded
         } else {
-            items = []
+            loadedItems = []
         }
         revision &+= 1
         seedIfNeeded()
     }
 
-    /// 首次使用播种「交通」的内置二级分类
+    /// 首次使用播种「交通」的内置二级分类（只落盘、不发布，可在渲染期调用）
     private func seedIfNeeded() {
         guard !defaults.bool(forKey: seedKey) else { return }
         defaults.set(true, forKey: seedKey)
         let parentKey = ExpenditureCategory.traffic.rawValue
         for (index, preset) in Self.trafficSubcategoryPresets.enumerated() {
-            items.append(
+            loadedItems.append(
                 CustomCategory(
                     id: UUID(),
                     kind: .expenditure,
@@ -135,33 +163,40 @@ final class CategoryStore: ObservableObject {
                 )
             )
         }
-        persist()
+        writeToDisk()
     }
 
-    private func persist() {
-        guard let data = try? JSONEncoder().encode(items) else { return }
+    /// 写入磁盘（不发布）
+    private func writeToDisk() {
+        guard let data = try? JSONEncoder().encode(loadedItems) else { return }
         defaults.set(data, forKey: storageKey)
         revision &+= 1
+    }
+
+    /// 写入磁盘并发布（增删改后调用）
+    private func persist() {
+        writeToDisk()
+        items = loadedItems
     }
 
     // MARK: - 查询
 
     /// 一级自定义分类
     func topLevel(_ kind: CategoryKind) -> [CustomCategory] {
-        items
+        currentItems
             .filter { $0.kind == kind && $0.parentKey == nil }
             .sorted { $0.order < $1.order }
     }
 
     /// 指定父分类下的二级分类
     func subcategories(parentKey: String, kind: CategoryKind) -> [CustomCategory] {
-        items
+        currentItems
             .filter { $0.kind == kind && $0.parentKey == parentKey }
             .sorted { $0.order < $1.order }
     }
 
     func item(id: UUID) -> CustomCategory? {
-        items.first { $0.id == id }
+        currentItems.first { $0.id == id }
     }
 
     func item(idString: String) -> CustomCategory? {
@@ -171,18 +206,19 @@ final class CategoryStore: ObservableObject {
 
     /// 按「存储名 + 父级」查找
     func item(named name: String, parentKey: String?, kind: CategoryKind) -> CustomCategory? {
-        items.first { $0.kind == kind && $0.parentKey == parentKey && $0.name == name }
+        currentItems.first { $0.kind == kind && $0.parentKey == parentKey && $0.name == name }
     }
 
     /// 某个分类已占用的图标（一级看整个类型；二级看同一父级下）
     func takenIcons(kind: CategoryKind, parentKey: String?) -> Set<String> {
+        let all = currentItems
         if let parentKey {
-            return Set(items.filter { $0.kind == kind && $0.parentKey == parentKey }.map(\.icon))
+            return Set(all.filter { $0.kind == kind && $0.parentKey == parentKey }.map(\.icon))
         }
         let builtInIcons = kind == .expenditure
             ? ExpenditureCategory.allCases.map(\.icon)
             : IncomeCategory.allCases.map(\.icon)
-        return Set(builtInIcons).union(items.filter { $0.kind == kind && $0.parentKey == nil }.map(\.icon))
+        return Set(builtInIcons).union(all.filter { $0.kind == kind && $0.parentKey == nil }.map(\.icon))
     }
 
     // MARK: - 编辑
@@ -196,7 +232,7 @@ final class CategoryStore: ObservableObject {
         parentKey: String?
     ) throws -> CustomCategory {
         let trimmed = try validatedName(name, kind: kind, parentKey: parentKey, excluding: nil)
-        let order = (items.filter { $0.kind == kind && $0.parentKey == parentKey }.map(\.order).max() ?? -1) + 1
+        let order = (currentItems.filter { $0.kind == kind && $0.parentKey == parentKey }.map(\.order).max() ?? -1) + 1
         let item = CustomCategory(
             id: UUID(),
             kind: kind,
@@ -208,29 +244,29 @@ final class CategoryStore: ObservableObject {
             order: order,
             createdAt: Date()
         )
-        items.append(item)
+        loadedItems.append(item)
         persist()
         return item
     }
 
     /// 修改名称 / 图标 / 颜色（名称变化时由调用方负责同步历史账单）
     func update(id: UUID, name: String, icon: String, colorHex: String?) throws {
-        guard let index = items.firstIndex(where: { $0.id == id }) else { return }
-        let item = items[index]
+        guard let index = currentItems.firstIndex(where: { $0.id == id }) else { return }
+        let item = loadedItems[index]
         let trimmed = try validatedName(name, kind: item.kind, parentKey: item.parentKey, excluding: id)
         let renamed = trimmed != item.name
-        items[index].name = trimmed
-        items[index].icon = icon
-        items[index].colorHex = colorHex
+        loadedItems[index].name = trimmed
+        loadedItems[index].icon = icon
+        loadedItems[index].colorHex = colorHex
         // 用户改名后不再跟随内置文案
-        if renamed { items[index].builtInKey = nil }
+        if renamed { loadedItems[index].builtInKey = nil }
         persist()
     }
 
     /// 删除分类（连同其二级分类；历史账单由调用方决定是否保留）
     func delete(id: UUID) {
         guard let item = item(id: id) else { return }
-        items.removeAll { $0.id == id || $0.parentKey == item.key }
+        loadedItems.removeAll { $0.id == id || $0.parentKey == item.key }
         persist()
     }
 
@@ -283,13 +319,14 @@ final class CategoryStore: ObservableObject {
             if builtInNames.contains(trimmed) { throw CategoryStoreError.duplicateName }
         }
 
-        let duplicated = items.contains {
+        let all = currentItems
+        let duplicated = all.contains {
             $0.kind == kind && $0.parentKey == parentKey && $0.name == trimmed && $0.id != id
         }
         if duplicated { throw CategoryStoreError.duplicateName }
 
         if id == nil {
-            let count = items.filter { $0.kind == kind && $0.parentKey == parentKey }.count
+            let count = all.filter { $0.kind == kind && $0.parentKey == parentKey }.count
             let limit = parentKey == nil ? Self.maxCustomPerKind : Self.maxSubPerParent
             if count >= limit { throw CategoryStoreError.limitReached }
         }

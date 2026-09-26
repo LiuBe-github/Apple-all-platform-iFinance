@@ -168,7 +168,7 @@ rawValue 为中文：`餐饮`、`购物`、`服饰`、`日用`、`数码`、`美
 | 类型 | 关键接口 | 说明 |
 |------|----------|------|
 | `CustomCategory` | `id / kind / parentKey / name / icon / colorHex / builtInKey / order / createdAt`、`key` | 自定义分类条目；`parentKey` 非空即二级分类（内置父级用 rawValue，自定义父级用 UUID 字符串） |
-| `CategoryStore` | `shared`、`reload(force:)`、`topLevel(_:)`、`subcategories(parentKey:kind:)`、`add(kind:name:icon:colorHex:parentKey:)`、`update(id:name:icon:colorHex:)`、`delete(id:)`、`storedPath(of:)`、`takenIcons(kind:parentKey:)`、`revision` | 本机 UserDefaults JSON（按账号隔离）；名称校验（1–8 字、禁 `/`、同层级去重、一级 20 / 每父 20 上限）；首次使用播种「交通」7 个二级分类 |
+| `CategoryStore` | `shared`、`currentItems`、`reload(force:)`、`resetInMemoryCacheForTesting()`、`topLevel(_:)`、`subcategories(parentKey:kind:)`、`add(kind:name:icon:colorHex:parentKey:)`、`update(id:name:icon:colorHex:)`、`delete(id:)`、`storedPath(of:)`、`takenIcons(kind:parentKey:)`、`revision` | 本机 UserDefaults JSON（按账号隔离）；名称校验（1–8 字、禁 `/`、同层级去重、一级 20 / 每父 20 上限）；首次使用播种「交通」7 个二级分类。**`currentItems` 是解析层读取入口：按需同步载入且不发布变更（渲染期安全），`reload()` 负责补发布** |
 | `CategoryResolver` | `split(_:)`、`parentRaw(_:)`、`displayName(for:kind:)`、`icon(for:kind:)`、`color(for:kind:)`、`isValid(_:kind:)`、`topLevelOptions(kind:)`、`subOptions(forParent:kind:)`、`parentKey(forStoredParent:kind:)` | `@MainActor`；一级选项带 revision 缓存；全 App 唯一分类解析入口。`color(for:kind:)` 第五轮起返回**类型身份色**（支出红 / 收入绿，见 `CategoryKind.accentColor`）；饼图与预算明细请用 `CategoryPalette.chartColor(for:kind:)` |
 | `CategoryIconLibrary` | `groups`（9 组）、`allIcons`、`filtered(keyword:)` | 105 枚精选 SF Symbols，供图标选择器与自动分配使用 |
 

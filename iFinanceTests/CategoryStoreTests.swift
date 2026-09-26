@@ -109,6 +109,26 @@ final class CategoryStoreTests: XCTestCase {
         XCTAssertEqual(CategoryResolver.parentRaw(path), trafficKey)
     }
 
+    /// 回归：App 重启（内存缓存清空、磁盘数据保留）后，二级分类仍能被解析（账单行不再显示问号）
+    func testSubcategoryResolvesAfterColdStart() throws {
+        let trafficKey = ExpenditureCategory.traffic.rawValue
+        guard let subway = store.subcategories(parentKey: trafficKey, kind: .expenditure).first(where: { $0.icon == "tram.fill" }) else {
+            return XCTFail("未播种地铁子分类")
+        }
+        let path = trafficKey + CategoryStore.separator + subway.name
+        XCTAssertTrue(CategoryResolver.isValid(path, kind: .expenditure))
+
+        // 模拟冷启动：只清内存缓存，UserDefaults 里的数据保持不动
+        store.resetInMemoryCacheForTesting()
+
+        XCTAssertTrue(
+            CategoryResolver.isValid(path, kind: .expenditure),
+            "重启后二级分类应能从磁盘恢复（否则账单行会显示问号）"
+        )
+        XCTAssertEqual(CategoryResolver.icon(for: path, kind: .expenditure), "tram.fill")
+        XCTAssertTrue(CategoryResolver.displayName(for: path, kind: .expenditure).contains(subway.name))
+    }
+
     // MARK: - 改名与删除
 
     func testRenameCustomCategory() throws {

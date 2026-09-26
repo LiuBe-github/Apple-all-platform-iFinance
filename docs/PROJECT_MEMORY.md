@@ -330,6 +330,7 @@ macOS 端有独立副本：`MaciFinance/Views/Common/AppVisualStyle.swift`（130
 ### 9.1 分类体系（第四轮建立，iOS 两版）
 
 - **存储**：内置分类 = 枚举 rawValue；自定义分类 = 用户输入名称；二级分类 = `父/子` 复合路径（`CategoryStore.separator = "/"`，名称禁含该字符）。定义本身存在本机 `UserDefaults`（键 `custom_categories_v1_<账号>`、播种标记 `custom_categories_seeded_v1_<账号>`），**不落三份数据模型**，也不随 CSV 导出。
+- **加载时机（第五轮修复）**：`CategoryStore.currentItems` 是解析层的读取入口——首次访问时同步从磁盘载入并播种，**不发布变更**，因此账单列表重启后首帧就能正确解析二级路径；`reload()` 只做「载入 + 补发布」，供观察 `items` 的选择器/管理页刷新 UI。`resetInMemoryCacheForTesting()` 用于模拟冷启动的回归测试。
 - **解析**：`CategoryResolver` 是唯一入口——`displayName` / `icon` / `color` / `parentRaw`（聚合用）/ `isValid` / `topLevelOptions`（带版本缓存）；`CategoryKind`（支出/收入）同时提供 `billType` 与 `init?(billType:)`。
 - **配色（第五轮统一）**：分类**身份色** = `CategoryKind.accentColor`（支出红、收入绿，自定义与二级分类一致）；**数据可视化色** = `CategoryPalette.chartColor(for:kind:)`（8 色板，仅用于饼图扇区与预算页分类明细）。`CustomCategory.colorHex` 字段保留但已不再读写。
 - **图标**：`CategoryIconLibrary` 9 组 105 枚精选 SF Symbols；占用规则 = 一级分类在同一类型内不重复、二级分类在同一父级下不重复；`takenIcons(kind:parentKey:)` 提供占用集合。

@@ -1,8 +1,8 @@
 # 工作历史（codex/platform-18-27）
 
-> 分支起点：`main` @ `fd6b1fb` ｜ 当前共 **27 次提交**，`200 files changed, +24850 / −2434`（含本文件所在提交，实测值见 `git diff --shortstat main...HEAD`）
+> 分支起点：`main` @ `fd6b1fb` ｜ 当前共 **28 次提交**，`200 files changed, +24973 / −2434`（含本文件所在提交，实测值见 `git diff --shortstat main...HEAD`）
 > 分支未推送远端。每次完成新改动请**在表尾追加一行**；由于提交哈希在写入文件时尚未生成，最新一行用「*(最新一次提交)*」占位，**下次提交时把真实 SHA 回填到上一行**。
-> 历史行的 SHA 已核对：1~26 可直接用于 `git show`（第 27 行是当前提交的占位）。
+> 历史行的 SHA 已核对：1~27 可直接用于 `git show`（第 28 行是当前提交的占位）。
 
 ## 时间线
 
@@ -35,6 +35,7 @@
 | 25 | `9d2b147` | perf | 批次三（性能与构建）：趋势页取数加「最近 24 个月」窗口（Core Data 谓词 / SwiftData @Query）；`DailyAmount.id` 改为日期避免图表全量 diff；账单列表单次过滤分组 + LazyVStack；分类选项按 revision 缓存；开屏 1.8s→1.2s、Watch 连接延后到首帧后、DEBUG 启动耗时日志；`run-on-device.sh --release` | 四端编译 exit=0；iFinanceTests 关键 58 条全绿（含既有用例）；两版 App 在 iPhone 16 / iOS 18.6 启动冒烟正常 |
 | 26 | `b155546` | docs | 同步文档与记忆：AGENTS（分类体系不变量、性能约定、坑表、测试规模）、PRD（分类管理 / 自定义分类 / 二级分类 / 总收支图）、PROJECT_MEMORY、docs/api（分类体系与趋势页）、HANDOFF 快照、memory（台账 / 决策 D-51~D-58 / 待办） | 19 个 markdown 文件 0 失效链接；`check_localization.py` 四 target 通过；另在 iPhone 17 / iOS 27.0（上界）冒烟两版 App 启动正常 |
 | 27 | *(最新一次提交)* | fix | 备注输入条定位重做（删除 `NumberPad` 的键盘位移与内嵌输入框，改为 `AddBillView` 根级浮层 + 键盘高度单一来源定位，页面与浮层都忽略键盘安全区）；总收支图支出柱改为零轴向下（`expenseBarValue = -expense`，Y 轴刻度显示绝对值）；分类配色统一（身份色支出红/收入绿，删除主题色选择；饼图与预算明细保留 8 色板）；清理两条无用文案 | 两版 iOS 编译 exit=0；关键单测 58 条全绿（含新增 `expenseBarValue` 断言）；本地化审计四 target 通过；两版 App 在 iPhone 16 Pro / iOS 18.6 与 iPhone 17 / iOS 27.0 启动冒烟正常；备注条间距与图表观感待人工确认 |
+| 28 | *(最新一次提交)* | fix | 修复「重启后二级分类在账单页显示问号」：`CategoryStore` 拆分读取路径与发布路径——新增 `currentItems`（首次访问同步从磁盘载入 + 播种、不发布变更，渲染期安全）与 `ensureLoaded(force:)`，`reload()` 只负责补发布；新增 `resetInMemoryCacheForTesting()` 与两版冷启动回归用例 | 两版 iOS 编译 exit=0；CategoryStore/CategoryIcon/NetTrend 共 20 条测试全绿（含冷启动回归）；本地化审计四 target 通过；两版 App 在 iPhone 16 Pro / iOS 18.6 启动冒烟正常 |
 
 ## 验证方式说明（沿用本轮约定）
 

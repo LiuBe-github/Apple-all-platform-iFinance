@@ -133,3 +133,9 @@
 | D-59 | 备注输入条改为**根级浮层 + 键盘高度单一来源定位**：`AddBillView` 持有 `isNoteEditing` / `keyboardOverlap` / `@FocusState`，浮层 `padding(.bottom, keyboardOverlap + 8)`；页面与浮层都 `.ignoresSafeArea(.keyboard)`；`NumberPad` 不再内嵌输入框与键盘位移 | 上一版同时使用「系统键盘避让」与「手动 `offset(y: -keyboardLift)`」，两次位移叠加把输入条顶到离键盘很远处（用户反馈"间隔很大、看不见"）。单一来源才能可预测 | `AddBillView`（两版）、`NumberPad`（备注行改为按钮 + `onBeginNoteEditing`）、`NetTrendTests` 无关 |
 | D-60 | 总收支图**支出柱画负值**（`NetTrendPoint.expenseBarValue = -expense`），Y 轴刻度显示绝对值；`NetTrendBuilder` 的数据语义保持正值不变 | 用户要求「以 0 为界，支出向下、收入向上」；把渲染方向收在模型的一个计算属性里，既能单测又不影响既有聚合测试 | `Views/Tendency/NetTrendCard.swift`（两版）、`NetTrendTests`（两版） |
 | D-61 | 分类**身份色**统一：支出红 `(1.0, 0.27, 0.23)`、收入绿 `(0.18, 0.78, 0.44)`（含自定义与二级分类）；**删除主题色选择**；**饼图与预算页明细保留 8 色调色板** | 用户要求「不做复杂颜色系统，支出红、收入绿」；但饼图若同色则无法区分扇区，用户选择保留现有彩色调色板 | `CategoryResolver.color` → `CategoryKind.accentColor`；新增 `CategoryPalette.chartColor`（仅饼图/明细用）；`CustomCategorySheet` 去掉颜色段；`CategoryStore.colorHex` 保留字段但不再读写 |
+
+## M. 分类数据冷启动修复（2026-09-26 第六轮）
+
+| 编号 | 决策 | 理由 / 约束 | 影响 |
+|------|------|-------------|------|
+| D-62 | `CategoryStore` 拆分「读取路径」与「发布路径」：新增 `currentItems`（首次访问同步从磁盘载入 + 播种，**不发布变更**，可在渲染期调用）与 `ensureLoaded(force:)`；`reload()` 只做「载入 + 补发布」；新增 `resetInMemoryCacheForTesting()` 模拟冷启动 | 用户反馈「重启后二级分类在账单页变成问号」：分类定义存 UserDefaults，但只有记账页/分类管理页会 `reload()`，账单列表重启后首个渲染时内存为空 → `CategoryResolver.isValid("交通/地铁")` 失败 → 未知分类兜底为问号。若直接在渲染期 publish `items` 又会触发 SwiftUI 的 "Publishing changes from within view updates" 隐患，因此把读取与发布分离 | `CategoryStore`（两版副本）、`CategoryStoreTests` 新增冷启动回归用例（两版） |

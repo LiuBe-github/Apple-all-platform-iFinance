@@ -76,4 +76,23 @@ struct CategoryStoreTests {
         #expect(!CategoryResolver.isValid("订阅", kind: .expenditure))
         #expect(CategoryResolver.displayName(for: "订阅", kind: .expenditure) == "订阅")
     }
+
+    /// 回归：App 重启后（内存清空、磁盘保留）二级分类仍能解析，账单行不再显示问号
+    @Test
+    func subcategoryResolvesAfterColdStart() {
+        reset()
+        defer { reset() }
+        let trafficKey = ExpenditureCategory.traffic.rawValue
+        guard let subway = store.subcategories(parentKey: trafficKey, kind: .expenditure).first(where: { $0.icon == "tram.fill" }) else {
+            Issue.record("未播种地铁子分类")
+            return
+        }
+        let path = trafficKey + CategoryStore.separator + subway.name
+        #expect(CategoryResolver.isValid(path, kind: .expenditure))
+
+        store.resetInMemoryCacheForTesting()
+
+        #expect(CategoryResolver.isValid(path, kind: .expenditure), "重启后二级分类应能从磁盘恢复")
+        #expect(CategoryResolver.icon(for: path, kind: .expenditure) == "tram.fill")
+    }
 }
