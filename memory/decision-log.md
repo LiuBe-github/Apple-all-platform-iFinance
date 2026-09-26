@@ -146,3 +146,13 @@
 |------|------|-------------|------|
 | D-63 | 单系列柱状图与双向柱状图统一改为 **Apple Health 式 scrub**：选择用原生 `chartXSelection(value:)`；指示线与浮层由 `chartOverlay` + `ScrubCallout` 绘制（只做透明度变化，`AppMotion.quick` = 0.18s 淡出）；触觉由 `ScrubSelection.shouldTick` 门控（跨数据点才 tick）；删除 `DragMode` 状态机、`touchDetectionRadius` 与柱状图淡化逻辑 | 用户给出 Health 实测契约（≤100ms 出现、吸附、跨点 tick、松手淡出、不打断页面滚动/返回手势）。原生选择手势本身就是为可滚动容器设计；自研手势会与页面 ScrollView / 返回手势争抢触摸 | `TendencyChartView`、`NetTrendCard`、新增 `ScrubSupport.swift`（两版逐字节相同副本）；`TrendCard` 传入完整数据范围 `scrollBounds`；新增 a11y 文案 8 条 |
 | D-64 | 契约 4（贴边继续拖动自动滚动）用「**选中项贴住窗口边缘 + Task 每 200ms 步进一档窗口**」近似，不支持 `chartScrollableAxes`/`chartScrollPosition` 原生滚动 | 原生 `chartXSelection` 只回传吸附后的 x 值，不暴露连续拖动增量；若为取增量再叠一个自研 `DragGesture`，会破坏契约 5（不打断页面滚动与返回手势）。因此保留当前「窗口由 `scrollPosition` 驱动 + 固定 domain」的模型，用贴边判定 + 定时步进逼近 Health 的贴边滚动 | 同上；已在 PRD TDY-07 与 open-items OI-45 标注为「近似实现，待真机手感确认」 |
+
+## O. 图表对齐 Apple 规范 R1–R22（2026-09-27 第八轮）
+
+| 编号 | 决策 | 理由 / 约束 | 影响 |
+|------|------|-------------|------|
+| D-65 | 轴与刻度统一走新 `ChartAxisSupport`：柱状图下界 0、上界随数据、目标 4 条整齐步长（1/2/2.5/5×10ⁿ）、≥1 万时中文/日文用「万」英文用「k」；双向图两侧共用步长且 0 必为刻度 | R2/R3/R4/R6。原先依赖 Swift Charts 自动刻度，可能出现 1/6/11 这类不整齐序列；把规则固化成纯函数才能单测 | 新增 `Views/Common/ChartAxisSupport.swift`；`TendencyChartView` / `NetTrendCard` 改用 `yAxisModel` + `chartYScale(domain:)` + 显式 `AxisMarks(values:)` |
+| D-66 | 配色重排为 `ChartSeriesStyle`：保留原 8 色色相、把明度收进同一带（浅色 L≈0.20、深色 L≈0.44），语义命名（支出红 / 收入绿 / series1…8 / unknown），深浅各一套；热力图另做 `HeatmapRamp` 四套（深浅 × 普通 / 提高对比度） | R16：原调色板明度差大（`#FFCC19` vs `#5666FF`）、深色模式沿用浅色色阶导致高等级对比度不足。用 RGB 元组定义才能直接单测对比度与亮度单调 | 新增 `ChartSeriesStyle.swift` / `HeatmapRamp.swift`；`CategoryPalette` 增加 `scheme` 参数（签名保持向后兼容）；饼图 / 预算明细 / 账单行 / 键盘 / 管理页统一取语义色 |
+| D-67 | 「不以颜色为唯一区分手段」只跟随系统 `accessibilityDifferentiateWithoutColor`：开启时总收支柱顶叠加圆 / 方符号、饼图明细色点按索引循环形状；颜色语义需文字说明（本 App 红＝支出、绿＝收入，与「红涨绿跌」相反） | R14/R17。用户明确选择「跟随系统设置」而非 App 内开关；图例本来就有文字（收入 / 支出），形状是第二通道 | `ChartLegendShape` / `ChartSeriesStyle.markerSymbolName`；`NetTrendCard` 柱顶 `PointMark` 符号；`CategoryPieView.legendMark`；PRD TDY-08 写明文化前提 |
+| D-68 | 标题下新增结论副标题（`ChartSummary`），只用**现有区间数值**（合计 / 日均 / 净额）；图表 `AXChartDescriptor` 走 `ChartDescriptorRepresentable` 包装，轴刻度一律 `.accessibilityHidden(true)`，逐点标签统一「上下文在前、数值在后」 | R7/R18/R19 + 用户确认「副标题只用现有数值，不新增统计口径」；`AXChartDescriptor` 本身不符合 `AXChartDescriptorRepresentable`，必须包装；不隐藏轴刻度会被 VoiceOver 重复朗读 | 新增 `ChartSummary.swift` / `ChartAccessibility.swift`；两个柱状图 + 饼图 + 热力图各加描述符；新增 14 条四语言文案 |
+| D-69 | 热力图维持自绘 53×7 网格与横向滚动，把「12pt 单格点选」改为整块网格 `SpatialTapGesture` 吸附最近格（选中态改描边 + 圆点，去掉 `scaleEffect`）；macOS 统计页本轮不动（R14/R20 记未达成） | 用户选择方案 A；拖动被横向滚动占用，按住扫读会与滚动争抢；macOS 不在本轮范围（用户明确「不动 macOS」） | `TendencyHeatmapView` 整格命中 + `HeatmapRamp` + 描述符；重复的 `heatmapCellSize` token 合并到 `AppLayout.heatmapCell`；open-items 新增 OI-46 / OI-47 |

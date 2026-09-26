@@ -96,6 +96,24 @@ final class ScrubRenderSmokeTests: XCTestCase {
         )
     }
 
+    /// 深色模式渲染冒烟（提高对比度变体由 ChartGuidelineTests 的配色/色阶断言覆盖，
+    /// 因为 `\.colorSchemeContrast` 是只读环境键，无法在测试中注入）
+    func testChartsRenderInDarkMode() {
+        let series = makeSeries(days: 30)
+        render(
+            TendencyChartView(
+                series: series,
+                accent: ChartSeriesStyle.expense(for: .dark),
+                visibleDays: 30,
+                isHourly: false,
+                scrollBounds: (series.first?.date ?? Date())...(series.last?.date ?? Date()),
+                selectedDate: .constant(series[10].date),
+                scrollPosition: .constant(series.last?.date ?? Date())
+            )
+            .environment(\.colorScheme, .dark)
+        )
+    }
+
     /// Dynamic Type 最大档：浮层按可用宽度换行、不因排版高度溢出而崩溃
     func testScrubCalloutRendersAtLargestDynamicType() {
         let series = makeSeries(days: 30)

@@ -1,8 +1,8 @@
 # 工作历史（codex/platform-18-27）
 
-> 分支起点：`main` @ `fd6b1fb` ｜ 当前共 **29 次提交**，`205 files changed, +25607 / −2487`（含本文件所在提交，实测值见 `git diff --shortstat main...HEAD`）
+> 分支起点：`main` @ `fd6b1fb` ｜ 当前共 **30 次提交**，`217 files changed, +27804 / −2531`（含本文件所在提交，实测值见 `git diff --shortstat main...HEAD`）
 > 分支未推送远端。每次完成新改动请**在表尾追加一行**；由于提交哈希在写入文件时尚未生成，最新一行用「*(最新一次提交)*」占位，**下次提交时把真实 SHA 回填到上一行**。
-> 历史行的 SHA 已核对：1~28 可直接用于 `git show`（第 29 行是当前提交的占位）。
+> 历史行的 SHA 已核对：1~29 可直接用于 `git show`（第 30 行是当前提交的占位）。
 
 ## 时间线
 
@@ -37,6 +37,7 @@
 | 27 | *(最新一次提交)* | fix | 备注输入条定位重做（删除 `NumberPad` 的键盘位移与内嵌输入框，改为 `AddBillView` 根级浮层 + 键盘高度单一来源定位，页面与浮层都忽略键盘安全区）；总收支图支出柱改为零轴向下（`expenseBarValue = -expense`，Y 轴刻度显示绝对值）；分类配色统一（身份色支出红/收入绿，删除主题色选择；饼图与预算明细保留 8 色板）；清理两条无用文案 | 两版 iOS 编译 exit=0；关键单测 58 条全绿（含新增 `expenseBarValue` 断言）；本地化审计四 target 通过；两版 App 在 iPhone 16 Pro / iOS 18.6 与 iPhone 17 / iOS 27.0 启动冒烟正常；备注条间距与图表观感待人工确认 |
 | 28 | *(最新一次提交)* | fix | 修复「重启后二级分类在账单页显示问号」：`CategoryStore` 拆分读取路径与发布路径——新增 `currentItems`（首次访问同步从磁盘载入 + 播种、不发布变更，渲染期安全）与 `ensureLoaded(force:)`，`reload()` 只负责补发布；新增 `resetInMemoryCacheForTesting()` 与两版冷启动回归用例 | 两版 iOS 编译 exit=0；CategoryStore/CategoryIcon/NetTrend 共 20 条测试全绿（含冷启动回归）；本地化审计四 target 通过；两版 App 在 iPhone 16 Pro / iOS 18.6 启动冒烟正常 |
 | 29 | *(最新一次提交)* | refactor(ios) | 趋势页两个柱状图改造为 Apple Health 式 scrub：原生 `chartXSelection` 负责按下即选/拖动吸附/松手清空，`chartOverlay` + 新增 `ScrubCallout` 自绘指示线与浮层（只做透明度变化，`AppMotion.quick` 0.18s），`ScrubSelection` 门控触觉（跨数据点才 tick）并提供贴边自动滚动（Task 200ms 步进近似）；删除 `DragMode`/`touchDetectionRadius`/`barOpacity` 与全部自研拖动手势；补 8 条中文 a11y 文案与 `.accessibilityLabel/Value/Hint`；`TrendCard` 新增 `scrollBounds` 传参 | 两版 iOS 编译 exit=0；`iFinanceTests` 106 条全绿（含新增 ScrubSelectionTests 5 条 + ScrubRenderSmokeTests 4 条真实渲染，覆盖选中/未选中/双向柱状图/Dynamic Type 最大档）；本地化审计四 target 通过（474 key）；静态检查无 `DragMode/touchDetectionRadius/barOpacity` 残留；两版 App 在 iPhone 16/iOS 18.6 与 iPhone 17/iOS 27.0 启动冒烟正常。**240fps 慢动作、真实触觉计数、VoiceOver 实读、Reduce Motion 观感、页面滚动/返回手势等真机项未在本机验证（见 open-items OI-45）** |
+| 30 | *(最新一次提交)* | feat(ios) | 趋势页图表对齐 Apple 图表规范 R1–R22：新增 5 个支撑文件（`ChartAxisSupport` 整齐刻度轴模型、`ChartSeriesStyle` 语义色 + 形状通道、`ChartSummary` 结论副标题、`ChartAccessibility` 图表描述符、`HeatmapRamp` 热力色阶）；两个柱状图改显式 y 域 + 右置轴 + 紧凑标签 + 3–5 条整齐刻度，日粒度按天/周取刻度；去掉图表额外内边距；余下英文 plottable 标签本地化；四图补 `AXChartDescriptor` 且轴刻度 `accessibilityHidden`；配色明度均衡（浅色对比度 ≥3.7:1、深色 ≥7.9:1）并支持「不以颜色区分」形状；热力图改整块网格单击吸附 + 深浅/提高对比度色阶 | 新增 `ChartGuidelineTests` 17 条（轴/刻度/紧凑标签/副标题/形状/对比度/色阶单调）；`iFinanceTests` **123 条全绿**、SwiftData 版 **50 条全绿（16 套件）**；两版 iOS 编译 exit=0；本地化审计四 target 通过（488 key）；`rg` 确认无未本地化 plottable 标签；两版 App 在 iPhone 16/iOS 18.6 启动冒烟正常。**240fps 并排、VoiceOver 实读、触觉计数、四环境观感、FKA 等真机项见 open-items OI-47；macOS R14/R20 未达成见 OI-46** |
 
 ## 验证方式说明（沿用本轮约定）
 

@@ -15,6 +15,7 @@ struct CategoryGridView: View {
     let onRequestCustom: () -> Void
 
     @ObservedObject private var store = CategoryStore.shared
+    @Environment(\.colorScheme) private var colorScheme
 
     private static let columns = Array(repeating: GridItem(.flexible(), spacing: AppSpacing.xs), count: 5)
 
@@ -43,13 +44,13 @@ struct CategoryGridView: View {
     // MARK: - 数据
 
     private var options: [CategoryOption] {
-        CategoryResolver.topLevelOptions(kind: kind)
+        CategoryResolver.topLevelOptions(kind: kind, scheme: colorScheme)
     }
 
     /// 当前选中项下的二级分类
     private var subOptions: [CategoryOption] {
         guard let parent = selectionParentName else { return [] }
-        return CategoryResolver.subOptions(forParent: parent, kind: kind)
+        return CategoryResolver.subOptions(forParent: parent, kind: kind, scheme: colorScheme)
     }
 
     /// 当前选中路径的一级名

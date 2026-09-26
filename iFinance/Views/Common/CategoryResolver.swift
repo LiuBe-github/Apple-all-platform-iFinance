@@ -24,8 +24,12 @@ struct CategoryOption: Identifiable, Hashable {
 @MainActor
 enum CategoryResolver {
 
-    /// 一级分类选项缓存（key = 类型；数据版本变化时失效）
-    private static var optionsCache: [CategoryKind: (revision: Int, options: [CategoryOption])] = [:]
+    /// 一级分类选项缓存（key = 类型 + 深浅模式；数据版本变化时失效）
+    private static var optionsCache: [String: (revision: Int, options: [CategoryOption])] = [:]
+
+    private static func cacheKey(kind: CategoryKind, scheme: ColorScheme) -> String {
+        "\(kind.rawValue)-\(scheme == .dark ? "dark" : "light")"
+    }
 
     // MARK: - 路径
 
@@ -84,9 +88,9 @@ enum CategoryResolver {
         }
     }
 
-    static func color(for raw: String, kind: CategoryKind) -> Color {
+    static func color(for raw: String, kind: CategoryKind, scheme: ColorScheme = .light) -> Color {
         // 分类身份色统一按类型：支出红、收入绿（不再有每分类主题色）
-        kind.accentColor
+        kind.accentColor(for: scheme)
     }
 
     /// 内置分类的本地化名（非内置返回 nil）
@@ -113,17 +117,18 @@ enum CategoryResolver {
     // MARK: - 选择器数据
 
     /// 一级分类选项（内置在前、自定义在后）
-    static func topLevelOptions(kind: CategoryKind) -> [CategoryOption] {
+    static func topLevelOptions(kind: CategoryKind, scheme: ColorScheme = .light) -> [CategoryOption] {
         let revision = CategoryStore.shared.revision
-        if let cached = optionsCache[kind], cached.revision == revision {
+        let key = cacheKey(kind: kind, scheme: scheme)
+        if let cached = optionsCache[key], cached.revision == revision {
             return cached.options
         }
-        let options = buildTopLevelOptions(kind: kind)
-        optionsCache[kind] = (revision, options)
+        let options = buildTopLevelOptions(kind: kind, scheme: scheme)
+        optionsCache[key] = (revision, options)
         return options
     }
 
-    private static func buildTopLevelOptions(kind: CategoryKind) -> [CategoryOption] {
+    private static func buildTopLevelOptions(kind: CategoryKind, scheme: ColorScheme) -> [CategoryOption] {
         var options: [CategoryOption] = []
         switch kind {
         case .expenditure:
@@ -132,7 +137,7 @@ enum CategoryResolver {
                     raw: $0.rawValue,
                     title: $0.localizedDisplayName,
                     icon: $0.icon,
-                    color: kind.accentColor,
+                    color: kind.accentColor(for: scheme),
                     isCustom: false
                 )
             }
@@ -142,7 +147,7 @@ enum CategoryResolver {
                     raw: $0.rawValue,
                     title: $0.localizedDisplayName,
                     icon: $0.icon,
-                    color: kind.accentColor,
+                    color: kind.accentColor(for: scheme),
                     isCustom: false
                 )
             }
@@ -152,7 +157,7 @@ enum CategoryResolver {
                 raw: item.name,
                 title: displayName(for: item.name, kind: kind),
                 icon: item.icon,
-                color: kind.accentColor,
+                color: kind.accentColor(for: scheme),
                 isCustom: true
             )
         }
@@ -160,7 +165,7 @@ enum CategoryResolver {
     }
 
     /// 指定父分类下的二级分类（父分类用「存储名」传入）
-    static func subOptions(forParent parentRaw: String, kind: CategoryKind) -> [CategoryOption] {
+    static func subOptions(forParent parentRaw: String, kind: CategoryKind, scheme: ColorScheme = .light) -> [CategoryOption] {
         guard let key = parentKey(forStoredParent: parentRaw, kind: kind) else { return [] }
         return CategoryStore.shared.subcategories(parentKey: key, kind: kind).map { item in
             let raw = parentRaw + CategoryStore.separator + item.name
@@ -168,7 +173,7 @@ enum CategoryResolver {
                 raw: raw,
                 title: displayName(for: raw, kind: kind),
                 icon: item.icon,
-                color: kind.accentColor,
+                color: kind.accentColor(for: scheme),
                 isCustom: true
             )
         }

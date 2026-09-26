@@ -22,6 +22,11 @@
 | `Views/Setting/CategoryManagementView.swift` | `CategoryManagementView`、`SubcategoryManageView` | 设置页分类管理（改名同步账单、删除保留账单、二级分类增删改；两版数据访问不同） |
 | `Views/Tendency/NetTrendCard.swift` | `NetTrendCard`、`NetTrendPoint`、`NetTrendBuilder` | 趋势页「总收支」双向柱状图：以零轴为界，收入柱用正值向上、支出柱用 `expenseBarValue`（负值）向下，Y 轴刻度显示绝对值；跨度月 / 6 个月 / 年 |
 | `Views/Tendency/ScrubSupport.swift` | `ScrubSelection`、`ScrubCallout`、`ScrubCalloutPointer` | scrub 共享支撑：下标映射 / 触觉门控 / 贴边判定的纯逻辑（可单测）+ 自动夹边并带指向三角的浮层组件 |
+| `Views/Common/ChartAxisSupport.swift` | `ChartAxisModel`、`ChartAxisSupport` | 图表轴模型（R2–R6）：`barAxis` / `bidirectionalAxis` / `niceStep` / `ticks` / `compactAmount` / `usesTenThousandUnit` |
+| `Views/Common/ChartSeriesStyle.swift` | `ChartRGB`、`ChartLegendShape`、`TriangleShape`、`ChartSeriesStyle` | 语义色 + 形状通道（R14/R16/R17）：深浅两套系列色与支出红 / 收入绿、对比度计算、图例形状循环 |
+| `Views/Common/ChartSummary.swift` | `ChartSummary` | 标题结论副标题（R7）：`periodSubtitle` / `netSubtitle` / `rangeText` / `signedAmount`，只组合现有区间数值 |
+| `Views/Common/ChartAccessibility.swift` | `ChartDescriptorRepresentable`、`ChartAccessibility` | 图表描述符（R18）：`barDescriptor` / `netDescriptor` / `categoryDescriptor` / `heatmapDescriptor`，逐点标签「上下文在前、数值在后」 |
+| `Views/Common/HeatmapRamp.swift` | `HeatmapRamp` | 热力图 5 级色阶（R16）：浅色 / 深色 / 提高对比度四套，等级亮度单调 |
 | `Views/Transaction/Bills/EditBillView.swift` | `EditBillView` | 编辑 / 删除账单 |
 | `Views/Transaction/Bills/CategoryPickerView.swift` | `CategoryPickerView` | 分类选择页（只列当前类型的分类，点选回写并返回） |
 | `Views/Transaction/Bills/BillEditRules.swift` | `BillEditRules` | 编辑页类型/分类联动规则（纯函数） |

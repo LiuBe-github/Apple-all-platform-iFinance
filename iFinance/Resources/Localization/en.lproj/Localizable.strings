@@ -531,3 +531,19 @@
 "tendency.a11y.selected" = "Selected %@: ¥%@";
 "tendency.net.a11y.summary" = "Period total: income ¥%1$@, expense ¥%2$@, net ¥%3$@";
 "tendency.net.a11y.selected" = "%1$@: income ¥%2$@, expense ¥%3$@, net ¥%4$@";
+
+// MARK: - Chart guidelines alignment (R1–R22): subtitles and accessibility
+"chart.summary.total" = "Total";
+"chart.summary.average" = "Daily average";
+"tendency.a11y.category" = "Category";
+"tendency.a11y.point_value" = "%1$@, ¥%2$@";
+"tendency.a11y.zero" = "Zero";
+"tendency.net.a11y.point" = "%1$@, income ¥%2$@, expense ¥%3$@";
+"tendency.category.a11y.summary" = "%1$d categories, total ¥%2$@";
+"tendency.category.a11y.point" = "%1$@, %2$@, %3$@ of total";
+"tendency.heatmap.a11y.hint" = "Tap anywhere in the grid to see that day's count";
+"tendency.heatmap.a11y.count" = "Number of bills";
+"tendency.heatmap.a11y.count_format" = "%d bills";
+"tendency.heatmap.a11y.point" = "%1$@, %2$d bills";
+"tendency.heatmap.a11y.summary" = "%1$d bills in the past year, busiest day %2$@ (%3$d bills)";
+"tendency.heatmap.a11y.summary_empty" = "%1$d bills in the past year";

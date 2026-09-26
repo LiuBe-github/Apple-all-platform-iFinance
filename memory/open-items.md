@@ -30,6 +30,8 @@
 | OI-42 | 备注浮层改为单一来源定位后，**间距与手感仍需真机确认**（验收标准：浮层底边距键盘顶边 ≤ 8pt、页面不位移、收起后回落）；总收支图零轴方向与分类红绿配色同样待人工过目 | 🟡 | 实施后在 Xcode / 真机按验收清单确认 |
 | OI-43 | `CustomCategory.colorHex` 字段保留但已不再读写（历史自定义分类的旧主题色数据不会清理） | ⚪ | 后续如需精简存储再做迁移 |
 | OI-45 | 趋势图 scrub 的**真机验收项未完成**：240fps 慢动作逐条核对契约 1–5、触觉次数（扫过 6 点 = 6 次）、Reduce Motion 无位移/缩放、Dynamic Type 最大档浮层不截断、VoiceOver 中文朗读、页面纵向滚动与返回手势不被拦截；另：贴边自动滚动为 200ms 步进近似（D-64），手感可能不如 Health 连续 | 🟡 | 真机按 PRD TDY-07 验收清单逐条确认；若贴边手感不足，再评估启用原生 `chartScrollableAxes` 并验证选择手势共存 |
+| OI-46 | **macOS 统计页未接入图表规范**：`MaciFinance/Views/StatisticsView.swift` 折线图无 `chartForegroundStyleScale` / 图例 / 线型区分，颜色仍硬编码红绿（R14、R20 未达成）；动画仍是 `.spring(...)` 而非 AppMotion token | 🟡 | 需要三端一致时按 iOS 的 `ChartSeriesStyle` + `chartForegroundStyleScale` + legend 补最小改动（用户本轮明确不动 macOS） |
+| OI-47 | 图表规范的真机验收项未完成（与 OI-45 同批执行）：240fps 慢动作并排比对、VoiceOver 实读图表逐点标签与摘要、触觉计数、深色 / 提高对比度 / 减弱动态效果 / Dynamic Type 最大档四环境无截断无低对比；FKA（全键盘访问）可行性未验证 | 🟡 | 按 PRD TDY-08 的验收清单在真机逐条确认，结果回填 memory |
 
 ## C. 验证欠账（环境限制导致）
 

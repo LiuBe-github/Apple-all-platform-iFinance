@@ -509,6 +509,7 @@ struct CategoryRowView: View {
     let amount:    Double
     let total:     Double
     let isLast:    Bool
+    @Environment(\.colorScheme) private var colorScheme
     
     // MARK: - 静态格式化器
     private static let currencyFormatter: NumberFormatter = {
@@ -526,7 +527,7 @@ struct CategoryRowView: View {
     
     private var barColor: Color {
         // 与同页饼图保持一致：明细列表使用 8 色板（分类身份色在记账/账单页统一红绿）
-        CategoryPalette.chartColor(for: rawValue, kind: kind)
+        CategoryPalette.chartColor(for: rawValue, kind: kind, scheme: colorScheme)
     }
     
     private func formatAmount(_ v: Double) -> String {

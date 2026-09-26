@@ -19,6 +19,8 @@ struct CategoryPieView: View {
 
     @State private var selectedAngle: Double?
     @State private var selectedRawValue: String?
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityDifferentiateWithoutColor) private var differentiateWithoutColor
 
     private static let currencyFormatter: NumberFormatter = {
         let f = NumberFormatter()
@@ -57,12 +59,17 @@ struct CategoryPieView: View {
                 innerRadius: .ratio(0.5),
                 angularInset: 1.5
             )
-            .foregroundStyle(kind.color(for: slice.rawValue))
+            .foregroundStyle(kind.color(for: slice.rawValue, scheme: colorScheme))
             .cornerRadius(4)
             .opacity(selectedRawValue == nil || selectedRawValue == slice.rawValue ? 1 : 0.4)
         }
         .chartLegend(.hidden)
         .chartAngleSelection(value: $selectedAngle)
+        // R18：图表标题 + 摘要（逐点标签由 descriptor 提供）
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(kind == .expenditure ? L10n.string("tendency.expense_categories") : L10n.string("tendency.income_categories"))
+        .accessibilityValue(accessibilitySummary)
+        .accessibilityChartDescriptor(ChartDescriptorRepresentable { chartDescriptor })
         .onChange(of: selectedAngle) { _, newAngle in
             HapticManager.shared.selectionChanged()
             selectedRawValue = newAngle.map { rawValue(at: $0) } ?? nil
@@ -78,8 +85,9 @@ struct CategoryPieView: View {
                         .foregroundStyle(.primary)
                         .appNumericTransition(value: current.amount)
                 }
-                .transition(.scale(scale: 0.85).combined(with: .opacity))
+                .transition(.opacity)
                 .appAnimation(AppMotion.quick, value: current.rawValue)
+                .accessibilityHidden(true)
             }
         }
         .frame(height: AppLayout.chartHeightRegular + 50)
@@ -90,6 +98,38 @@ struct CategoryPieView: View {
     private var selectedSlice: CategorySlice? {
         guard let raw = selectedRawValue else { return nil }
         return slices.first { $0.rawValue == raw }
+    }
+
+    // MARK: - 无障碍（R18）
+
+    /// 图例标记：默认圆点；开启「不以颜色为唯一区分手段」时按索引循环形状（R14）
+    private func legendMark(for index: Int) -> AnyShape {
+        differentiateWithoutColor
+            ? ChartLegendShape.shape(forIndex: index).shape
+            : AnyShape(Circle())
+    }
+
+    /// 图表摘要：只描述总量与条目数，细节由逐点标签承担
+    private var accessibilitySummary: String {
+        String(
+            format: L10n.string("tendency.category.a11y.summary"),
+            slices.count,
+            Self.amount(total)
+        )
+    }
+
+    private var chartDescriptor: AXChartDescriptor {
+        ChartAccessibility.categoryDescriptor(
+            title: kind == .expenditure ? L10n.string("tendency.expense_categories") : L10n.string("tendency.income_categories"),
+            summary: accessibilitySummary,
+            slices: slices.map { slice in
+                (
+                    name: kind.displayName(for: slice.rawValue),
+                    amount: slice.amount,
+                    share: total > 0 ? slice.amount / total : 0
+                )
+            }
+        )
     }
 
     /// 根据点选角度定位分类（按累计金额）
@@ -107,10 +147,11 @@ struct CategoryPieView: View {
 
     private var breakdownList: some View {
         VStack(spacing: 1) {
-            ForEach(slices) { slice in
+            ForEach(Array(slices.enumerated()), id: \.element.id) { index, slice in
                 HStack(spacing: AppSpacing.md) {
-                    Circle()
-                        .fill(kind.color(for: slice.rawValue))
+                    // R14：开启「不以颜色为唯一区分手段」时，图例色点改为形状循环
+                    legendMark(for: index)
+                        .fill(kind.color(for: slice.rawValue, scheme: colorScheme))
                         .frame(width: 10, height: 10)
 
                     Text(kind.displayName(for: slice.rawValue))
@@ -136,6 +177,15 @@ struct CategoryPieView: View {
                 .padding(.vertical, AppSpacing.sm)
                 .background(
                     selectedRawValue == slice.rawValue ? accent.opacity(0.10) : Color.clear
+                )
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(
+                    String(
+                        format: L10n.string("tendency.category.a11y.point"),
+                        kind.displayName(for: slice.rawValue),
+                        Self.amount(slice.amount),
+                        AppNumberFormat.percent(total > 0 ? slice.amount / total : 0)
+                    )
                 )
             }
 

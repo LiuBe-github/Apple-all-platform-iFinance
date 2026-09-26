@@ -96,7 +96,7 @@ struct TendencyView: View {
                         // 支出趋势
                         TrendCard(
                             titleKey: "tendency.expense",
-                            accent: .pink,
+                            accent: ChartSeriesStyle.expense(for: colorScheme),
                             billType: "expenditure",
                             allSeries: expenseSeries,
                             allBills: Array(allBills),
@@ -108,7 +108,7 @@ struct TendencyView: View {
                         // 支出分类占比（饼图）
                         CategoryPieCard(
                             titleKey: "tendency.expense_categories",
-                            accent: .pink,
+                            accent: ChartSeriesStyle.expense(for: colorScheme),
                             kind: .expenditure,
                             billType: "expenditure",
                             allBills: Array(allBills),
@@ -118,7 +118,7 @@ struct TendencyView: View {
                         // 收入趋势
                         TrendCard(
                             titleKey: "tendency.income",
-                            accent: .mint,
+                            accent: ChartSeriesStyle.income(for: colorScheme),
                             billType: "income",
                             allSeries: incomeSeries,
                             allBills: Array(allBills),
@@ -130,7 +130,7 @@ struct TendencyView: View {
                         // 收入分类占比（饼图）
                         CategoryPieCard(
                             titleKey: "tendency.income_categories",
-                            accent: .mint,
+                            accent: ChartSeriesStyle.income(for: colorScheme),
                             kind: .income,
                             billType: "income",
                             allBills: Array(allBills),

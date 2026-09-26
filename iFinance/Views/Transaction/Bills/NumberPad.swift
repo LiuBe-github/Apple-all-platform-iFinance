@@ -18,6 +18,7 @@ struct NumberPad: View {
     @Binding var selectedDate: Date
 
     @State private var showDatePicker = false
+    @Environment(\.colorScheme) private var colorScheme
 
     /// 点备注行时回调（备注输入条由 AddBillView 负责展示与聚焦）
     let onBeginNoteEditing: () -> Void
@@ -235,8 +236,8 @@ struct NumberPad: View {
 
     private var amountColor: Color {
         switch transactionType {
-        case .expenditure: return .red
-        case .income: return .green
+        case .expenditure: return ChartSeriesStyle.expense(for: colorScheme)
+        case .income: return ChartSeriesStyle.income(for: colorScheme)
         case .transfer: return .orange
         }
     }

@@ -9,6 +9,7 @@ import SwiftUI
 
 struct TransactionRowView: View {
     @ObservedObject var bill: Bill
+    @Environment(\.colorScheme) private var colorScheme
 
     private static let amountFormatter: NumberFormatter = {
         let f = NumberFormatter()
@@ -71,9 +72,9 @@ struct TransactionRowView: View {
     private var iconColor: Color {
         switch resolvedCategory {
         case .expenditure:
-            return Color(red: 1.0, green: 0.27, blue: 0.23)  // 红
+            return ChartSeriesStyle.expense(for: colorScheme)  // 红＝支出
         case .income:
-            return Color(red: 0.18, green: 0.78, blue: 0.44)  // 绿
+            return ChartSeriesStyle.income(for: colorScheme)   // 绿＝收入
         case .transfer:
             return Color(red: 0.10, green: 0.75, blue: 0.85)  // 青
         case .unknown:
@@ -98,7 +99,7 @@ struct TransactionRowView: View {
             return .secondary
         }
         return amount >= 0
-        ? Color(red: 0.18, green: 0.78, blue: 0.44)
+        ? ChartSeriesStyle.income(for: colorScheme)
         : Color(red: 1.0,  green: 0.27, blue: 0.23)
     }
     

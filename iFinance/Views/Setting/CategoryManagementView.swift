@@ -19,6 +19,7 @@ struct CategoryManagementView: View {
     ) private var bills: FetchedResults<Bill>
 
     @ObservedObject private var store = CategoryStore.shared
+    @Environment(\.colorScheme) private var colorScheme
 
     @State private var kind: CategoryKind = .expenditure
     @State private var showingCreateSheet = false
@@ -103,7 +104,7 @@ struct CategoryManagementView: View {
                     row(
                         icon: item.icon,
                         title: CategoryResolver.displayName(for: item.name, kind: kind),
-                        color: CategoryResolver.color(for: item.name, kind: kind),
+                        color: CategoryResolver.color(for: item.name, kind: kind, scheme: colorScheme),
                         subtitle: subcategoryCountText(for: item),
                         destination: SubcategoryManageView(parentRaw: item.name, kind: kind)
                     ) {
@@ -128,7 +129,7 @@ struct CategoryManagementView: View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
             sectionHeader("category.manage.builtin")
 
-            ForEach(CategoryResolver.topLevelOptions(kind: kind).filter { !$0.isCustom }) { option in
+            ForEach(CategoryResolver.topLevelOptions(kind: kind, scheme: colorScheme).filter { !$0.isCustom }) { option in
                 row(
                     icon: option.icon,
                     title: option.title,
@@ -216,7 +217,7 @@ struct CategoryManagementView: View {
     }
 
     private func builtInSubcategoryCountText(for raw: String) -> String {
-        let count = CategoryResolver.subOptions(forParent: raw, kind: kind).count
+        let count = CategoryResolver.subOptions(forParent: raw, kind: kind, scheme: colorScheme).count
         return count == 0 ? L10n.string("category.manage.no_subcategory") : String(format: L10n.string("category.manage.subcategory_count"), count)
     }
 
@@ -255,6 +256,7 @@ struct SubcategoryManageView: View {
     ) private var bills: FetchedResults<Bill>
 
     @ObservedObject private var store = CategoryStore.shared
+    @Environment(\.colorScheme) private var colorScheme
 
     @State private var showingAddSheet = false
     @State private var editingItem: CustomCategory?
@@ -348,7 +350,7 @@ struct SubcategoryManageView: View {
                 .font(.callout.weight(.semibold))
                 .foregroundStyle(.white)
                 .frame(width: 34, height: 34)
-                .background(Circle().fill(CategoryResolver.color(for: parentRaw + CategoryStore.separator + item.name, kind: kind)))
+                .background(Circle().fill(CategoryResolver.color(for: parentRaw + CategoryStore.separator + item.name, kind: kind, scheme: colorScheme)))
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.builtInKey.map { L10n.string($0) } ?? item.name)

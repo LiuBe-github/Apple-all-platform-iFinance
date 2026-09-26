@@ -38,9 +38,6 @@ struct SpanOption: Identifiable, Hashable {
 // MARK: - 常量
 
 enum TendencyConstants {
-    /// 热力图单元格大小
-    static let heatmapCellSize: CGFloat = 12
-    
     /// 图表高度
     static let chartHeight: CGFloat = 220
     
@@ -61,8 +58,6 @@ enum TendencyConstants {
     
     /// 选择器宽度
     
-    /// 图表水平内边距
-    static let chartHorizontalPadding: CGFloat = 6
 }
 
 // MARK: - 日期扩展

@@ -20,6 +20,9 @@ struct TendencyHeatmapView: View {
 
     /// 每日账单计数（用于计算热力等级）
     let dailyBillCounts: [Date: Int]
+
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.colorSchemeContrast) private var colorSchemeContrast
     
     // MARK: - 交互状态
     
@@ -63,7 +66,7 @@ struct TendencyHeatmapView: View {
         HStack(spacing: AppSpacing.sm) {
             Spacer()
             Text(L10n.string("tendency.heatmap_less"))
-                .font(.caption2)
+                .font(AppTypography.tiny)
                 .foregroundStyle(.tertiary)
             ForEach(0..<5) { level in
                 RoundedRectangle(cornerRadius: 3, style: .continuous)
@@ -71,7 +74,7 @@ struct TendencyHeatmapView: View {
                     .frame(width: AppLayout.heatmapCell, height: AppLayout.heatmapCell)
             }
             Text(L10n.string("tendency.heatmap_more"))
-                .font(.caption2)
+                .font(AppTypography.tiny)
                 .foregroundStyle(.tertiary)
         }
     }
@@ -123,7 +126,7 @@ struct TendencyHeatmapView: View {
                             // 月份标签（放在 ScrollView 内部，跟随滚动）
                             monthLabelsView
                             
-                            // 热力图网格
+                            // 热力图网格（R11：整块网格任意位置单击即吸附最近格子）
                             HStack(alignment: .top, spacing: AppSpacing.xs) {
                                 ForEach(weeks.indices, id: \.self) { weekIndex in
                                     VStack(spacing: AppSpacing.xs) {
@@ -134,6 +137,18 @@ struct TendencyHeatmapView: View {
                                     .id(weekIndex)
                                 }
                             }
+                            .contentShape(Rectangle())
+                            .gesture(
+                                SpatialTapGesture()
+                                    .onEnded { value in
+                                        selectNearestCell(at: value.location)
+                                    }
+                            )
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel(L10n.string("tendency.heatmap"))
+                            .accessibilityValue(heatmapAccessibilitySummary)
+                            .accessibilityHint(L10n.string("tendency.heatmap.a11y.hint"))
+                            .accessibilityChartDescriptor(ChartDescriptorRepresentable { heatmapDescriptor })
                             .padding(.vertical, AppSpacing.xs)
                         }
                         .frame(width: totalHeatmapWidth, alignment: .leading)
@@ -178,26 +193,72 @@ struct TendencyHeatmapView: View {
         
         RoundedRectangle(cornerRadius: 3, style: .continuous)
             .fill(color)
-            .frame(width: TendencyConstants.heatmapCellSize, height: TendencyConstants.heatmapCellSize)
+            .frame(width: AppLayout.heatmapCell, height: AppLayout.heatmapCell)
             .overlay(
                 RoundedRectangle(cornerRadius: 3, style: .continuous)
-                    .strokeBorder(isSelected ? Color.blue : Color.clear, lineWidth: 1.6)
+                    .strokeBorder(isSelected ? Color.primary : Color.clear, lineWidth: 1.6)
             )
-            .scaleEffect(isSelected ? 1.22 : 1)
+            .overlay {
+                // 选中态只加描边 + 圆点，不做缩放（减弱动态效果下无位移/缩放）
+                if isSelected {
+                    Circle()
+                        .fill(Color.primary)
+                        .frame(width: 4, height: 4)
+                }
+            }
             .opacity(cellsAppeared ? 1 : 0)
             .appAnimation(AppMotion.emphasized.delay(AppMotion.entranceDelay(index: index)), value: cellsAppeared)
             .appAnimation(AppMotion.quick, value: isSelected)
-            .contentShape(Rectangle())
-            .onTapGesture {
-                HapticManager.shared.selectionChanged()
-                withAnimation(AppMotion.standard) {
-                    selectedCellDate = selectedCellDate?.startOfDay == date.startOfDay ? nil : date
-                }
-            }
+            .accessibilityHidden(true)
     }
     
     // MARK: - 数据处理
-    
+
+    // MARK: - R11：整块网格单击吸附
+
+    /// 把点击位置吸附到最近的格子（列 = 周、行 = 星期）。
+    /// 说明：R11 的原生 API `chartXSelection` 需要 Swift Charts 图表；热力图为自绘 53×7 网格
+    /// （月份标签在滚动内容里、横向可滚动），迁移会改变既有布局与 R20 一致性，
+    /// 因此这里用 `SpatialTapGesture` 兜底；横向拖动仍交给外层 ScrollView，不与之争抢。
+    private func selectNearestCell(at location: CGPoint) {
+        let pitch = AppLayout.heatmapCell + AppSpacing.xs
+        guard pitch > 0, !weeks.isEmpty else { return }
+        let weekIndex = Int(floor(max(location.x, 0) / pitch))
+        let dayIndex = Int(floor(max(location.y, 0) / pitch))
+        guard weeks.indices.contains(weekIndex),
+              weeks[weekIndex].indices.contains(dayIndex) else { return }
+        let date = weeks[weekIndex][dayIndex]
+        HapticManager.shared.selectionChanged()
+        withAnimation(AppMotion.quick) {
+            selectedCellDate = selectedCellDate?.startOfDay == date.startOfDay ? nil : date
+        }
+    }
+
+    // MARK: - R18：图表摘要与描述符
+
+    private var heatmapAccessibilitySummary: String {
+        let totalCount = dailyBillCounts.values.reduce(0, +)
+        if let busiest = dailyBillCounts.max(by: { $0.value < $1.value }) {
+            return String(
+                format: L10n.string("tendency.heatmap.a11y.summary"),
+                totalCount,
+                busiest.key.formatted(date: .abbreviated, time: .omitted),
+                busiest.value
+            )
+        }
+        return String(format: L10n.string("tendency.heatmap.a11y.summary_empty"), totalCount)
+    }
+
+    private var heatmapDescriptor: AXChartDescriptor {
+        ChartAccessibility.heatmapDescriptor(
+            title: L10n.string("tendency.heatmap"),
+            summary: heatmapAccessibilitySummary,
+            days: weeks.flatMap { $0 }.map { date in
+                (date: date, count: dailyBillCounts[date.startOfDay] ?? 0)
+            }
+        )
+    }
+
     private func buildHeatmapWeeks() -> [[Date]] {
         var cal = Calendar.current
         cal.firstWeekday = 2 // 周一为一周第一天
@@ -259,29 +320,20 @@ struct TendencyHeatmapView: View {
         }
     }
     
+    /// 当前环境下的 5 级色阶（R16：深浅模式各一套、提高对比度再拉大明度差）
+    private var ramp: [Color] {
+        HeatmapRamp.colors(scheme: colorScheme, contrast: colorSchemeContrast)
+    }
+
     private func heatColor(level: Int, date: Date) -> Color {
-        let base: Color
-        switch level {
-        case 0: base = Color(UIColor.systemGray5)
-        case 1: base = Color(red: 0.79, green: 0.88, blue: 1.0)
-        case 2: base = Color(red: 0.56, green: 0.75, blue: 0.98)
-        case 3: base = Color(red: 0.31, green: 0.56, blue: 0.95)
-        default: base = Color(red: 0.15, green: 0.42, blue: 0.86)
-        }
-        
+        let base = ramp[min(max(level, 0), ramp.count - 1)]
         // 未来日期显示为半透明
         return date.startOfDay > Date().startOfDay ? base.opacity(0.35) : base
     }
-    
+
     /// 图例用纯色（不含未来日期透明处理）
     private func heatColor(level: Int) -> Color {
-        switch level {
-        case 0: return Color(UIColor.systemGray5)
-        case 1: return Color(red: 0.79, green: 0.88, blue: 1.0)
-        case 2: return Color(red: 0.56, green: 0.75, blue: 0.98)
-        case 3: return Color(red: 0.31, green: 0.56, blue: 0.95)
-        default: return Color(red: 0.15, green: 0.42, blue: 0.86)
-        }
+        ramp[min(max(level, 0), ramp.count - 1)]
     }
     
     private func monthName(for month: Int) -> String {

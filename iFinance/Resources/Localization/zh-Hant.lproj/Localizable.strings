@@ -531,3 +531,19 @@
 "tendency.a11y.selected" = "選取 %@：¥%@";
 "tendency.net.a11y.summary" = "區間合計：收入 ¥%1$@，支出 ¥%2$@，淨額 ¥%3$@";
 "tendency.net.a11y.selected" = "%1$@：收入 ¥%2$@，支出 ¥%3$@，淨額 ¥%4$@";
+
+// MARK: - 圖表規範對齊（R1–R22）：副標題與無障礙
+"chart.summary.total" = "合計";
+"chart.summary.average" = "日均";
+"tendency.a11y.category" = "分類";
+"tendency.a11y.point_value" = "%1$@，¥%2$@";
+"tendency.a11y.zero" = "零";
+"tendency.net.a11y.point" = "%1$@，收入 ¥%2$@，支出 ¥%3$@";
+"tendency.category.a11y.summary" = "共 %1$d 個分類，合計 ¥%2$@";
+"tendency.category.a11y.point" = "%1$@，%2$@，佔比 %3$@";
+"tendency.heatmap.a11y.hint" = "點按網格任意位置可查看當天筆數";
+"tendency.heatmap.a11y.count" = "筆數";
+"tendency.heatmap.a11y.count_format" = "%d 筆";
+"tendency.heatmap.a11y.point" = "%1$@，%2$d 筆";
+"tendency.heatmap.a11y.summary" = "近一年共 %1$d 筆記錄，最活躍的一天是 %2$@（%3$d 筆）";
+"tendency.heatmap.a11y.summary_empty" = "近一年共 %1$d 筆記錄";

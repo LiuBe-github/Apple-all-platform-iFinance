@@ -25,6 +25,7 @@ struct CustomCategorySheet: View {
     var onRenamed: (_ oldPath: String, _ newPath: String) -> Void = { _, _ in }
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var colorScheme
     @ObservedObject private var store = CategoryStore.shared
 
     @State private var name: String = ""
@@ -272,7 +273,7 @@ struct CustomCategorySheet: View {
 
     private var selectedColor: Color {
         // 分类身份色：支出红、收入绿
-        kind.accentColor
+        kind.accentColor(for: colorScheme)
     }
 
     private func isIconTaken(_ symbol: String) -> Bool {

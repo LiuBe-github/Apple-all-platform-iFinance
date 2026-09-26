@@ -48,6 +48,7 @@ enum ScrubSelection {
 /// 只做透明度变化，不做位移/缩放 —— Reduce Motion 下天然满足「无位移/缩放」。
 struct ScrubCallout<Content: View>: View {
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.colorSchemeContrast) private var colorSchemeContrast
 
     /// 绘图区在 overlay 坐标系中的矩形
     let plotRect: CGRect
@@ -98,9 +99,13 @@ struct ScrubCallout<Content: View>: View {
             .fill(bubbleFill)
             .overlay(
                 RoundedRectangle(cornerRadius: AppRadius.row, style: .continuous)
-                    .strokeBorder(Color.primary.opacity(0.10), lineWidth: 0.8)
+                    // R13：提高对比度环境下加深描边，选中态更明显
+                    .strokeBorder(
+                        Color.primary.opacity(colorSchemeContrast == .increased ? 0.55 : 0.10),
+                        lineWidth: colorSchemeContrast == .increased ? 1.6 : 0.8
+                    )
             )
-            .shadow(color: .black.opacity(0.18), radius: 6, x: 0, y: 3)
+            .shadow(color: .black.opacity(colorSchemeContrast == .increased ? 0.32 : 0.18), radius: 6, x: 0, y: 3)
     }
 }
 

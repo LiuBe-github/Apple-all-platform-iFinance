@@ -306,6 +306,8 @@ Watch 端前缀独立：`add.*`、`category.*`、`summary.*`、`history.*`、`ta
 
 > 趋势图 scrub 约定（第七轮）：单系列柱状图与双向柱状图统一使用原生 `chartXSelection(value:)`（按下即选 / 拖动吸附 / 松手清空）；指示线与浮层由 `chartOverlay` + `ScrubCallout` 绘制，只做透明度变化（`AppMotion.quick`），不做位移/缩放；触觉由 `ScrubSelection.shouldTick` 门控（跨数据点才 tick）。**不允许再引入自研 DragGesture**（会与页面滚动/返回手势争抢触摸）；贴边自动滚动用「选中项贴边 + Task 步进窗口」近似。
 
+> 图表规范约定（第八轮，R1–R22）：轴与刻度统一走 `ChartAxisSupport`（下界 0 / 上界随数据 / 3–5 条整齐步长 / 紧凑标签）；配色统一走 `ChartSeriesStyle`（语义命名 + 深浅两套 + 明度同带，对比度有单测）；图表的标题结论走 `ChartSummary`（只用现有区间数值）；无障碍走 `ChartAccessibility`（`AXChartDescriptorRepresentable` 包装 + 逐点中文标签，轴刻度 `.accessibilityHidden`）；热力图色阶走 `HeatmapRamp`（深浅 + 提高对比度）。**新增图表请复用这五个支撑文件，不要再写死颜色 / 刻度 / 字符串**。macOS 统计页尚未接入（R14/R20 未达成，见 open-items OI-46）。
+
 | 能力 | 实现 | 位置 |
 |------|------|------|
 | 渐变背景 + 呼吸光斑 | `AppBackgroundView`（`TimelineView(.animation(minimumInterval: 1/30))` + 3 个漂移球体） | `iFinance/Views/Common/AppVisualStyle.swift:5` |

@@ -41,6 +41,7 @@ struct AddBillView: View {
     @State private var isNoteEditing = false
     @State private var keyboardOverlap: CGFloat = 0
     @FocusState private var noteFieldFocused: Bool
+    @Environment(\.colorScheme) private var colorScheme
     
     var body: some View {
         NavigationStack {
@@ -234,8 +235,8 @@ struct AddBillView: View {
 
     private var amountColor: Color {
         switch transactionType {
-        case .expenditure: return .red
-        case .income: return .green
+        case .expenditure: return ChartSeriesStyle.expense(for: colorScheme)
+        case .income: return ChartSeriesStyle.income(for: colorScheme)
         case .transfer: return .orange
         }
     }

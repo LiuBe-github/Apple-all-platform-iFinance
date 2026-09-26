@@ -103,6 +103,10 @@ struct NetTrendCard: View {
     /// 松手后仍用于绘制浮层淡出（selectedDate 变 nil 时不立刻移除视图）
     @State private var lastSelectedDate: Date?
 
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.locale) private var locale
+    @Environment(\.accessibilityDifferentiateWithoutColor) private var differentiateWithoutColor
+
     private static let amountFormatter: NumberFormatter = {
         let f = NumberFormatter()
         f.numberStyle = .decimal
@@ -151,12 +155,22 @@ struct NetTrendCard: View {
         return first.addingTimeInterval(-padding)...last.addingTimeInterval(padding)
     }
 
-    private var yDomain: ClosedRange<Double> {
-        let maxIncome = visiblePoints.map(\.income).max() ?? 0
-        let maxExpense = visiblePoints.map(\.expense).max() ?? 0
-        if maxIncome == 0 && maxExpense == 0 { return -1...1 }
-        return (-max(maxExpense, 0.0001))...max(maxIncome, 0.0001)
+    /// R2/R3/R4：跨 0 的对称刻度模型（收入向上、支出向下，0 始终是刻度）
+    private var yAxisModel: ChartAxisModel {
+        ChartAxisSupport.bidirectionalAxis(
+            minValue: visiblePoints.map(\.expenseBarValue).min() ?? 0,
+            maxValue: visiblePoints.map(\.income).max() ?? 0
+        )
     }
+
+    /// R6：中文 / 日文轴标签用「万」，英文用「k」
+    private var usesTenThousandUnit: Bool {
+        ChartAxisSupport.usesTenThousandUnit(for: locale)
+    }
+
+    /// 系列分组标签（本地化后同一系列在各数据点上取值一致，分组稳定）
+    private var kindTagIncome: String { L10n.string("tendency.net.income") }
+    private var kindTagExpense: String { L10n.string("tendency.net.expense") }
 
     private var selectedPoint: NetTrendPoint? {
         guard let selectedDate else { return nil }
@@ -171,13 +185,18 @@ struct NetTrendCard: View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
             HStack {
                 Text("tendency.net.title")
-                    .font(.headline)
-                    .fontWeight(.semibold)
+                    .font(AppTypography.sectionTitle)
                 Spacer()
                 Text("tendency.last_year")
-                    .font(.caption)
+                    .font(AppTypography.tiny)
                     .foregroundStyle(.secondary)
             }
+
+            // R7：标题下的结论副标题（区间 + 净额，取自现有可见区间数值）
+            Text(subtitleText)
+                .font(AppTypography.tiny)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
 
             Picker("", selection: $span) {
                 ForEach(SpanOption.netOptions) { item in
@@ -213,11 +232,12 @@ struct NetTrendCard: View {
         let net = income - expense
         return HStack(spacing: AppSpacing.md) {
             statPill(icon: "arrow.down.circle.fill", titleKey: "tendency.net.income",
-                     value: "¥\(formatAmount(income))", accent: .green)
+                     value: "¥\(formatAmount(income))", accent: ChartSeriesStyle.income(for: colorScheme))
             statPill(icon: "arrow.up.circle.fill", titleKey: "tendency.net.expense",
-                     value: "¥\(formatAmount(expense))", accent: .red)
+                     value: "¥\(formatAmount(expense))", accent: ChartSeriesStyle.expense(for: colorScheme))
             statPill(icon: "equal.circle.fill", titleKey: "tendency.net.net",
-                     value: "¥\(formatAmount(net))", accent: net >= 0 ? .green : .red)
+                     value: "¥\(formatAmount(net))",
+                     accent: net >= 0 ? ChartSeriesStyle.income(for: colorScheme) : ChartSeriesStyle.expense(for: colorScheme))
         }
     }
 
@@ -288,45 +308,68 @@ struct NetTrendCard: View {
                     x: .value(L10n.string("tendency.a11y.date"), point.date, unit: isMonthly ? .month : .day),
                     y: .value(L10n.string("tendency.a11y.amount"), point.income)
                 )
-                .foregroundStyle(Color.green.gradient)
-                .position(by: .value("kind", "income"))
+                .foregroundStyle(ChartSeriesStyle.income(for: colorScheme).gradient)
+                .position(by: .value(L10n.string("tendency.net.income"), kindTagIncome))
                 .cornerRadius(2)
 
                 BarMark(
                     x: .value(L10n.string("tendency.a11y.date"), point.date, unit: isMonthly ? .month : .day),
                     y: .value(L10n.string("tendency.a11y.amount"), point.expenseBarValue)
                 )
-                .foregroundStyle(Color.red.gradient)
-                .position(by: .value("kind", "expense"))
+                .foregroundStyle(ChartSeriesStyle.expense(for: colorScheme).gradient)
+                .position(by: .value(L10n.string("tendency.net.expense"), kindTagExpense))
                 .cornerRadius(2)
+
+                // R14：开启「不以颜色为唯一区分手段」时，用形状再次区分两个系列
+                if differentiateWithoutColor {
+                    PointMark(
+                        x: .value(L10n.string("tendency.a11y.date"), point.date, unit: isMonthly ? .month : .day),
+                        y: .value(L10n.string("tendency.a11y.amount"), point.income)
+                    )
+                    .symbol(.circle)
+                    .symbolSize(22)
+                    .foregroundStyle(ChartSeriesStyle.income(for: colorScheme))
+
+                    PointMark(
+                        x: .value(L10n.string("tendency.a11y.date"), point.date, unit: isMonthly ? .month : .day),
+                        y: .value(L10n.string("tendency.a11y.amount"), point.expenseBarValue)
+                    )
+                    .symbol(.square)
+                    .symbolSize(22)
+                    .foregroundStyle(ChartSeriesStyle.expense(for: colorScheme))
+                }
             }
 
-            RuleMark(y: .value("zero", 0))
+            RuleMark(y: .value(L10n.string("tendency.a11y.zero"), 0))
                 .foregroundStyle(Color.secondary.opacity(0.45))
                 .lineStyle(StrokeStyle(lineWidth: 1))
         }
         .chartXScale(domain: xDomain)
-        .chartYScale(domain: yDomain)
+        .chartYScale(domain: yAxisModel.domain)
         .chartXAxis {
             AxisMarks(values: .automatic) { value in
                 AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 3]))
-                    .foregroundStyle(.secondary.opacity(0.22))
+                    .foregroundStyle(.secondary.opacity(0.12))
                 AxisValueLabel {
                     if let date = value.as(Date.self) {
                         Text(axisLabel(for: date))
-                            .font(.caption2)
+                            .font(AppTypography.tiny)
+                            .accessibilityHidden(true)
                     }
                 }
             }
         }
         .chartYAxis {
-            AxisMarks(position: .leading) { value in
-                AxisGridLine(stroke: StrokeStyle(lineWidth: 0.7))
+            AxisMarks(position: .trailing, values: yAxisModel.ticks) { value in
+                AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
                     .foregroundStyle(.secondary.opacity(0.12))
                 AxisValueLabel {
                     if let amount = value.as(Double.self) {
-                        // 零轴下侧是支出，刻度显示绝对值更易读
-                        Text(formatAmount(abs(amount))).font(.caption2)
+                        // 零轴下侧是支出，刻度显示绝对值更易读（R6：紧凑、不带单位）
+                        Text(ChartAxisSupport.compactAmount(abs(amount), usesTenThousandUnit: usesTenThousandUnit))
+                            .font(AppTypography.tiny)
+                            .foregroundStyle(.secondary)
+                            .accessibilityHidden(true)
                     }
                 }
             }
@@ -346,7 +389,7 @@ struct NetTrendCard: View {
         .accessibilityLabel(L10n.string("tendency.net.title"))
         .accessibilityValue(accessibilityValueText)
         .accessibilityHint(L10n.string("tendency.a11y.hint"))
-        .padding(.horizontal, TendencyConstants.chartHorizontalPadding)
+        .accessibilityChartDescriptor(ChartDescriptorRepresentable { chartDescriptor })
         .appAnimation(AppMotion.quick, value: selectedDate)
         .onChange(of: selectedDate) { oldValue, newValue in
             handleSelectionChange(from: oldValue, to: newValue)
@@ -374,6 +417,7 @@ struct NetTrendCard: View {
                     ScrubCallout(plotRect: plotRect, anchorX: x, isVisible: selectedDate != nil) {
                         calloutContent(for: date)
                     }
+                    .accessibilityHidden(true)
                 }
             }
         }
@@ -474,6 +518,24 @@ struct NetTrendCard: View {
     }
 
     // MARK: - 辅助
+
+    /// R7：副标题（区间 + 净额），只组合现有可见区间数值
+    private var subtitleText: String {
+        guard let first = visiblePoints.first?.date, let last = visiblePoints.last?.date else { return "" }
+        let income = visiblePoints.reduce(0) { $0 + $1.income }
+        let expense = visiblePoints.reduce(0) { $0 + $1.expense }
+        let range = ChartSummary.rangeText(from: first, to: last, monthly: isMonthly)
+        return ChartSummary.netSubtitle(rangeText: range, net: income - expense)
+    }
+
+    /// R18：图表描述符（收入 / 支出两个系列 + 摘要 + Audio Graph）
+    private var chartDescriptor: AXChartDescriptor {
+        ChartAccessibility.netDescriptor(
+            title: L10n.string("tendency.net.title"),
+            summary: accessibilityValueText,
+            points: visiblePoints.map { (date: $0.date, income: $0.income, expense: $0.expense) }
+        )
+    }
 
     private var accessibilityValueText: String {
         guard let point = selectedPoint else {

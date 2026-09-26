@@ -10,7 +10,8 @@ import SwiftData
 struct TrendCard: View {
     // MARK: - 配置
     
-    let titleKey: LocalizedStringKey
+    /// 本地化 key（同时用于标题与图表的无障碍标题，R18）
+    let titleKey: String
     let accent: Color
     let billType: String // "expenditure" or "income"
     
@@ -60,6 +61,17 @@ struct TrendCard: View {
         }
     }
 
+    /// R7：副标题（区间 + 合计 + 日均），只组合现有区间数值，不新增统计口径
+    private func subtitleText(for metrics: [DailyAmount]) -> String {
+        guard let first = metrics.first?.date, let last = metrics.last?.date else { return "" }
+        let values = metrics.map(\.value)
+        let total = values.reduce(0, +)
+        let nonZero = values.filter { $0 > 0 }
+        let average = nonZero.isEmpty ? 0 : nonZero.reduce(0, +) / Double(nonZero.count)
+        let range = ChartSummary.rangeText(from: first, to: last, monthly: span.days > 31)
+        return ChartSummary.periodSubtitle(rangeText: range, total: total, average: average)
+    }
+
     /// 完整数据范围（供图表贴边自动滚动夹取窗口位置）
     private var scrollBounds: ClosedRange<Date> {
         let today = Date().startOfDay
@@ -75,18 +87,24 @@ struct TrendCard: View {
         // 每帧只计算一次序列（displaySeries / metricsSeries 都会遍历账单，避免重复遍历）
         let series = displaySeries
         let metrics = metricsSeries
+        let subtitle = subtitleText(for: metrics)
 
         VStack(alignment: .leading, spacing: AppSpacing.md) {
             // 标题行
             HStack {
-                Text(titleKey)
-                    .font(.headline)
-                    .fontWeight(.semibold)
+                Text(LocalizedStringKey(titleKey))
+                    .font(AppTypography.sectionTitle)
                 Spacer()
                 Text("tendency.last_year")
-                    .font(.caption)
+                    .font(AppTypography.tiny)
                     .foregroundStyle(.secondary)
             }
+
+            // R7：标题下的结论副标题（区间 + 合计 + 日均，均取自现有区间数值）
+            Text(subtitle)
+                .font(AppTypography.tiny)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
             
             // 时间段选择
             Picker("", selection: $span) {
@@ -112,6 +130,7 @@ struct TrendCard: View {
                 visibleDays: span.days,
                 isHourly: span.days == 1,
                 scrollBounds: scrollBounds,
+                titleKey: titleKey,
                 selectedDate: $selectedDate,
                 scrollPosition: $scrollPosition
             )

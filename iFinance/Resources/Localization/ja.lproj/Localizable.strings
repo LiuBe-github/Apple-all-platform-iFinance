@@ -531,3 +531,19 @@
 "tendency.a11y.selected" = "%@ を選択：¥%@";
 "tendency.net.a11y.summary" = "期間合計：収入 ¥%1$@、支出 ¥%2$@、収支差 ¥%3$@";
 "tendency.net.a11y.selected" = "%1$@：収入 ¥%2$@、支出 ¥%3$@、収支差 ¥%4$@";
+
+// MARK: - グラフガイドライン対応（R1–R22）：サブタイトルとアクセシビリティ
+"chart.summary.total" = "合計";
+"chart.summary.average" = "1日平均";
+"tendency.a11y.category" = "カテゴリ";
+"tendency.a11y.point_value" = "%1$@、¥%2$@";
+"tendency.a11y.zero" = "ゼロ";
+"tendency.net.a11y.point" = "%1$@、収入 ¥%2$@、支出 ¥%3$@";
+"tendency.category.a11y.summary" = "全 %1$d カテゴリ、合計 ¥%2$@";
+"tendency.category.a11y.point" = "%1$@、%2$@、割合 %3$@";
+"tendency.heatmap.a11y.hint" = "グリッドの任意の位置をタップすると当日の件数を確認できます";
+"tendency.heatmap.a11y.count" = "件数";
+"tendency.heatmap.a11y.count_format" = "%d 件";
+"tendency.heatmap.a11y.point" = "%1$@、%2$d 件";
+"tendency.heatmap.a11y.summary" = "過去1年で %1$d 件、最も多い日は %2$@（%3$d 件）";
+"tendency.heatmap.a11y.summary_empty" = "過去1年で %1$d 件";

@@ -12,6 +12,7 @@ import Charts
 /// 贴边继续按住时按日历步长自动滚动时间窗口。日志见 `ScrubSupport.swift` 顶部说明。
 struct TendencyChartView: View {
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.locale) private var locale
     
     // MARK: - 数据
     
@@ -21,6 +22,8 @@ struct TendencyChartView: View {
     let isHourly: Bool
     /// 完整数据范围（贴边自动滚动时用于夹取窗口位置）
     let scrollBounds: ClosedRange<Date>
+    /// 图表无障碍标题的本地化 key（默认「趋势图」）
+    let titleKey: String
     
     // MARK: - 交互状态
     
@@ -58,6 +61,7 @@ struct TendencyChartView: View {
         visibleDays: Int,
         isHourly: Bool = false,
         scrollBounds: ClosedRange<Date>,
+        titleKey: String = "tendency.a11y.chart",
         selectedDate: Binding<Date?>,
         scrollPosition: Binding<Date>
     ) {
@@ -66,6 +70,7 @@ struct TendencyChartView: View {
         self.visibleDays = visibleDays
         self.isHourly = isHourly
         self.scrollBounds = scrollBounds
+        self.titleKey = titleKey
         self._selectedDate = selectedDate
         self._scrollPosition = scrollPosition
     }
@@ -121,6 +126,16 @@ struct TendencyChartView: View {
     private var visibleLength: TimeInterval {
         TimeInterval(visibleDays * 86_400)
     }
+
+    /// R2/R3/R4：y 轴下界 0、上界随数据、刻度取整齐整数
+    private var yAxisModel: ChartAxisModel {
+        ChartAxisSupport.barAxis(maxValue: series.map(\.value).max() ?? 0)
+    }
+
+    /// R6：中文 / 日文轴标签用「万」，英文用「k」
+    private var usesTenThousandUnit: Bool {
+        ChartAxisSupport.usesTenThousandUnit(for: locale)
+    }
     
     // MARK: - 子视图
     
@@ -169,6 +184,7 @@ struct TendencyChartView: View {
         // chartScrollableAxes / chartScrollPosition：避免与原生选择手势争抢拖动（详见 ScrubSupport.swift 顶部说明）
         .chartXVisibleDomain(length: visibleLength)
         .chartXScale(domain: viewDateRange)
+        .chartYScale(domain: yAxisModel.domain)
         .chartXAxis { axisMarksContent }
         .chartYAxis { yAxisMarksContent }
         .chartOverlay { proxy in
@@ -181,11 +197,11 @@ struct TendencyChartView: View {
             )
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(L10n.string("tendency.a11y.chart"))
+        .accessibilityLabel(L10n.string(titleKey))
         .accessibilityValue(accessibilityValueText)
         .accessibilityHint(L10n.string("tendency.a11y.hint"))
+        .accessibilityChartDescriptor(ChartDescriptorRepresentable { chartDescriptor })
         .appAnimation(AppMotion.quick, value: selectedDate)
-        .padding(.horizontal, TendencyConstants.chartHorizontalPadding)
     }
     
     // MARK: - 坐标轴配置（使用 AxisContentBuilder）
@@ -201,23 +217,25 @@ struct TendencyChartView: View {
             }
             AxisMarks(values: hourTimes) { value in
                 AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 3]))
-                    .foregroundStyle(.secondary.opacity(0.22))
+                    .foregroundStyle(.secondary.opacity(0.12))
                 AxisValueLabel {
                     if let date = value.as(Date.self) {
                         Text(hourLabel(for: date))
-                            .font(.caption2)
+                            .font(AppTypography.tiny)
+                            .accessibilityHidden(true)
                     }
                 }
             }
         case 2...7:
-            // 周视图
-            AxisMarks(values: .automatic) { value in
+            // 周视图（R5：日粒度按天取刻度）
+            AxisMarks(values: .stride(by: .day, count: 1)) { value in
                 AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 3]))
-                    .foregroundStyle(.secondary.opacity(0.22))
+                    .foregroundStyle(.secondary.opacity(0.12))
                 AxisValueLabel {
                     if let date = value.as(Date.self) {
                         Text(weekdayLabel(for: date))
-                            .font(.caption2)
+                            .font(AppTypography.tiny)
+                            .accessibilityHidden(true)
                     }
                 }
             }
@@ -225,11 +243,12 @@ struct TendencyChartView: View {
             // 月视图
             AxisMarks(values: .stride(by: .day, count: 7)) { value in
                 AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 3]))
-                    .foregroundStyle(.secondary.opacity(0.22))
+                    .foregroundStyle(.secondary.opacity(0.12))
                 AxisValueLabel {
                     if let date = value.as(Date.self) {
                         Text(dayOfMonthLabel(for: date))
-                            .font(.caption2)
+                            .font(AppTypography.tiny)
+                            .accessibilityHidden(true)
                     }
                 }
             }
@@ -237,11 +256,12 @@ struct TendencyChartView: View {
             // 半年视图
             AxisMarks(values: .stride(by: .month, count: 1)) { value in
                 AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 3]))
-                    .foregroundStyle(.secondary.opacity(0.22))
+                    .foregroundStyle(.secondary.opacity(0.12))
                 AxisValueLabel {
                     if let date = value.as(Date.self) {
                         Text(monthLabel(for: date, withSuffix: true))
-                            .font(.caption2)
+                            .font(AppTypography.tiny)
+                            .accessibilityHidden(true)
                     }
                 }
             }
@@ -249,11 +269,12 @@ struct TendencyChartView: View {
             // 接近一年
             AxisMarks(values: .stride(by: .month, count: 2)) { value in
                 AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 3]))
-                    .foregroundStyle(.secondary.opacity(0.22))
+                    .foregroundStyle(.secondary.opacity(0.12))
                 AxisValueLabel {
                     if let date = value.as(Date.self) {
                         Text(monthLabel(for: date, withSuffix: true))
-                            .font(.caption2)
+                            .font(AppTypography.tiny)
+                            .accessibilityHidden(true)
                     }
                 }
             }
@@ -261,11 +282,12 @@ struct TendencyChartView: View {
             // 一年视图
             AxisMarks(values: .stride(by: .month, count: 1)) { value in
                 AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 3]))
-                    .foregroundStyle(.secondary.opacity(0.22))
+                    .foregroundStyle(.secondary.opacity(0.12))
                 AxisValueLabel {
                     if let date = value.as(Date.self) {
                         Text(monthLabel(for: date, withSuffix: false))
-                            .font(.caption2)
+                            .font(AppTypography.tiny)
+                            .accessibilityHidden(true)
                     }
                 }
             }
@@ -274,12 +296,16 @@ struct TendencyChartView: View {
     
     @AxisContentBuilder
     private var yAxisMarksContent: some AxisContent {
-        AxisMarks(position: .leading) { value in
-            AxisGridLine(stroke: StrokeStyle(lineWidth: 0.7))
+        // R4：显式刻度（3–5 条、整齐步长）；R9：数值轴放右侧，绘图区左边缘与卡片文字对齐
+        AxisMarks(position: .trailing, values: yAxisModel.ticks) { value in
+            AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
                 .foregroundStyle(.secondary.opacity(0.12))
             AxisValueLabel {
                 if let v = value.as(Double.self) {
-                    Text(formatAmount(v)).font(.caption2)
+                    Text(ChartAxisSupport.compactAmount(v, usesTenThousandUnit: usesTenThousandUnit))
+                        .font(AppTypography.tiny)
+                        .foregroundStyle(.secondary)
+                        .accessibilityHidden(true)
                 }
             }
         }
@@ -303,6 +329,7 @@ struct TendencyChartView: View {
                     ScrubCallout(plotRect: plotRect, anchorX: x, isVisible: selectedDate != nil) {
                         calloutContent(for: date)
                     }
+                    .accessibilityHidden(true)
                 }
             }
         }
@@ -408,6 +435,16 @@ struct TendencyChartView: View {
         return String(format: L10n.string("tendency.a11y.selected"),
                       point.date.formatted(date: .abbreviated, time: .omitted),
                       formatAmount(point.value))
+    }
+
+    /// R18：图表描述符（标题 + 摘要 + 逐点标签 + Audio Graph）
+    private var chartDescriptor: AXChartDescriptor {
+        ChartAccessibility.barDescriptor(
+            title: L10n.string(titleKey),
+            summary: accessibilityValueText,
+            valueLabel: L10n.string("tendency.a11y.amount"),
+            points: series.map { (date: $0.date, value: $0.value) }
+        )
     }
     
     // MARK: - 数据处理

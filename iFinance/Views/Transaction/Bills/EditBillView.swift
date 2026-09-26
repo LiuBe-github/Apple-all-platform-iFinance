@@ -11,6 +11,7 @@ internal import CoreData
 struct EditBillView: View {
     @ObservedObject var bill: Bill
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var colorScheme
     @Environment(\.managedObjectContext) private var viewContext
     
     // 表单状态（绑定到 Core Data 属性）
@@ -150,7 +151,9 @@ struct EditBillView: View {
         HStack(spacing: AppSpacing.md) {
             if let raw = categoryRawValue, !raw.isEmpty {
                 Image(systemName: categoryIcon(for: raw))
-                    .foregroundStyle(selectedType == "income" ? .green : .red)
+                    .foregroundStyle(selectedType == "income"
+                                     ? ChartSeriesStyle.income(for: colorScheme)
+                                     : ChartSeriesStyle.expense(for: colorScheme))
                 Text(categoryDisplayName(for: raw))
                     .foregroundStyle(.primary)
             } else {
