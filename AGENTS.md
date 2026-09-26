@@ -112,3 +112,4 @@ Watch 概览 → requestSync → transferUserInfo(action: requestTodayBills)
 `docs/PRD.md`（产品需求：功能清单、业务规则、验收清单）、`docs/PROJECT_MEMORY.md`（架构与坑）、`docs/api/*.md`（接口文档，含 `swiftdata.md`）由代码勘察生成，接口文档带 `路径:行号` 引用。
 **修改任何公开类型/方法签名、数据模型、Watch 协议或本地化 key 规则后，请同步更新对应文档与本节中的坑表。**
 新增/调整产品功能时，请同步 `docs/PRD.md` 的功能需求表与验收清单（状态列用 ✅ / 🚧 / 💤 标注真实情况）。
+每一轮工作结束后，请同步 [memory/](memory/README.md)：`work-history.md` 追加提交记录、`decision-log.md` 记录取舍、`open-items.md` 更新待办状态。
