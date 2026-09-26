@@ -1,8 +1,8 @@
 # 工作历史（codex/platform-18-27）
 
-> 分支起点：`main` @ `fd6b1fb` ｜ 当前共 **18 次提交**，`169 files changed, +18581 / −2030`
+> 分支起点：`main` @ `fd6b1fb` ｜ 当前共 **20 次提交**，`177 files changed, +19241 / −2030`（含本文件所在提交，实测值见 `git diff --shortstat main...HEAD`）
 > 分支未推送远端。每次完成新改动请**在表尾追加一行**；由于提交哈希在写入文件时尚未生成，最新一行用「*(最新一次提交)*」占位，**下次提交时把真实 SHA 回填到上一行**。
-> 历史行的 SHA 已核对：1~17 可直接用于 `git show`。
+> 历史行的 SHA 已核对：1~19 可直接用于 `git show`（第 20 行是当前提交的占位）。
 
 ## 时间线
 
@@ -18,14 +18,16 @@
 | 8 | `104f9f8` | style | 今日结余只显示金额，移除「结余 / 超支」文字 | 两版编译 + 测试；冒烟 |
 | 9 | `8b5f152` | assets | 微信二维码替换为 `IMG_5894.jpg`，改为单文件通用资源（445KB→164KB）；移除误收录的空图片集 | 编译 + `assetutil` 核对尺寸 + 冒烟 |
 | 10 | `30392f8` | fix | 本地化修复：268 处 `String(localized:)`/`NSLocalizedString` → `L10n.string`；新增 `LocalizationSync`（AppleLanguages 同步 + 启动兜底）；补 15 个 `auth.*` 译文、清理 6 个残留 key；新增审计脚本 | 四端编译；三套测试全绿；审计脚本四 target 通过；两版 App 在 en/ja 下验证同步日志 |
-| 11 | `bd84c95` | perf | 背景动画共享时钟（30fps→10fps、非活跃暂停、RadialGradient 替代 blur）；头像解码缓存；Formatter 静态化；分类网格 Equatable 拆分；TrendCard 单次遍历；SettingView 拆子视图 | 四端编译；三套测试；冒烟 |
-| 12 | `95d2475` | feat | 个性签名：三份模型加 `signature` 字段，`AuthManager.signature/updateSignature/validateSignature`（40 字上限），设置页头部显示 + 点击编辑 + 个人中心入口 | 新增边界单测；三套测试；审计通过 |
-| 13 | `5167091` | perf(dev) | 关闭 `SWIFT_EMIT_LOC_STRINGS` / `STRING_CATALOG_GENERATE_SYMBOLS`（全量设备构建 25.1s→23.9s）；新增 `scripts/run-on-device.sh`（跳过 Watch 部署与调试器附加）；修复 macOS 偶发测试失败（`DashboardLogicTests` 加 `.serialized`） | 实测构建耗时；四端编译；三套测试 |
-| 14 | `52f6c36` | fix | 记账键盘「运算符后无法继续输入数字」：抽出 `NumberPadExpression`（按当前数字段校验）、修正运算符首按语义 | 新增 9+2 条单测（含复现用例与四则运算）；三套测试 |
-| 15 | `1953919` | feat | 趋势页新增支出/收入分类占比饼图（独立跨度、完整列表、点选高亮），删除折线图与图表类型切换器；预算页饼图改用同一组件；新增 `CategoryBreakdown` 纯逻辑 | 新增 4+2 条聚合单测；四端编译；三套测试；审计通过 |
-| 16 | `509b9cf` | fix | 编辑页：分类改推入式选择页（只列当前类型分类）、类型切换清空并要求重选、类型补转账、日期精确到时分；新增 `BillEditRules` 归一化旧脏数据 | 新增 3+3 条规则单测；四端编译；三套测试；审计通过 |
-| 17 | `db152dd` | docs | 新增 `docs/PRD.md`（11 模块功能需求、10 条业务规则、验收清单、路线图、已知限制）并接入 README / AGENTS / PROJECT_MEMORY 索引 | 11 个 markdown 链接校验 |
-| 18 | *(最新一次提交)* | docs | 根据本次协作历史建立 `memory/` 记忆文件夹（7 份：索引 / 速查 / 决策 / 工作历史 / 待办 / 环境 / 协作约定） | 18 个 markdown 链接校验通过（仅文档改动，未跑构建） |
+| 11 | `b275f02` | feat | 账单行备注为主/分类为次（同步 macOS）、头像裁剪页（拖动缩放 + 300×300 JPEG）、概况页配色与层级重排、冷启动开屏动画、设置页头像旁显示昵称、已用百分比保留两位小数 | 新增百分比格式单测；四端编译；三套测试；冒烟 |
+| 12 | `bd84c95` | perf | 背景动画共享时钟（30fps→10fps、非活跃暂停、RadialGradient 替代 blur）；头像解码缓存；Formatter 静态化；分类网格 Equatable 拆分；TrendCard 单次遍历；SettingView 拆子视图 | 四端编译；三套测试；冒烟 |
+| 13 | `95d2475` | feat | 个性签名：三份模型加 `signature` 字段，`AuthManager.signature/updateSignature/validateSignature`（40 字上限），设置页头部显示 + 点击编辑 + 个人中心入口 | 新增边界单测；三套测试；审计通过 |
+| 14 | `5167091` | perf(dev) | 关闭 `SWIFT_EMIT_LOC_STRINGS` / `STRING_CATALOG_GENERATE_SYMBOLS`（全量设备构建 25.1s→23.9s）；新增 `scripts/run-on-device.sh`（跳过 Watch 部署与调试器附加）；修复 macOS 偶发测试失败（`DashboardLogicTests` 加 `.serialized`） | 实测构建耗时；四端编译；三套测试 |
+| 15 | `52f6c36` | fix | 记账键盘「运算符后无法继续输入数字」：抽出 `NumberPadExpression`（按当前数字段校验）、修正运算符首按语义 | 新增 9+2 条单测（含复现用例与四则运算）；三套测试 |
+| 16 | `1953919` | feat | 趋势页新增支出/收入分类占比饼图（独立跨度、完整列表、点选高亮），删除折线图与图表类型切换器；预算页饼图改用同一组件；新增 `CategoryBreakdown` 纯逻辑 | 新增 4+2 条聚合单测；四端编译；三套测试；审计通过 |
+| 17 | `509b9cf` | fix | 编辑页：分类改推入式选择页（只列当前类型分类）、类型切换清空并要求重选、类型补转账、日期精确到时分；新增 `BillEditRules` 归一化旧脏数据 | 新增 3+3 条规则单测；四端编译；三套测试；审计通过 |
+| 18 | `db152dd` | docs | 新增 `docs/PRD.md`（11 模块功能需求、10 条业务规则、验收清单、路线图、已知限制）并接入 README / AGENTS / PROJECT_MEMORY 索引 | 11 个 markdown 链接校验 |
+| 19 | `8acaaed` | docs | 根据本次协作历史建立 `memory/` 记忆文件夹（7 份：索引 / 速查 / 决策 / 工作历史 / 待办 / 环境 / 协作约定） | 18 个 markdown 链接校验通过（仅文档改动，未跑构建） |
+| 20 | *(最新一次提交)* | docs | 新增 `docs/HANDOFF.md` 交接文档（接手清单、环境准备、十条铁律、代码地图、验证四件套、风险摘录）并接入 README / AGENTS / PROJECT_MEMORY / docs/api / memory 索引；修正 `work-history.md` 的提交数与统计偏差（补记第 11 行 `b275f02`） | 19 个 markdown 文件、0 失效链接（仅文档改动，未跑构建） |
 
 ## 验证方式说明（沿用本轮约定）
 

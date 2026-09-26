@@ -289,6 +289,7 @@ iFinance/
 
 | 文档 | 内容 |
 |------|------|
+| [docs/HANDOFF.md](docs/HANDOFF.md) | 交接文档：接手清单、环境准备、铁律、代码地图、验证标准、未完成事项 |
 | [AGENTS.md](AGENTS.md) | Agent 速用记忆：版本矩阵、构建命令、不可违反的约定、已知坑 |
 | [docs/PRD.md](docs/PRD.md) | 产品需求文档：定位、各端功能需求与优先级、业务规则、非功能要求、验收清单、路线图 |
 | [memory/README.md](memory/README.md) | 记忆文件夹：本次协作的决策记录、工作历史、待办与风险、环境与协作约定 |

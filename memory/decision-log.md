@@ -15,7 +15,7 @@
 | D-06 | SwiftData 版**不迁移** Core Data 历史数据、不含 Watch / CloudKit / 通知 | 「单独做一版」的定位；数据从空库开始 | `iFinanceSwiftData/Data/` |
 | D-07 | 共享 iOS 的四语言 `.lproj` 与 `EconomicQuotes.json`（target membership 引用，不复制） | 避免两份文案漂移；改 iOS 文案同时影响两版 | 工程资源引用 |
 | D-08 | 先建 `codex/platform-18-27` 分支并**把用户既有未提交改动提交为基线** | 便于分阶段回滚与 review（用户明确选择） | commit `37b2b39` |
-| D-09 | 提交粒度：分阶段提交；本次全部改动**不推送远端** | 用户在 Codex 里自行 review 后决定 | 分支上 18 次提交 |
+| D-09 | 提交粒度：分阶段提交；本次全部改动**不推送远端** | 用户在 Codex 里自行 review 后决定 | 分支上 20 次提交 |
 
 ## B. 视觉、动画与设计系统
 

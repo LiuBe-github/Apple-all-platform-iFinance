@@ -368,7 +368,8 @@ macOS 端有独立副本：`MaciFinance/Views/Common/AppVisualStyle.swift`（130
 
 | 文档 | 内容 |
 |------|------|
-| [memory/README.md](../memory/README.md) | 会话记忆：决策记录、工作历史（18 次提交）、待办与风险、环境与协作约定 |
+| [docs/HANDOFF.md](HANDOFF.md) | 交接文档：接手清单、环境准备、铁律、代码地图、验证标准、未完成事项 |
+| [memory/README.md](../memory/README.md) | 会话记忆：决策记录、工作历史（20 次提交）、待办与风险、环境与协作约定 |
 | [docs/PRD.md](PRD.md) | 产品需求文档：功能需求与优先级、业务规则、非功能要求、验收清单、路线图 |
 | [docs/api/README.md](api/README.md) | 接口文档索引与通用约定 |
 | [docs/api/ios-core.md](api/ios-core.md) | iOS 核心层：入口、Persistence、Manager、Model、Helper |

@@ -2,6 +2,7 @@
 
 > 生成依据：`fd6b1fb` 基线 + `codex/platform-18-27` 分支（三端版本适配与 SwiftData 版）。
 > 项目背景、架构决策与已知问题见 [PROJECT_MEMORY.md](../PROJECT_MEMORY.md)；Agent 速用记忆见 [AGENTS.md](../../AGENTS.md)。
+> 刚接手项目请先读 [HANDOFF.md](../HANDOFF.md)（交接清单与验证标准）。
 
 ## 版本矩阵（2026-09 起）
 
