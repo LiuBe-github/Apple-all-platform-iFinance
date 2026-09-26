@@ -161,3 +161,68 @@ enum MemoSorting {
             .map(\.id)
     }
 }
+
+// MARK: - 标签规则
+
+/// 重复待办完成后的「下一期」推进（纯数据，视图只负责落库与复制关系）
+enum TodoRecurrence {
+
+    /// 生成下一期草稿：截止日按重复规则推进，其余字段沿用，完成状态重置。
+    /// 不重复、无截止日或规则非法时返回 nil。
+    static func nextDraft(
+        after snapshot: TodoSnapshot,
+        now: Date = Date(),
+        calendar: Calendar = .current
+    ) -> TodoSnapshot? {
+        guard snapshot.repeatRule != TodoRepeat.noneRule,
+              let dueDate = snapshot.dueDate,
+              let nextDueDate = TodoRepeat.nextDueDate(after: dueDate, rule: snapshot.repeatRule, calendar: calendar) else {
+            return nil
+        }
+
+        return TodoSnapshot(
+            id: UUID(),
+            title: snapshot.title,
+            note: snapshot.note,
+            dueDate: nextDueDate,
+            priority: snapshot.priority,
+            isDone: false,
+            repeatRule: snapshot.repeatRule,
+            createdAt: now
+        )
+    }
+}
+
+/// 待办标签的名字与数量规则（视图与单测共用）
+enum TodoTagRules {
+
+    /// 每账号标签上限
+    static let maxCount = 12
+    /// 标签名长度上限（按字符数）
+    static let maxNameLength = 8
+
+    enum Validation: Equatable {
+        case valid
+        case empty
+        case tooLong
+        case duplicate
+        case limit
+    }
+
+    /// 校验标签名：去空白后 1–8 字、不与既有标签重名（忽略大小写与音标差异）
+    static func validate(_ rawName: String, existingNames: [String]) -> Validation {
+        let name = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return .empty }
+        guard name.count <= maxNameLength else { return .tooLong }
+
+        let duplicated = existingNames.contains { existing in
+            existing.compare(name, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame
+        }
+        return duplicated ? .duplicate : .valid
+    }
+
+    /// 是否还能新增标签
+    static func canAdd(existingCount: Int) -> Bool {
+        existingCount < maxCount
+    }
+}

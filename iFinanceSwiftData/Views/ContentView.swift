@@ -12,6 +12,7 @@ struct ContentView: View {
     enum Tab {
         case home
         case transaction
+        case todo
         case tendency
         case setting
     }
@@ -33,6 +34,12 @@ struct ContentView: View {
                     Label("tab.transaction", systemImage: "long.text.page.and.pencil.fill")
                 }
                 .tag(Tab.transaction)
+            
+            TodoTabView()
+                .tabItem {
+                    Label("tab.todo", systemImage: "checklist")
+                }
+                .tag(Tab.todo)
             
             TendencyView()
                 .tabItem {
