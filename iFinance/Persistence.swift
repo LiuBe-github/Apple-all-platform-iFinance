@@ -115,6 +115,9 @@ struct PersistenceController {
         let userReq: NSFetchRequest<NSFetchRequestResult> = UserProfile.fetchRequest()
         try? context.execute(NSBatchDeleteRequest(fetchRequest: userReq))
 
+        // 删除所有待办 / 备忘 / 资产数据（与账号删除联动保持一致）
+        AuthManager.deleteTodoAndAssetData(identifier: nil, context: context)
+
         try? context.save()
         print("✅ [Persistence] 已清空所有账号和账单数据")
     }
@@ -129,6 +132,27 @@ extension PersistenceController {
 
     /// 获取账单的用户过滤 predicate
     static var billUserPredicate: NSPredicate {
+        NSPredicate(format: "createdBy == %@", currentUserIdentifier)
+    }
+
+    /// 待办 / 标签 / 备忘 / 资产账户 / 资产快照的用户过滤 predicate（与账单同一隔离键）
+    static var todoUserPredicate: NSPredicate {
+        NSPredicate(format: "createdBy == %@", currentUserIdentifier)
+    }
+
+    static var todoTagUserPredicate: NSPredicate {
+        NSPredicate(format: "createdBy == %@", currentUserIdentifier)
+    }
+
+    static var memoUserPredicate: NSPredicate {
+        NSPredicate(format: "createdBy == %@", currentUserIdentifier)
+    }
+
+    static var assetAccountUserPredicate: NSPredicate {
+        NSPredicate(format: "createdBy == %@", currentUserIdentifier)
+    }
+
+    static var assetSnapshotUserPredicate: NSPredicate {
         NSPredicate(format: "createdBy == %@", currentUserIdentifier)
     }
 
@@ -166,4 +190,3 @@ extension PersistenceController {
         return try? context.fetch(request).first
     }
 }
-

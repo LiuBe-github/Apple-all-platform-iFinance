@@ -28,4 +28,65 @@
         <attribute name="updatedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="userIdentifier" attributeType="String" defaultValueString="anonymous"/>
     </entity>
+    <entity name="TodoItem" representedClassName="TodoItem" syncable="YES" codeGenerationType="class">
+        <attribute name="completedAt" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="createdAt" attributeType="Date" defaultDateTimeInterval="790680300" usesScalarValueType="NO"/>
+        <attribute name="createdBy" attributeType="String" defaultValueString="anonymous"/>
+        <attribute name="dueDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="isDone" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="note" optional="YES" attributeType="String"/>
+        <attribute name="priority" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="repeatRule" attributeType="String" defaultValueString="none"/>
+        <attribute name="title" attributeType="String" defaultValueString=""/>
+        <attribute name="updatedAt" attributeType="Date" defaultDateTimeInterval="790680300" usesScalarValueType="NO"/>
+        <attribute name="updatedBy" attributeType="String" defaultValueString="anonymous"/>
+        <relationship name="subtasks" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="TodoSubtask" inverseName="owner" inverseEntity="TodoSubtask"/>
+        <relationship name="tags" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="TodoTag" inverseName="items" inverseEntity="TodoTag"/>
+    </entity>
+    <entity name="TodoSubtask" representedClassName="TodoSubtask" syncable="YES" codeGenerationType="class">
+        <attribute name="createdAt" attributeType="Date" defaultDateTimeInterval="790680300" usesScalarValueType="NO"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="isDone" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="title" attributeType="String" defaultValueString=""/>
+        <relationship name="owner" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="TodoItem" inverseName="subtasks" inverseEntity="TodoItem"/>
+    </entity>
+    <entity name="TodoTag" representedClassName="TodoTag" syncable="YES" codeGenerationType="class">
+        <attribute name="colorIndex" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="createdBy" attributeType="String" defaultValueString="anonymous"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" attributeType="String" defaultValueString=""/>
+        <relationship name="items" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="TodoItem" inverseName="tags" inverseEntity="TodoItem"/>
+    </entity>
+    <entity name="MemoNote" representedClassName="MemoNote" syncable="YES" codeGenerationType="class">
+        <attribute name="content" attributeType="String" defaultValueString=""/>
+        <attribute name="createdAt" attributeType="Date" defaultDateTimeInterval="790680300" usesScalarValueType="NO"/>
+        <attribute name="createdBy" attributeType="String" defaultValueString="anonymous"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="isPinned" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="title" optional="YES" attributeType="String"/>
+        <attribute name="updatedAt" attributeType="Date" defaultDateTimeInterval="790680300" usesScalarValueType="NO"/>
+        <attribute name="updatedBy" attributeType="String" defaultValueString="anonymous"/>
+    </entity>
+    <entity name="AssetAccount" representedClassName="AssetAccount" syncable="YES" codeGenerationType="class">
+        <attribute name="balance" attributeType="Decimal" defaultValueString="0"/>
+        <attribute name="createdAt" attributeType="Date" defaultDateTimeInterval="790680300" usesScalarValueType="NO"/>
+        <attribute name="createdBy" attributeType="String" defaultValueString="anonymous"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="includeInTotal" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
+        <attribute name="name" attributeType="String" defaultValueString=""/>
+        <attribute name="note" optional="YES" attributeType="String"/>
+        <attribute name="sortOrder" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="type" attributeType="String" defaultValueString="cash"/>
+        <attribute name="updatedAt" attributeType="Date" defaultDateTimeInterval="790680300" usesScalarValueType="NO"/>
+        <attribute name="updatedBy" attributeType="String" defaultValueString="anonymous"/>
+    </entity>
+    <entity name="AssetSnapshot" representedClassName="AssetSnapshot" syncable="YES" codeGenerationType="class">
+        <attribute name="createdAt" attributeType="Date" defaultDateTimeInterval="790680300" usesScalarValueType="NO"/>
+        <attribute name="createdBy" attributeType="String" defaultValueString="anonymous"/>
+        <attribute name="date" attributeType="Date" defaultDateTimeInterval="790680240" usesScalarValueType="NO"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="totalAssets" attributeType="Decimal" defaultValueString="0"/>
+        <attribute name="totalLiabilities" attributeType="Decimal" defaultValueString="0"/>
+    </entity>
 </model>

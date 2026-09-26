@@ -332,6 +332,10 @@ final class AuthManager: ObservableObject {
         let billPredicate = PersistenceController.billPredicate(for: identifier)
 
         try? context.delete(model: Bill.self, where: billPredicate)
+
+        // 待办 / 备忘 / 资产：同一隔离键（SwiftData 按关系删除规则级联子任务）
+        Self.deleteTodoAndAssetData(identifier: identifier, context: context)
+
         context.delete(user)
         try? context.save()
 
@@ -340,10 +344,48 @@ final class AuthManager: ObservableObject {
 
     // MARK: - 删除所有账号（调试用）
 
+    /// 删除待办 / 备忘 / 资产数据（SwiftData 版）。
+    /// - Parameter identifier: 传账号标识只删该账号；传 nil 时清空全部（调试用）。
+    /// - Note: 待办与标签走**对象图删除**。`TodoItem.tags` / `TodoTag.items` 是非可选的多对多关系，
+    ///   批量删除（`delete(model:where:)`）会因「强制 MTM 反置 nullify」约束失败
+    ///   （NSCocoaErrorDomain 134050，且被 `try?` 静默吞掉、数据删不掉），
+    ///   逐个 `delete` 才能触发关系删除规则：子任务级联删除、标签关系自动清理。
+    static func deleteTodoAndAssetData(identifier: String?, context: ModelContext) {
+        let todoPredicate: Predicate<TodoItem>
+        let tagPredicate: Predicate<TodoTag>
+        if let identifier {
+            todoPredicate = #Predicate<TodoItem> { $0.createdBy == identifier }
+            tagPredicate = #Predicate<TodoTag> { $0.createdBy == identifier }
+        } else {
+            todoPredicate = #Predicate<TodoItem> { _ in true }
+            tagPredicate = #Predicate<TodoTag> { _ in true }
+        }
+
+        if let items = try? context.fetch(FetchDescriptor<TodoItem>(predicate: todoPredicate)) {
+            for item in items { context.delete(item) }
+        }
+        if let tags = try? context.fetch(FetchDescriptor<TodoTag>(predicate: tagPredicate)) {
+            for tag in tags { context.delete(tag) }
+        }
+
+        if let identifier {
+            try? context.delete(model: MemoNote.self, where: #Predicate<MemoNote> { $0.createdBy == identifier })
+            try? context.delete(model: AssetAccount.self, where: #Predicate<AssetAccount> { $0.createdBy == identifier })
+            try? context.delete(model: AssetSnapshot.self, where: #Predicate<AssetSnapshot> { $0.createdBy == identifier })
+        } else {
+            // 兜底清理：没有归属的孤立子任务（正常路径已随父级待办级联删除）
+            try? context.delete(model: TodoSubtask.self)
+            try? context.delete(model: MemoNote.self)
+            try? context.delete(model: AssetAccount.self)
+            try? context.delete(model: AssetSnapshot.self)
+        }
+    }
+
     /// 清空 SwiftData 中所有 UserProfile 和所有 Bill（不可恢复）
     func deleteAllAccounts() {
         let context = self.context
         try? context.delete(model: Bill.self)
+        Self.deleteTodoAndAssetData(identifier: nil, context: context)
         try? context.delete(model: UserProfile.self)
         try? context.save()
         logout()

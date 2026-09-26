@@ -48,7 +48,16 @@ struct PersistenceController {
     let container: ModelContainer
 
     init(inMemory: Bool = false) {
-        let schema = Schema([Bill.self, UserProfile.self])
+        let schema = Schema([
+            Bill.self,
+            UserProfile.self,
+            TodoItem.self,
+            TodoSubtask.self,
+            TodoTag.self,
+            MemoNote.self,
+            AssetAccount.self,
+            AssetSnapshot.self
+        ])
         let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: inMemory)
         do {
             container = try ModelContainer(for: schema, configurations: [configuration])
@@ -73,6 +82,33 @@ struct PersistenceController {
     /// 指定用户的账单过滤条件（用于账号删除等场景）
     static func billPredicate(for identifier: String) -> Predicate<Bill> {
         #Predicate<Bill> { $0.createdBy == identifier }
+    }
+
+    // MARK: - 待办 / 备忘 / 资产的用户过滤条件（与账单同一隔离键）
+
+    static var todoUserPredicate: Predicate<TodoItem> {
+        let identifier = currentUserIdentifier
+        return #Predicate<TodoItem> { $0.createdBy == identifier }
+    }
+
+    static var todoTagUserPredicate: Predicate<TodoTag> {
+        let identifier = currentUserIdentifier
+        return #Predicate<TodoTag> { $0.createdBy == identifier }
+    }
+
+    static var memoUserPredicate: Predicate<MemoNote> {
+        let identifier = currentUserIdentifier
+        return #Predicate<MemoNote> { $0.createdBy == identifier }
+    }
+
+    static var assetAccountUserPredicate: Predicate<AssetAccount> {
+        let identifier = currentUserIdentifier
+        return #Predicate<AssetAccount> { $0.createdBy == identifier }
+    }
+
+    static var assetSnapshotUserPredicate: Predicate<AssetSnapshot> {
+        let identifier = currentUserIdentifier
+        return #Predicate<AssetSnapshot> { $0.createdBy == identifier }
     }
 }
 

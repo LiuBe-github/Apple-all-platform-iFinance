@@ -378,6 +378,9 @@ final class AuthManager: ObservableObject {
         let billDeleteRequest = NSBatchDeleteRequest(fetchRequest: billRequest)
         try? context.execute(billDeleteRequest)
 
+        // 1.1 删除该用户的待办 / 备忘 / 资产数据（隔离键同样是 createdBy）
+        Self.deleteTodoAndAssetData(identifier: identifier, context: context)
+
         // 2. 删除 UserProfile 记录
         context.delete(user)
         try? context.save()
@@ -388,6 +391,41 @@ final class AuthManager: ObservableObject {
 
     // MARK: - 删除所有账号（调试用）
 
+    /// 删除待办 / 备忘 / 资产数据。
+    /// - Parameter identifier: 传账号标识只删该账号；传 nil 时清空全部（调试用）。
+    /// - Note: 待办与子任务走对象图删除（`NSBatchDeleteRequest` 不会触发级联规则），其余实体用批量删除。
+    static func deleteTodoAndAssetData(identifier: String?, context: NSManagedObjectContext) {
+        // 1) 待办：对象图删除，保证子任务级联、标签关系清理
+        let todoRequest: NSFetchRequest<TodoItem> = TodoItem.fetchRequest()
+        if let identifier {
+            todoRequest.predicate = NSPredicate(format: "createdBy == %@", identifier)
+        }
+        if let todos = try? context.fetch(todoRequest) {
+            todos.forEach { context.delete($0) }
+        }
+
+        // 2) 子任务：孤儿 + 归属于该账号待办的子任务（双保险）
+        let subtaskRequest: NSFetchRequest<TodoSubtask> = TodoSubtask.fetchRequest()
+        if let identifier {
+            subtaskRequest.predicate = NSPredicate(format: "owner == nil OR owner.createdBy == %@", identifier)
+        }
+        if let subtasks = try? context.fetch(subtaskRequest) {
+            subtasks.forEach { context.delete($0) }
+        }
+
+        // 3) 其余 4 类：按 createdBy 逐个删除（不用 NSBatchDeleteRequest：
+        //    内存存储/部分存储不支持批量删除，且这几张表数据量很小）
+        for entityName in ["TodoTag", "MemoNote", "AssetAccount", "AssetSnapshot"] {
+            let request = NSFetchRequest<NSFetchRequestResult>(entityName: entityName)
+            if let identifier {
+                request.predicate = NSPredicate(format: "createdBy == %@", identifier)
+            }
+            if let objects = try? context.fetch(request) {
+                objects.compactMap { $0 as? NSManagedObject }.forEach { context.delete($0) }
+            }
+        }
+    }
+
     /// 清空 Core Data 中所有 UserProfile 和所有 Bill（不可恢复）
     func deleteAllAccounts() {
         let context = PersistenceController.shared.container.viewContext
@@ -396,6 +434,9 @@ final class AuthManager: ObservableObject {
         let billRequest: NSFetchRequest<NSFetchRequestResult> = Bill.fetchRequest()
         let billDelete = NSBatchDeleteRequest(fetchRequest: billRequest)
         try? context.execute(billDelete)
+
+        // 删除所有待办 / 备忘 / 资产数据
+        Self.deleteTodoAndAssetData(identifier: nil, context: context)
 
         // 删除所有用户
         let userRequest: NSFetchRequest<NSFetchRequestResult> = UserProfile.fetchRequest()
