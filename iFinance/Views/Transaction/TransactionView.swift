@@ -12,6 +12,7 @@ struct TransactionView: View {
     @EnvironmentObject private var authManager: AuthManager
     @State private var showingAddBillView = false
     @State private var showProfile = false
+    @State private var showAsset = false
     @State private var showingSearch = false
     @State private var selectedCategory: String? = nil
     @State private var selectedNote: String? = nil
@@ -100,6 +101,17 @@ struct TransactionView: View {
                     .accessibilityLabel("search.title")
                 }
                 ToolbarItem(placement: .topBarTrailing) {
+                    // 资产按钮（入口不占标签位）
+                    Button {
+                        showAsset = true
+                    } label: {
+                        Image(systemName: "banknote")
+                            .font(.title3)
+                    }
+                    .buttonStyle(.borderless)
+                    .accessibilityLabel("asset.title")
+                }
+                ToolbarItem(placement: .topBarTrailing) {
                     // 个人中心按钮
                     Button {
                         showProfile = true
@@ -125,6 +137,9 @@ struct TransactionView: View {
             }
             .navigationDestination(isPresented: $showProfile) {
                 ProfileView()
+            }
+            .navigationDestination(isPresented: $showAsset) {
+                AssetView()
             }
             .sheet(isPresented: $showingAddBillView) {
                 AddBillView()
