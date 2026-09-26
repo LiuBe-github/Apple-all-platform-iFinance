@@ -391,6 +391,8 @@ macOS 端有独立副本：`MaciFinance/Views/Common/AppVisualStyle.swift`（130
 13. **SwiftData 批量删除对非可选多对多会失败**：`context.delete(model: TodoItem.self, where:)` 抛 `Constraint trigger violation: Batch delete failed due to mandatory MTM nullify inverse on TodoItem/tags`（`NSCocoaErrorDomain` 134050）；代码里用 `try?` 会把错误静默吞掉、数据删不掉（单测抓到）。**待办与标签必须走对象图删除**（`fetch` + 逐个 `context.delete`），其余无关系实体（备忘 / 资产账户 / 快照）可继续批量删除。见 `iFinanceSwiftData/Manager/AuthManager.swift`。
 14. **SwiftData 测试夹具必须持有容器**：写成 `PersistenceController(inMemory: true).container.mainContext` 时控制器随临时实例释放、容器被销毁，之后 `insert`/`save` 触发内部断言（SIGTRAP），且崩溃点会飘到别的测试上（先崩在 `TodoItem`、后崩在 `Bill`），极难定位。用局部 `let controller = ...` 或测试夹具类持有（见 `iFinanceSwiftDataTests/SwiftDataCoreTests.swift` 的 `SwiftDataTestContext`、`TodoAssetTests.swift` 的 `TodoAssetTestHarness`）。
 15. **Core Data 代码生成的类型契约**：整数属性只生成 `Int16/Int32/Int64`（没有 `Int`），非标量属性（String / Date / Decimal / UUID）默认生成**可选**类型。因此新增实体的纯逻辑与 SwiftData 实体统一用 `Int16`，Core Data 侧读取时要 `?? ""` / `?.doubleValue ?? 0`（两版视图的差异都集中在这里，不要试图把两版强行写成逐字节一致）。
+16. **标签栏放图片的两个坑**（`Views/ContentView.swift` 的「我的」标签）：① `.tabItem` 里放 `.resizable()` 图片会被拉伸铺满整个标签栏——必须传**固定尺寸位图**；② 标签栏会把**非符号图片当模板**渲染（整块纯色填充），SwiftUI 层 `.renderingMode(.original)` 不足以阻止，必须对 `UIImage` 调 `withRenderingMode(.alwaysOriginal)`。两版各有一条 `AvatarThumbnailTests` 锁定这两条约束。
+17. **`UserProfile.avatarData` 是 Core Data 外部二进制存储**（`allowsExternalBinaryDataStorage="YES"`）：字节实际落在 `<store>_SUPPORT/_EXTERNAL_DATA/`，列里存引用。**不要用裸 SQL 往这一列写图片字节**——Core Data 会把字节当引用读，轻则 `avatarData` 读到 nil，重则启动时抛 `NSInternalInconsistencyException: Missing bytes from file at path .../_EXTERNAL_DATA`（`AuthManager.bootstrap()` 里崩）。要给模拟器造带头像的账号请走 App 内流程或 Core Data API。
 
 ## 11. 高频任务操作指引
 

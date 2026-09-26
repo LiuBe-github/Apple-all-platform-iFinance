@@ -75,8 +75,9 @@ struct ContentView: View {
             for: authManager.avatarData,
             diameter: AppLayout.tabBarIcon
         ) {
+            // 缩略图已是固定尺寸位图：不要再 resizable（会被拉伸铺满标签栏），
+            // 也已在 UIImage 层标记 alwaysOriginal（标签栏会模板化非符号图片）
             Image(uiImage: thumbnail)
-                .renderingMode(.original)
         } else {
             Image(systemName: "person.crop.circle.fill")
         }

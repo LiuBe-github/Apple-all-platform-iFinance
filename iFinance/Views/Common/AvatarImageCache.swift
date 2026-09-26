@@ -38,6 +38,8 @@ final class AvatarImageCache {
     /// `TabView` 的 `.tabItem` 里没有固有尺寸的可伸缩图片会被拉伸铺满标签栏。
     func thumbnail(for data: Data?, diameter: CGFloat) -> UIImage? {
         guard let data, let image = image(for: data) else { return nil }
+        // 尺寸为 0 时 aspect fill 会算出 inf/nan，直接回落默认头像
+        guard image.size.width > 0, image.size.height > 0 else { return nil }
 
         let hash = data.hashValue
         if hash == cachedThumbnailHash, cachedThumbnailDiameter == diameter, let cachedThumbnail {
@@ -62,9 +64,11 @@ final class AvatarImageCache {
             image.draw(in: CGRect(origin: origin, size: drawSize))
         }
 
-        cachedThumbnail = rendered
+        // 标签栏会把非符号图片当模板填充（整块纯色）——在 UIImage 层标记保持原色
+        let original = rendered.withRenderingMode(.alwaysOriginal)
+        cachedThumbnail = original
         cachedThumbnailHash = hash
         cachedThumbnailDiameter = diameter
-        return rendered
+        return original
     }
 }

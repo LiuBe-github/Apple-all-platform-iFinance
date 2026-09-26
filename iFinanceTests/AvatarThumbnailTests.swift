@@ -33,6 +33,12 @@ final class AvatarThumbnailTests: XCTestCase {
 
         let expectedPixels = Int((diameter * UIScreen.main.scale).rounded())
         XCTAssertEqual(thumbnail?.cgImage?.width ?? 0, expectedPixels, "像素尺寸随屏幕 scale 放大，点尺寸保持固定")
+
+        XCTAssertEqual(
+            thumbnail?.renderingMode,
+            .alwaysOriginal,
+            "标签栏会把非符号图片当模板渲染成纯色块，必须在 UIImage 层标记 alwaysOriginal"
+        )
     }
 
     func testThumbnailIsNilWithoutAvatarData() {

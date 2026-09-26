@@ -134,6 +134,8 @@ Watch 概览 → requestSync → transferUserInfo(action: requestTodayBills)
 | 记账键盘输入 | 数字键盘的表达式逻辑在 `Views/Transaction/Bills/NumberPadLogic.swift`（`NumberPadExpression`，纯函数 + 单测）。**校验只能针对「当前数字段」（最后一个运算符之后的部分）**——曾经用整串 `displayText` 判断小数位，导致「小数点出现后运算符后面再也输不进数字」；`AddBillView.parseExpression` 负责求值 |
 | SwiftData 待办/标签删除 | `TodoItem.tags` / `TodoTag.items` 是非可选多对多：`context.delete(model:where:)` 抛 `mandatory MTM nullify inverse`（134050）且被 `try?` 静默吞掉（数据删不掉）。待办与标签必须逐个 `context.delete(_:)`（对象图删除），其余 4 类无关系实体可继续批量删除 |
 | SwiftData 测试夹具 | `PersistenceController(inMemory: true).container.mainContext` 这种临时实例写法会让容器随控制器一起释放，`insert`/`save` 直接 SIGTRAP（崩溃点还会飘到别的测试上）。夹具类或局部常量必须持有 `PersistenceController` |
+| 标签栏头像（「我的」标签） | `.tabItem` 里放 `.resizable()` 图片会被拉伸铺满整条标签栏；且标签栏会把非符号图片**当模板**渲染成纯色块。必须传固定尺寸位图（`AvatarImageCache.thumbnail(for:diameter:)`），并保证 UIImage 为 `withRenderingMode(.alwaysOriginal)` |
+| `UserProfile.avatarData` | 该属性是 Core Data **外部二进制存储**（引用 + `_SUPPORT/_EXTERNAL_DATA` 文件）。**禁止用裸 SQL 往这列写图片字节**：Core Data 会把字节当引用读，轻则读到 nil、重则启动崩（`Missing bytes from file at path .../_EXTERNAL_DATA`）。造测试数据请走 App 流程或 Core Data API |
 | 文本解析换行 | Swift 中 `"\r\n"` 是**一个** Character：CSV/文本解析里 `ch == "\n"` 漏掉 CRLF，会把 Windows/Excel 导出的文件当成一整行（`CSVImporter.parseRows` 已修为覆盖 `\n` / `\r\n` / `\r`，新写解析逻辑请照此处理） |
 | 分类体系（第四轮新增） | 自定义分类与二级分类定义存在**本机 UserDefaults**（`CategoryStore`，按账号隔离，键 `custom_categories_v1_<账号>`），**不改三份数据模型**；账单里只存名字或 `父/子` 路径。改名会同步历史账单、删除不会（历史账单保留原分类名）。macOS / watchOS 不识别自定义分类，显示为灰色纯文本 |
 | 分类图标唯一性 | 一级分类图标在同一类型内不得重复、二级分类在同一父级下不得重复；新增/调整分类后必须跑 `iFinanceTests/CategoryIconTests`（同时校验符号在系统中真实存在） |
