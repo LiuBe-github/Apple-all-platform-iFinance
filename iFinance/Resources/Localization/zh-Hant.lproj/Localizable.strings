@@ -463,3 +463,63 @@
 "mac.settings.cancel" = "取消";
 "mac.settings.confirm" = "確認刪除";
 "mac.settings.generate" = "生成";
+
+// MARK: - 分類管理（自訂分類 / 子分類）
+"settings.categories" = "分類管理";
+"common.delete" = "刪除";
+
+"cat.sub.bus" = "公車";
+"cat.sub.metro" = "地鐵";
+"cat.sub.bike" = "共享單車";
+"cat.sub.plane" = "飛機";
+"cat.sub.train" = "火車";
+"cat.sub.lightrail" = "輕軌";
+"cat.sub.cityrail" = "城軌";
+
+"category.custom.new" = "自訂";
+"category.custom.add" = "新增自訂分類";
+"category.custom.edit" = "編輯分類";
+"category.custom.name" = "分類名稱";
+"category.custom.name_placeholder" = "請輸入分類名稱";
+"category.custom.name_hint" = "最多 %d 個字";
+"category.custom.icon" = "選擇圖示";
+"category.custom.icon_search" = "搜尋圖示";
+"category.custom.icon_in_use" = "使用中";
+"category.custom.color" = "主題色";
+"category.custom.color_auto" = "自動";
+"category.custom.subcategory" = "子分類";
+"category.custom.subcategory_placeholder" = "輸入子分類名稱";
+"category.custom.error.empty" = "請輸入分類名稱";
+"category.custom.error.too_long" = "分類名稱最多 %d 個字";
+"category.custom.error.invalid" = "分類名稱不能包含「/」";
+"category.custom.error.duplicate" = "已存在同名分類";
+"category.custom.error.limit" = "分類數量已達上限";
+
+"category.manage.title" = "分類管理";
+"category.manage.expenditure" = "支出分類";
+"category.manage.income" = "收入分類";
+"category.manage.custom" = "自訂分類";
+"category.manage.builtin" = "內建分類";
+"category.manage.custom_empty" = "還沒有自訂分類，點右上角「+」新增";
+"category.manage.no_subcategory" = "尚無子分類";
+"category.manage.subcategory_count" = "共 %d 個子分類";
+"category.manage.sub_empty" = "還沒有子分類，點右上角「+」新增";
+"category.manage.delete_title" = "刪除這個分類？";
+"category.manage.delete_message" = "分類只會從選擇器移除，既有帳單仍保留原分類名。";
+"category.manage.rename" = "重新命名";
+
+"category.icon.group.food" = "餐飲";
+"category.icon.group.travel" = "出行";
+"category.icon.group.shopping" = "購物";
+"category.icon.group.home" = "居家";
+"category.icon.group.digital" = "數位";
+"category.icon.group.health" = "醫療健康";
+"category.icon.group.work" = "工作學習";
+"category.icon.group.finance" = "金融";
+"category.icon.group.life" = "生活娛樂";
+
+// MARK: - 趨勢頁：總收支雙向柱狀圖
+"tendency.net.title" = "總收支";
+"tendency.net.income" = "收入";
+"tendency.net.expense" = "支出";
+"tendency.net.net" = "淨額";

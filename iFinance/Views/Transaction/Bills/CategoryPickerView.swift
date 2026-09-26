@@ -15,62 +15,51 @@ struct CategoryPickerView: View {
 
     @Environment(\.dismiss) private var dismiss
 
-    private static let columns = Array(repeating: GridItem(.flexible(), spacing: AppSpacing.xs), count: 5)
+    @State private var showingCustomCategorySheet = false
 
     var body: some View {
         ZStack {
             AppBackgroundView()
 
             ScrollView(showsIndicators: false) {
-                LazyVGrid(columns: Self.columns, spacing: AppSpacing.xl) {
-                    if type == "income" {
-                        ForEach(IncomeCategory.allCases, id: \.self) { category in
-                            IncomeCategoryItemView(category: category, selectedCategory: incomeSelection)
-                                .onTapGesture { select(category.rawValue) }
-                        }
-                    } else {
-                        ForEach(ExpenditureCategory.allCases, id: \.self) { category in
-                            ExpenditureCategoryItemView(category: category, selectedCategory: expenditureSelection)
-                                .onTapGesture { select(category.rawValue) }
-                        }
-                    }
+                CategoryGridView(kind: kind, selection: selectionBinding) {
+                    showingCustomCategorySheet = true
                 }
-                .padding(.horizontal, AppSpacing.md)
                 .padding(.vertical, AppSpacing.lg)
                 .appContentWidth()
             }
         }
         .navigationTitle(L10n.string("bill.select_category"))
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showingCustomCategorySheet) {
+            CustomCategorySheet(mode: .create, kind: kind) { item in
+                select(item.name)
+            }
+        }
+        .onAppear { CategoryStore.shared.reload() }
     }
 
-    // MARK: - 选择回写
+    // MARK: - 类型与选择
+
+    private var kind: CategoryKind {
+        type == "income" ? .income : .expenditure
+    }
+
+    /// 选中即写回并返回上一页
+    private var selectionBinding: Binding<String?> {
+        Binding(
+            get: { selectedRawValue },
+            set: { newValue in
+                guard let newValue, !newValue.isEmpty else { return }
+                select(newValue)
+            }
+        )
+    }
 
     private func select(_ rawValue: String) {
         HapticManager.shared.light()
         selectedRawValue = rawValue
         dismiss()
-    }
-
-    /// 支出分类选择桥接（把 item 视图的选中回写到 rawValue 并返回上一页）
-    private var expenditureSelection: Binding<ExpenditureCategory?> {
-        Binding(
-            get: { selectedRawValue.flatMap(ExpenditureCategory.init(rawValue:)) },
-            set: { newValue in
-                guard let newValue else { return }
-                select(newValue.rawValue)
-            }
-        )
-    }
-
-    private var incomeSelection: Binding<IncomeCategory?> {
-        Binding(
-            get: { selectedRawValue.flatMap(IncomeCategory.init(rawValue:)) },
-            set: { newValue in
-                guard let newValue else { return }
-                select(newValue.rawValue)
-            }
-        )
     }
 }
 

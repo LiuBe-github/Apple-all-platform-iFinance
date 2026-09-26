@@ -39,6 +39,11 @@ struct TendencyView: View {
     @State private var incomePieSpan: SpanOption = SpanOption.all[1]
 
     @State private var dailyBillCounts: [Date: Int] = [:]
+
+    // 总收支（双向柱状图）状态
+    @State private var netSpan: SpanOption = SpanOption.netOptions.first ?? SpanOption.all[2]
+    @State private var netSelection: Date?
+    @State private var netScrollPosition: Date = Date().startOfDay
     
     // MARK: - 计算属性
     
@@ -48,6 +53,17 @@ struct TendencyView: View {
     
     private var incomeSeries: [DailyAmount] {
         buildDailySeries(for: "income")
+    }
+
+    /// 总收支序列（收入向上 / 支出向下），仅包含收入与支出，转账不计入
+    private var netSeries: [NetTrendPoint] {
+        NetTrendBuilder.series(
+            entries: allBills.compactMap { bill -> (date: Date, type: String, amount: Double)? in
+                guard let date = bill.date, let type = bill.type else { return nil }
+                return (date: date, type: type, amount: bill.amount?.doubleValue ?? 0)
+            },
+            spanDays: netSpan.days
+        )
     }
     
     // MARK: - 视图
@@ -59,6 +75,14 @@ struct TendencyView: View {
                 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: AppSpacing.lg) {
+                        // 总收支（双向柱状图）
+                        NetTrendCard(
+                            points: netSeries,
+                            span: $netSpan,
+                            scrollPosition: $netScrollPosition,
+                            selectedDate: $netSelection
+                        )
+
                         // 支出趋势
                         TrendCard(
                             titleKey: "tendency.expense",

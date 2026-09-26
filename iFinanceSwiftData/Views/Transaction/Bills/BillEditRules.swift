@@ -1,6 +1,6 @@
 //
 //  BillEditRules.swift
-//  iFinanceSwiftData
+//  iFinance
 //
 //  编辑账单的类型 / 分类联动规则（纯函数，便于单测）。
 //  说明：本文件是 iOS 主版与 SwiftData 版的同名副本，改一处请同步另一处。
@@ -19,26 +19,22 @@ enum BillEditRules {
         type == transferType ? transferCategory : nil
     }
 
-    /// 分类是否属于指定类型
+    /// 分类是否属于指定类型（支持自定义分类与「父/子」二级路径）
+    @MainActor
     static func isValid(_ category: String?, for type: String) -> Bool {
         guard let category, !category.isEmpty else { return false }
 
         if type == transferType {
             return category == transferCategory
         }
-        if ExpenditureCategory(rawValue: category) != nil {
-            return type == "expenditure"
-        }
-        if IncomeCategory(rawValue: category) != nil {
-            return type == "income"
-        }
-        return false
+        guard let kind = CategoryKind(billType: type) else { return false }
+        return CategoryResolver.isValid(category, kind: kind)
     }
 
     /// 打开已有账单时归一化分类：不匹配类型（历史脏数据）按「未选择」处理；转账一律归为 transfer
+    @MainActor
     static func normalizedCategory(_ category: String?, for type: String) -> String? {
         if type == transferType { return transferCategory }
         return isValid(category, for: type) ? category : nil
     }
 }
-

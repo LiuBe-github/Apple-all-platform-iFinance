@@ -24,6 +24,12 @@ enum CategoryPalette {
     /// 无法解析的分类（历史脏数据）用中性灰
     static let unknown = Color(red: 0.55, green: 0.55, blue: 0.60)
 
+    /// 自定义分类可选的主题色（十六进制，供图标/饼图使用）
+    static let customColors: [String] = [
+        "#2E9BFF", "#4DC770", "#FF9919", "#BF59FF", "#FF4D4D", "#1AC0D9",
+        "#FFCC19", "#8C8C99", "#F26A9B", "#5C7CFA", "#20C997", "#B07CFF"
+    ]
+
     static func color(index: Int) -> Color {
         let count = colors.count
         return colors[((index % count) + count) % count]
@@ -36,31 +42,56 @@ enum CategoryPalette {
     static func color(for category: IncomeCategory) -> Color {
         color(index: IncomeCategory.allCases.firstIndex(of: category) ?? 0)
     }
+
+    /// 十六进制颜色（#RRGGBB）
+    static func color(hex: String) -> Color? {
+        var value = hex.trimmingCharacters(in: .whitespacesAndNewlines)
+        if value.hasPrefix("#") { value.removeFirst() }
+        guard value.count == 6, let raw = UInt64(value, radix: 16) else { return nil }
+        let red = Double((raw >> 16) & 0xFF) / 255
+        let green = Double((raw >> 8) & 0xFF) / 255
+        let blue = Double(raw & 0xFF) / 255
+        return Color(red: red, green: green, blue: blue)
+    }
+
+    /// 未指定主题色时的稳定自动配色（同名分类永远得到同一颜色）
+    static func autoColor(seed: String, kind: CategoryKind) -> Color {
+        let offset = kind == .expenditure ? 0 : 3
+        let hash = seed.unicodeScalars.reduce(0) { partial, scalar in
+            (partial &* 31 &+ Int(scalar.value)) & 0xFFFF
+        }
+        return color(index: hash + offset)
+    }
 }
 
 /// 饼图使用的分类种类：决定分类展示名与配色
-enum CategoryKind {
+enum CategoryKind: String, Codable, CaseIterable {
     case expenditure
     case income
 
-    func displayName(for rawValue: String) -> String {
+    /// 账单里的类型字符串
+    var billType: String {
         switch self {
-        case .expenditure:
-            return ExpenditureCategory(rawValue: rawValue)?.localizedDisplayName ?? rawValue
-        case .income:
-            return IncomeCategory(rawValue: rawValue)?.localizedDisplayName ?? rawValue
+        case .expenditure: return "expenditure"
+        case .income: return "income"
         }
     }
 
-    func color(for rawValue: String) -> Color {
-        switch self {
-        case .expenditure:
-            guard let category = ExpenditureCategory(rawValue: rawValue) else { return CategoryPalette.unknown }
-            return CategoryPalette.color(for: category)
-        case .income:
-            guard let category = IncomeCategory(rawValue: rawValue) else { return CategoryPalette.unknown }
-            return CategoryPalette.color(for: category)
+    init?(billType: String) {
+        switch billType {
+        case "expenditure": self = .expenditure
+        case "income": self = .income
+        default: return nil
         }
+    }
+
+    @MainActor
+    func displayName(for rawValue: String) -> String {
+        CategoryResolver.displayName(for: rawValue, kind: self)
+    }
+
+    @MainActor
+    func color(for rawValue: String) -> Color {
+        CategoryResolver.color(for: rawValue, kind: self)
     }
 }
-

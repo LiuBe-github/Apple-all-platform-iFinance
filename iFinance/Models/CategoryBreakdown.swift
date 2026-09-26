@@ -42,8 +42,11 @@ enum CategoryBreakdown {
         for bill in bills {
             guard bill.type == type, let date = bill.date, window.contains(date) else { continue }
             guard let raw = bill.category?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else { continue }
-            amounts[raw, default: 0] += bill.amount?.doubleValue ?? 0
-            counts[raw, default: 0] += 1
+            // 二级分类（「父/子」）按一级分类聚合；此处保持纯函数（不依赖主线程隔离的解析层）
+            let key = String(raw.split(separator: "/").first ?? Substring(raw))
+            guard !key.isEmpty else { continue }
+            amounts[key, default: 0] += bill.amount?.doubleValue ?? 0
+            counts[key, default: 0] += 1
         }
 
         return amounts
@@ -58,4 +61,3 @@ enum CategoryBreakdown {
         slices.reduce(0) { $0 + $1.amount }
     }
 }
-

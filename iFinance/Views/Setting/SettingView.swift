@@ -257,6 +257,7 @@ struct SettingView: View {
     @State private var navigateToHelp = false
     @State private var navigateToAbout = false
     @State private var navigateToLanguage = false
+    @State private var navigateToCategories = false
     @State private var showDeleteAccountConfirmation = false
 
     // 生物识别锁相关状态
@@ -339,6 +340,14 @@ struct SettingView: View {
                             SettingsThemeSelectorView(selectedTheme: $selectedTheme)
                         }
 
+                        // 分类管理
+                        SettingsGroup(title: L10n.string("settings.categories"), icon: "square.grid.2x2.fill", iconColor: .teal) {
+                            SettingsRow(icon: "tag.fill", iconColor: .teal, title: L10n.string("category.manage.title")) {
+                                HapticManager.shared.light()
+                                navigateToCategories = true
+                            }
+                        }
+
                         // 通用
                         SettingsGroup(title: L10n.string("settings.general"), icon: "gearshape.fill", iconColor: .gray) {
                             // 生物识别锁
@@ -414,6 +423,9 @@ struct SettingView: View {
             }
             .navigationDestination(isPresented: $navigateToLanguage) {
                 LanguageSettingView().toolbar(.hidden, for: .tabBar).navigationTitle(L10n.string("settings.language"))
+            }
+            .navigationDestination(isPresented: $navigateToCategories) {
+                CategoryManagementView().toolbar(.hidden, for: .tabBar).navigationTitle(L10n.string("category.manage.title"))
             }
             .fileExporter(isPresented: $isExporting, document: exportDocument, contentType: .commaSeparatedText, defaultFilename: "iFinance-bills-\(Date().formatted(.dateTime.year().month().day()))") { result in
                 switch result {

@@ -28,6 +28,9 @@ struct SpanOption: Identifiable, Hashable {
         .init(titleKey: "tendency.span_6month", days: 180),
         .init(titleKey: "tendency.span_year", days: 365)
     ]
+
+    /// 「总收支」卡片的跨度：月 / 6 个月 / 年
+    static let netOptions: [SpanOption] = all.filter { [30, 180, 365].contains($0.days) }
 }
 
 // MARK: - 常量

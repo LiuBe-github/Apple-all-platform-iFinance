@@ -463,3 +463,63 @@
 "mac.settings.cancel" = "キャンセル";
 "mac.settings.confirm" = "削除する";
 "mac.settings.generate" = "生成";
+
+// MARK: - カテゴリ管理（カスタムカテゴリ / サブカテゴリ）
+"settings.categories" = "カテゴリ管理";
+"common.delete" = "削除";
+
+"cat.sub.bus" = "バス";
+"cat.sub.metro" = "地下鉄";
+"cat.sub.bike" = "シェアサイクル";
+"cat.sub.plane" = "飛行機";
+"cat.sub.train" = "列車";
+"cat.sub.lightrail" = "ライトレール";
+"cat.sub.cityrail" = "都市鉄道";
+
+"category.custom.new" = "カスタム";
+"category.custom.add" = "カスタムカテゴリを作成";
+"category.custom.edit" = "カテゴリを編集";
+"category.custom.name" = "カテゴリ名";
+"category.custom.name_placeholder" = "カテゴリ名を入力";
+"category.custom.name_hint" = "%d 文字以内";
+"category.custom.icon" = "アイコンを選択";
+"category.custom.icon_search" = "アイコンを検索";
+"category.custom.icon_in_use" = "使用中";
+"category.custom.color" = "テーマカラー";
+"category.custom.color_auto" = "自動";
+"category.custom.subcategory" = "サブカテゴリ";
+"category.custom.subcategory_placeholder" = "サブカテゴリ名を入力";
+"category.custom.error.empty" = "カテゴリ名を入力してください";
+"category.custom.error.too_long" = "カテゴリ名は %d 文字以内で入力してください";
+"category.custom.error.invalid" = "カテゴリ名に「/」は使用できません";
+"category.custom.error.duplicate" = "同名のカテゴリが既に存在します";
+"category.custom.error.limit" = "カテゴリ数の上限に達しました";
+
+"category.manage.title" = "カテゴリ管理";
+"category.manage.expenditure" = "支出カテゴリ";
+"category.manage.income" = "収入カテゴリ";
+"category.manage.custom" = "カスタムカテゴリ";
+"category.manage.builtin" = "標準カテゴリ";
+"category.manage.custom_empty" = "カスタムカテゴリはまだありません。右上の「+」で作成できます。";
+"category.manage.no_subcategory" = "サブカテゴリなし";
+"category.manage.subcategory_count" = "サブカテゴリ %d 件";
+"category.manage.sub_empty" = "サブカテゴリはまだありません。右上の「+」で追加できます。";
+"category.manage.delete_title" = "このカテゴリを削除しますか？";
+"category.manage.delete_message" = "選択肢から削除されるだけで、既存の記録は元の分類名のまま残ります。";
+"category.manage.rename" = "名前を変更";
+
+"category.icon.group.food" = "食事";
+"category.icon.group.travel" = "移動";
+"category.icon.group.shopping" = "買い物";
+"category.icon.group.home" = "住まい";
+"category.icon.group.digital" = "デジタル";
+"category.icon.group.health" = "医療・健康";
+"category.icon.group.work" = "仕事・学習";
+"category.icon.group.finance" = "金融";
+"category.icon.group.life" = "生活・娯楽";
+
+// MARK: - トレンド：収支グラフ
+"tendency.net.title" = "収支";
+"tendency.net.income" = "収入";
+"tendency.net.expense" = "支出";
+"tendency.net.net" = "収支差";

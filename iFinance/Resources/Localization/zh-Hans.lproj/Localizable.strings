@@ -463,3 +463,63 @@
 "mac.settings.cancel" = "取消";
 "mac.settings.confirm" = "确认删除";
 "mac.settings.generate" = "生成";
+
+// MARK: - 分类管理（自定义分类 / 二级分类）
+"settings.categories" = "分类管理";
+"common.delete" = "删除";
+
+"cat.sub.bus" = "公交车";
+"cat.sub.metro" = "地铁";
+"cat.sub.bike" = "共享单车";
+"cat.sub.plane" = "飞机";
+"cat.sub.train" = "火车";
+"cat.sub.lightrail" = "轻轨";
+"cat.sub.cityrail" = "城轨";
+
+"category.custom.new" = "自定义";
+"category.custom.add" = "新建自定义分类";
+"category.custom.edit" = "编辑分类";
+"category.custom.name" = "分类名称";
+"category.custom.name_placeholder" = "请输入分类名称";
+"category.custom.name_hint" = "最多 %d 个字";
+"category.custom.icon" = "选择图标";
+"category.custom.icon_search" = "搜索图标";
+"category.custom.icon_in_use" = "使用中";
+"category.custom.color" = "主题色";
+"category.custom.color_auto" = "自动";
+"category.custom.subcategory" = "二级分类";
+"category.custom.subcategory_placeholder" = "输入二级分类名称";
+"category.custom.error.empty" = "请输入分类名称";
+"category.custom.error.too_long" = "分类名称最多 %d 个字";
+"category.custom.error.invalid" = "分类名称不能包含「/」";
+"category.custom.error.duplicate" = "已存在同名分类";
+"category.custom.error.limit" = "分类数量已达上限";
+
+"category.manage.title" = "分类管理";
+"category.manage.expenditure" = "支出分类";
+"category.manage.income" = "收入分类";
+"category.manage.custom" = "自定义分类";
+"category.manage.builtin" = "内置分类";
+"category.manage.custom_empty" = "还没有自定义分类，点右上角「+」新建";
+"category.manage.no_subcategory" = "暂无二级分类";
+"category.manage.subcategory_count" = "共 %d 个二级分类";
+"category.manage.sub_empty" = "还没有二级分类，点右上角「+」添加";
+"category.manage.delete_title" = "删除这个分类？";
+"category.manage.delete_message" = "分类只会从选择器移除，已有账单仍保留原分类名。";
+"category.manage.rename" = "重命名";
+
+"category.icon.group.food" = "餐饮";
+"category.icon.group.travel" = "出行";
+"category.icon.group.shopping" = "购物";
+"category.icon.group.home" = "居家";
+"category.icon.group.digital" = "数码";
+"category.icon.group.health" = "医疗健康";
+"category.icon.group.work" = "工作学习";
+"category.icon.group.finance" = "金融";
+"category.icon.group.life" = "生活娱乐";
+
+// MARK: - 趋势页：总收支双向柱状图
+"tendency.net.title" = "总收支";
+"tendency.net.income" = "收入";
+"tendency.net.expense" = "支出";
+"tendency.net.net" = "净额";

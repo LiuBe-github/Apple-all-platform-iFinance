@@ -463,3 +463,63 @@
 "mac.settings.cancel" = "Cancel";
 "mac.settings.confirm" = "Delete";
 "mac.settings.generate" = "Generate";
+
+// MARK: - Category management (custom categories / subcategories)
+"settings.categories" = "Categories";
+"common.delete" = "Delete";
+
+"cat.sub.bus" = "Bus";
+"cat.sub.metro" = "Metro";
+"cat.sub.bike" = "Shared Bike";
+"cat.sub.plane" = "Flight";
+"cat.sub.train" = "Train";
+"cat.sub.lightrail" = "Light Rail";
+"cat.sub.cityrail" = "City Rail";
+
+"category.custom.new" = "Custom";
+"category.custom.add" = "New Custom Category";
+"category.custom.edit" = "Edit Category";
+"category.custom.name" = "Category Name";
+"category.custom.name_placeholder" = "Enter a category name";
+"category.custom.name_hint" = "Up to %d characters";
+"category.custom.icon" = "Choose Icon";
+"category.custom.icon_search" = "Search icons";
+"category.custom.icon_in_use" = "In use";
+"category.custom.color" = "Theme Color";
+"category.custom.color_auto" = "Auto";
+"category.custom.subcategory" = "Subcategory";
+"category.custom.subcategory_placeholder" = "Enter a subcategory name";
+"category.custom.error.empty" = "Please enter a category name";
+"category.custom.error.too_long" = "Category name must be within %d characters";
+"category.custom.error.invalid" = "Category name cannot contain \"/\"";
+"category.custom.error.duplicate" = "A category with the same name already exists";
+"category.custom.error.limit" = "Category limit reached";
+
+"category.manage.title" = "Categories";
+"category.manage.expenditure" = "Expense";
+"category.manage.income" = "Income";
+"category.manage.custom" = "Custom Categories";
+"category.manage.builtin" = "Built-in Categories";
+"category.manage.custom_empty" = "No custom categories yet. Tap + to create one.";
+"category.manage.no_subcategory" = "No subcategories";
+"category.manage.subcategory_count" = "%d subcategories";
+"category.manage.sub_empty" = "No subcategories yet. Tap + to add one.";
+"category.manage.delete_title" = "Delete this category?";
+"category.manage.delete_message" = "It is removed from the picker only; existing bills keep the original name.";
+"category.manage.rename" = "Rename";
+
+"category.icon.group.food" = "Food";
+"category.icon.group.travel" = "Travel";
+"category.icon.group.shopping" = "Shopping";
+"category.icon.group.home" = "Home";
+"category.icon.group.digital" = "Digital";
+"category.icon.group.health" = "Health";
+"category.icon.group.work" = "Work & Study";
+"category.icon.group.finance" = "Finance";
+"category.icon.group.life" = "Life & Fun";
+
+// MARK: - Trend: income & expense chart
+"tendency.net.title" = "Income & Expense";
+"tendency.net.income" = "Income";
+"tendency.net.expense" = "Expense";
+"tendency.net.net" = "Net";

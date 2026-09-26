@@ -27,41 +27,42 @@ struct TransactionRowView: View {
         return f
     }()
     
-    // MARK: - 解析分类
+    // MARK: - 解析分类（内置 / 自定义 / 「父/子」二级路径统一走 CategoryResolver）
     private enum BillCategory {
-        case expenditure(ExpenditureCategory)
-        case income(IncomeCategory)
+        case expenditure
+        case income
         case transfer
         case unknown
     }
-    
-    private var resolvedCategory: BillCategory {
-        guard let raw = bill.category else { return .unknown }
-        if let c = ExpenditureCategory(rawValue: raw) {
-            return .expenditure(c)
-        }
-        if let c = IncomeCategory(rawValue: raw) {
-            return .income(c)
-        }
-        if bill.type == "transfer" {
-            return .transfer
-        }
-        return .unknown
+
+    private var billKind: CategoryKind? {
+        CategoryKind(billType: bill.type ?? "")
     }
-    
+
+    private var resolvedCategory: BillCategory {
+        if bill.type == "transfer" { return .transfer }
+        guard let raw = bill.category, let kind = billKind,
+              CategoryResolver.isValid(raw, kind: kind) else { return .unknown }
+        return kind == .expenditure ? .expenditure : .income
+    }
+
     private var icon: String {
         switch resolvedCategory {
-        case .expenditure(let c): return c.icon
-        case .income(let c): return c.icon
+        case .expenditure, .income:
+            guard let raw = bill.category, let kind = billKind else { return "tag" }
+            return CategoryResolver.icon(for: raw, kind: kind)
         case .transfer: return "arrow.left.arrow.right"
         case .unknown: return "questionmark"
         }
     }
-    
+
     private var categoryText: Text {
         switch resolvedCategory {
-        case .expenditure(let c): return Text(c.localizedDisplayName)
-        case .income(let c): return Text(c.localizedDisplayName)
+        case .expenditure, .income:
+            guard let raw = bill.category, let kind = billKind else {
+                return Text(bill.category ?? L10n.string("bill.uncategorized"))
+            }
+            return Text(CategoryResolver.displayName(for: raw, kind: kind))
         case .transfer: return Text("bill.type_transfer")
         case .unknown: return Text(bill.category ?? L10n.string("bill.uncategorized"))
         }

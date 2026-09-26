@@ -96,23 +96,26 @@ struct BudgetView: View {
         }
     }
     
-    private var categoryItems: [(category: ExpenditureCategory, amount: Double)] {
-        var dict: [ExpenditureCategory: Double] = [:]
+    /// 本月支出分类汇总（按一级分类聚合，含自定义分类与二级分类）
+    private var categoryItems: [CategorySlice] {
+        var amounts: [String: Double] = [:]
+        var counts: [String: Int] = [:]
         for bill in currentMonthExpenditures {
-            guard let raw = bill.category,
-                  let cat = ExpenditureCategory(rawValue: raw),
-                  let amt = bill.amount?.doubleValue else { continue }
-            dict[cat, default: 0] += amt
+            guard let raw = bill.category, !raw.isEmpty,
+                  let amount = bill.amount?.doubleValue else { continue }
+            let key = CategoryResolver.parentRaw(raw)
+            guard !key.isEmpty else { continue }
+            amounts[key, default: 0] += amount
+            counts[key, default: 0] += 1
         }
-        return ExpenditureCategory.allCases
-            .map { (category: $0, amount: dict[$0] ?? 0) }
-            .filter { $0.amount > 0 }
-            .sorted { $0.amount > $1.amount }
+        return amounts
+            .map { CategorySlice(rawValue: $0.key, amount: $0.value, count: counts[$0.key] ?? 0) }
+            .sorted { $0.amount == $1.amount ? $0.rawValue < $1.rawValue : $0.amount > $1.amount }
     }
 
     /// 饼图数据（分类汇总 → 共享饼图组件输入）
     private var pieSlices: [CategorySlice] {
-        categoryItems.map { CategorySlice(rawValue: $0.category.rawValue, amount: $0.amount, count: 0) }
+        categoryItems
     }
     
     private var monthLabel: String {
@@ -323,9 +326,10 @@ struct BudgetView: View {
     // MARK: - 分类列表内容
     private var categoryListContent: some View {
         VStack(spacing: 1) {
-            ForEach(Array(categoryItems.enumerated()), id: \.element.category) { index, item in
+            ForEach(Array(categoryItems.enumerated()), id: \.element.id) { index, item in
                 CategoryRowView(
-                    category: item.category,
+                    rawValue: item.rawValue,
+                    kind: .expenditure,
                     amount: item.amount,
                     total: totalExpenditure,
                     isLast: index == categoryItems.count - 1
@@ -507,7 +511,8 @@ struct BudgetView: View {
 
 // MARK: - 分类行
 struct CategoryRowView: View {
-    let category:  ExpenditureCategory
+    let rawValue:  String
+    let kind:      CategoryKind
     let amount:    Double
     let total:     Double
     let isLast:    Bool
@@ -527,7 +532,7 @@ struct CategoryRowView: View {
     }
     
     private var barColor: Color {
-        CategoryPalette.color(for: category)
+        CategoryResolver.color(for: rawValue, kind: kind)
     }
     
     private func formatAmount(_ v: Double) -> String {
@@ -545,7 +550,7 @@ struct CategoryRowView: View {
                     Circle()
                         .fill(barColor.opacity(0.12))
                         .frame(width: 38, height: 38)
-                    Image(systemName: category.icon)
+                    Image(systemName: CategoryResolver.icon(for: rawValue, kind: kind))
                         .font(AppTypography.secondary.weight(.medium))
                         .foregroundStyle(barColor)
                 }
@@ -553,7 +558,7 @@ struct CategoryRowView: View {
                 // 中间：分类名 + 进度条
                 VStack(alignment: .leading, spacing: AppSpacing.sm) {
                     HStack(alignment: .firstTextBaseline) {
-                        Text(category.localizedDisplayName)
+                        Text(CategoryResolver.displayName(for: rawValue, kind: kind))
                             .font(AppTypography.secondary.weight(.medium))
                             .foregroundStyle(.primary)
                         Spacer()

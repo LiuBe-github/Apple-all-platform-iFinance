@@ -25,8 +25,9 @@ struct AddBillView: View {
     @State private var note: String = ""
     @State private var isEditingNote = false
     @State private var transactionType: TransactionType = .expenditure
-    @State private var selectedExpenditureCategory: ExpenditureCategory? = .foodAndBeverage
-    @State private var selectedIncomeCategory: IncomeCategory? = .salary
+    /// 当前选中的分类（账单里存储的字符串：内置 rawValue / 自定义名 / 「父/子」复合路径）
+    @State private var selectedCategoryRaw: String? = ExpenditureCategory.foodAndBeverage.rawValue
+    @State private var showingCustomCategorySheet = false
     @State private var showNumberPad = true
     /// 最近一次按下的运算符（由数字键盘回写；表达式本身以 displayText 为准）
     @State private var currentOperator: String = ""
@@ -43,11 +44,13 @@ struct AddBillView: View {
                 VStack(alignment: .leading) {
                     Group {
                         if transactionType == .expenditure {
-                            ExpenditureCategoryGrid(selection: $selectedExpenditureCategory)
-                                .equatable()
+                            CategoryGridView(kind: .expenditure, selection: $selectedCategoryRaw) {
+                                showingCustomCategorySheet = true
+                            }
                         } else if transactionType == .income {
-                            IncomeCategoryGrid(selection: $selectedIncomeCategory)
-                                .equatable()
+                            CategoryGridView(kind: .income, selection: $selectedCategoryRaw) {
+                                showingCustomCategorySheet = true
+                            }
                         } else {
                             transferForm
                         }
@@ -98,6 +101,25 @@ struct AddBillView: View {
                     }
                     .frame(width: 300)
                     .pickerStyle(SegmentedPickerStyle())
+                }
+            }
+            .onChange(of: transactionType) { _, newType in
+                // 切换类型后若当前分类不属于新类型，回退到该类型的默认分类
+                guard let kind = CategoryKind(billType: newType == .expenditure ? "expenditure" :
+                                              newType == .income ? "income" : "transfer") else { return }
+                if selectedCategoryRaw.map({ CategoryResolver.isValid($0, kind: kind) }) != true {
+                    selectedCategoryRaw = kind == .expenditure
+                        ? ExpenditureCategory.foodAndBeverage.rawValue
+                        : IncomeCategory.salary.rawValue
+                }
+            }
+            .onAppear { CategoryStore.shared.reload() }
+            .sheet(isPresented: $showingCustomCategorySheet) {
+                CustomCategorySheet(
+                    mode: .create,
+                    kind: transactionType == .income ? .income : .expenditure
+                ) { item in
+                    selectedCategoryRaw = item.name
                 }
             }
         }
@@ -152,17 +174,17 @@ struct AddBillView: View {
         let categoryString: String
         switch transactionType {
         case .expenditure:
-            guard let cat = selectedExpenditureCategory else {
+            guard let raw = selectedCategoryRaw, CategoryResolver.isValid(raw, kind: .expenditure) else {
                 showAlert(message: L10n.string("bill.choose_category"))
                 return
             }
-            categoryString = cat.rawValue
+            categoryString = raw
         case .income:
-            guard let cat = selectedIncomeCategory else {
+            guard let raw = selectedCategoryRaw, CategoryResolver.isValid(raw, kind: .income) else {
                 showAlert(message: L10n.string("bill.choose_category"))
                 return
             }
-            categoryString = cat.rawValue
+            categoryString = raw
         case .transfer:
             guard !transferFrom.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
                   !transferTo.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
@@ -317,46 +339,4 @@ struct AddBillView: View {
 #Preview {
     AddBillView()
         .environment(\.modelContext, PersistenceController.preview.container.viewContext)
-}
-
-// MARK: - 分类网格（独立 Equatable 子视图：输入金额时不会重建整片格子）
-
-private struct ExpenditureCategoryGrid: View, Equatable {
-    @Binding var selection: ExpenditureCategory?
-
-    private static let columns = Array(repeating: GridItem(.flexible(), spacing: AppSpacing.xs), count: 5)
-
-    static func == (lhs: Self, rhs: Self) -> Bool {
-        lhs.selection == rhs.selection
-    }
-
-    var body: some View {
-        LazyVGrid(columns: Self.columns, spacing: AppSpacing.xl) {
-            ForEach(ExpenditureCategory.allCases, id: \.self) { category in
-                ExpenditureCategoryItemView(category: category, selectedCategory: $selection)
-                    .onTapGesture { HapticManager.shared.light() }
-            }
-        }
-        .padding(.horizontal, AppSpacing.md)
-    }
-}
-
-private struct IncomeCategoryGrid: View, Equatable {
-    @Binding var selection: IncomeCategory?
-
-    private static let columns = Array(repeating: GridItem(.flexible(), spacing: AppSpacing.xs), count: 5)
-
-    static func == (lhs: Self, rhs: Self) -> Bool {
-        lhs.selection == rhs.selection
-    }
-
-    var body: some View {
-        LazyVGrid(columns: Self.columns, spacing: AppSpacing.xl) {
-            ForEach(IncomeCategory.allCases, id: \.self) { category in
-                IncomeCategoryItemView(category: category, selectedCategory: $selection)
-                    .onTapGesture { HapticManager.shared.light() }
-            }
-        }
-        .padding(.horizontal, AppSpacing.md)
-    }
 }

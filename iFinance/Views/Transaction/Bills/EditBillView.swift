@@ -163,13 +163,11 @@ struct EditBillView: View {
     }
 
     private func categoryIcon(for rawValue: String) -> String {
-        if selectedType == "income" { return IncomeCategory(rawValue: rawValue)?.icon ?? "tag" }
-        return ExpenditureCategory(rawValue: rawValue)?.icon ?? "tag"
+        CategoryResolver.icon(for: rawValue, kind: selectedType == "income" ? .income : .expenditure)
     }
 
     private func categoryDisplayName(for rawValue: String) -> String {
-        if selectedType == "income" { return IncomeCategory(rawValue: rawValue)?.localizedDisplayName ?? rawValue }
-        return ExpenditureCategory(rawValue: rawValue)?.localizedDisplayName ?? rawValue
+        CategoryResolver.displayName(for: rawValue, kind: selectedType == "income" ? .income : .expenditure)
     }
     
     private func saveBill() {
