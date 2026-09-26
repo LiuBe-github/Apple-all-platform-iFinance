@@ -202,6 +202,26 @@ description.shouldInferMappingModelAutomatically = true
 - SwiftData 版不注册 `WCSession`（不联动 Watch）、不启用 CloudKit 与本地通知，数据从空库开始（不迁移 Core Data 历史数据）。
 - 两版 CSV 导入均会写入 `createdBy`/`updatedBy` 与审计字段，locale 均为 `en_US_POSIX`；Core Data 版的解析逻辑抽在 `iFinance/Helper/CSVImporter.swift`（`parseRows` / `makeBill`），两版解析均支持 CRLF / LF / CR 换行。
 
+### 4.8 待办 / 备忘 / 资产数据层（iOS 两版，2026-09-26 新增）
+
+新增 6 个实体，**三份模型契约一致**：`iFinance/iFinance.xcdatamodeld`、`MaciFinance/MaciFinance.xcdatamodeld`（macOS 只有模型、无界面）、
+SwiftData 版 `iFinanceSwiftData/Data/TodoEntities.swift` + `AssetEntities.swift`。
+
+| 实体 | 关键字段 | 关系 |
+|------|----------|------|
+| `TodoItem` | title / note? / dueDate? / priority(Int16) / isDone / completedAt? / repeatRule / 审计字段 | `subtasks`（一对多 **Cascade**）、`tags`（**多对多 Nullify**） |
+| `TodoSubtask` | title / isDone / createdAt | `owner`（仅一层，不支持嵌套） |
+| `TodoTag` | name / colorIndex(Int16) / createdBy? | 多对多反向 `items` |
+| `MemoNote` | title? / content / isPinned / 审计字段 | 无 |
+| `AssetAccount` | name / type / balance(Decimal，可负) / note? / includeInTotal / sortOrder(Int16) | 无 |
+| `AssetSnapshot` | date(当天 00:00) / totalAssets / totalLiabilities / createdBy | 每个自然日一条，同日覆盖写 |
+
+- 纯逻辑（两版同名副本、逐字节一致）：`Models/TodoModels.swift`（`TodoGrouping` 六分组、`TodoRepeat` 规则推进、`TodoRecurrence` 下一期草稿、`TodoTagRules` 标签校验、`MemoSorting`）与 `Models/AssetBreakdown.swift`（总额 / 负债 / 占比 / 快照差值 / 同日 upsert）。
+- 隔离：iOS 新增 5 个账号谓词（todo / todoTag / memo / assetAccount / assetSnapshot）；写入必带 `createdBy`/`updatedBy`。
+- 删除联动：`AuthManager.deleteTodoAndAssetData(identifier:context:)`（两版同名），接入 `deleteAccount()` / `deleteAllAccounts()` 与 Core Data 启动重置钩子。
+- 界面：待办与备忘在 Tab 第 3 位（`TodoTabView` 分段切换）；资产是账本页右上角推入的二级页（`AssetView`），**不占标签位**。
+- 详细接口、快照口径与测试覆盖见 [docs/api/todo-asset.md](api/todo-asset.md)。
+
 ## 5. 认证与账号体系（iOS）
 
 核心类：`AuthManager`（`@MainActor final class ... ObservableObject`，单例 `shared`，`iFinance/Manager/AuthManager.swift:16`）。
@@ -368,6 +388,9 @@ macOS 端有独立副本：`MaciFinance/Views/Common/AppVisualStyle.swift`（130
 10. **下界不可运行**：macOS 15 / watchOS 11 无法在本机运行，采用「编译 + API 可用性审查」验证；若需真机结论需自行安装对应系统。
 11. **SwiftData 版与 Core Data 版视图代码双份维护**：同名 API 兼容层让复制成本很低，但视图改动需要同步两处（见 §4.7）。
 12. **测试必须串行执行**：同时运行多个 `xcodebuild test`（尤其含 UI 测试的 scheme）会出现测试宿主互相干扰，表现为 `Early unexpected exit` 与 UI 测试超时；验证时请一次只跑一个 scheme，并用 `-only-testing:` 限定单元测试。
+13. **SwiftData 批量删除对非可选多对多会失败**：`context.delete(model: TodoItem.self, where:)` 抛 `Constraint trigger violation: Batch delete failed due to mandatory MTM nullify inverse on TodoItem/tags`（`NSCocoaErrorDomain` 134050）；代码里用 `try?` 会把错误静默吞掉、数据删不掉（单测抓到）。**待办与标签必须走对象图删除**（`fetch` + 逐个 `context.delete`），其余无关系实体（备忘 / 资产账户 / 快照）可继续批量删除。见 `iFinanceSwiftData/Manager/AuthManager.swift`。
+14. **SwiftData 测试夹具必须持有容器**：写成 `PersistenceController(inMemory: true).container.mainContext` 时控制器随临时实例释放、容器被销毁，之后 `insert`/`save` 触发内部断言（SIGTRAP），且崩溃点会飘到别的测试上（先崩在 `TodoItem`、后崩在 `Bill`），极难定位。用局部 `let controller = ...` 或测试夹具类持有（见 `iFinanceSwiftDataTests/SwiftDataCoreTests.swift` 的 `SwiftDataTestContext`、`TodoAssetTests.swift` 的 `TodoAssetTestHarness`）。
+15. **Core Data 代码生成的类型契约**：整数属性只生成 `Int16/Int32/Int64`（没有 `Int`），非标量属性（String / Date / Decimal / UUID）默认生成**可选**类型。因此新增实体的纯逻辑与 SwiftData 实体统一用 `Int16`，Core Data 侧读取时要 `?? ""` / `?.doubleValue ?? 0`（两版视图的差异都集中在这里，不要试图把两版强行写成逐字节一致）。
 
 ## 11. 高频任务操作指引
 

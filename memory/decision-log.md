@@ -159,3 +159,13 @@
 
 | D-70 | **配色回退**：撤掉 D-66 的明度均衡，`ChartSeriesStyle` 与 `HeatmapRamp` 的默认取值恢复为改版前的原始配色（8 色原值、支出红 / 收入绿原值、热力四级蓝色原值），深浅模式共用同一组原色；热力图仅保留「提高对比度」变体（只在系统开关开启时生效）；R16 的「明度均衡 / 对比度 ≥3:1」目标标记为**未采用（用户取舍）** | 用户反馈「更改后颜色变暗了不好看，我要原来的颜色」。原方案虽满足对比度阈值，但整体观感偏暗；本项目以用户观感优先，可辨识性由形状 / 符号 + 文字图例承担（R14） | `ChartSeriesStyle`（`seriesLight == seriesDark`、`expenseLight/incomeLight` 回原值）、`HeatmapRamp`（`dark = light`）；测试由「对比度阈值」改为「锁定原始颜色取值」，避免后续再被顺手改暗；open-items 新增 OI-48 |
 
+## P. 待办与备忘 + 资产（2026-09-26 第九轮）
+
+| 编号 | 决策 | 理由 | 落地 |
+|------|------|------|------|
+| D-71 | **标签栏仍是 5 项**：新增「待办」为第 3 个 Tab（首页 / 账本 / 待办 / 趋势 / 设置）；**资产不占 Tab 位**，改为账本页右上角（头像左侧）推入的二级页面 | HIG 建议底部标签不超过 5 项；资产是「偶尔查看」的页面，而待办是需要频繁勾选的日常动作，所以把有限的标签位给待办 | `ContentView` 的 `Tab` 枚举 + `TodoTabView`；`TransactionView.topBarTrailing` 新增资产按钮 + `navigationDestination` |
+| D-72 | 新增 6 个持久化实体，**三份模型契约同步**（iOS / macOS 两份 `.xcdatamodeld` + SwiftData 三处）；小整数一律 `Integer 16` ↔ `Int16` | Core Data 代码生成对整数只产出 `Int16/Int32/Int64`，永远拿不到 Swift 惯用的 `Int`；若纯逻辑用 `Int`，两版视图与单测会处处要转换。统一成 `Int16` 后「实体 / 纯逻辑 / SwiftData 实体」三方类型完全一致 | `iFinance/Models/TodoModels.swift`、`AssetBreakdown.swift`（两版副本逐字节一致）；`.xcdatamodeld` 新增实体；SwiftData `TodoEntities.swift` / `AssetEntities.swift` |
+| D-73 | SwiftData 版删除待办/标签走**对象图删除**（`fetch` + 逐个 `context.delete`），不用 `delete(model:where:)` 批量删除；其余 4 类无关系实体仍用批量删除 | `TodoItem.tags` / `TodoTag.items` 是非可选多对多，批量删除会抛 `Constraint trigger violation: Batch delete failed due to mandatory MTM nullify inverse`（`NSCocoaErrorDomain` 134050）；若用 `try?` 包裹会被静默吞掉、数据删不掉（已由单测抓出）。对象图删除才能触发级联（子任务）与关系清理 | `iFinanceSwiftData/Manager/AuthManager.swift:deleteTodoAndAssetData`；回归用例 `TodoAssetIsolationTests.deleteTodoAndAssetDataClearsOnlyTargetAccount` |
+| D-74 | 资产快照口径：**每个自然日一条，同日覆盖写**；账户新增 / 编辑 / 删除保存后按当天 upsert（`date` 取当天 00:00，`createdBy` 必填） | 快照用于「较上次变化」，粒度太细（每次改动一条）会让差值失去意义；只有一条记录时显示「首次记录」而不是假的变化值 | `AssetBreakdown.upsertIndex(for:in:calendar:)`；`AssetView.persistSnapshot()`；单测 `AssetBreakdownTests.testUpsertIndexMatchesSameDay` |
+| D-75 | 重复待办**必须先设截止日**才会在完成时生成下一期（`TodoRecurrence.nextDraft` 在无 `dueDate` 时返回 nil） | 重复规则本质是「按截止日推进一档」；没有锚点日期时生成的新条目仍然没有日期，只会产生无意义的副本链 | `TodoRecurrence`（两版副本）；PRD TODO-04 写明该前提 |
+| D-76 | 测试夹具必须用**局部常量持有 `PersistenceController`**，禁止写成 `PersistenceController(inMemory: true).container.mainContext` 这种临时实例链 | 临时实例被释放后容器随之销毁，随后的 `insert`/`save` 会直接触发 SwiftData 内部断言（SIGTRAP，崩溃点还会飘到别的测试上，极难定位）。已用对照用例（持有 = 通过 / 不持有 = 崩溃）确认 | `iFinanceSwiftDataTests/TodoAssetTests.swift` 的 `TodoAssetTestHarness`；同类写法在 `SwiftDataCoreTests.SwiftDataTestContext` 早已正确 |

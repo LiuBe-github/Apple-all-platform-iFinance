@@ -59,6 +59,8 @@ docs/                     项目记忆与接口文档（改动接口后同步更
 1. **数据隔离**：账单归属由 `Bill.createdBy == UserDefaults["AuthUserIdentifier"]` 决定。所有账单查询都必须叠加 `PersistenceController.billUserPredicate`；所有写入都必须设置 `createdBy`。
 2. **两份 Core Data 模型**：`iFinance/iFinance.xcdatamodeld` 与 `MaciFinance/MaciFinance.xcdatamodeld` 是手动维护的副本，改一处必须同步另一处（新增字段可自动轻量迁移；改类型/删字段需 Mapping Model）。
    SwiftData 版是**第三份模型**（`iFinanceSwiftData/Data/Bill.swift`、`UserProfile.swift`），字段契约必须与 Core Data 版保持一致；三处同改。
+   **待办 / 备忘 / 资产**另有 6 个实体（`TodoItem` / `TodoSubtask` / `TodoTag` / `MemoNote` / `AssetAccount` / `AssetSnapshot`）：两份 Core Data 模型 + SwiftData 的 `Data/TodoEntities.swift`、`Data/AssetEntities.swift`，同样三处同改。
+   注意 Core Data 代码生成对整数只给 `Int16/Int32/Int64`（没有 `Int`），非标量属性（String / Date / Decimal / UUID）默认生成**可选**类型——纯逻辑与 SwiftData 实体统一用 `Int16`，Core Data 侧读取判空（详见 [docs/api/todo-asset.md](docs/api/todo-asset.md)）。
 3. **三套本地化资源**：iOS / macOS / watchOS 各自拥有 `Resources/Localization/{zh-Hans,zh-Hant,en,ja}.lproj`，key 不共享。新增文案只改对应端。
    SwiftData 版**不复制**这些资源，而是以 target membership 引用 `iFinance/Resources/Localization/*.lproj` 与 `EconomicQuotes.json`——改 iOS 文案会同时影响两版。
 4. **新增文案一律用 `L10n.string("...")`**：`String(localized:)` 与 `NSLocalizedString` 已全量统一替换（它们走系统语言、不跟随 App 内语言）。`Text("some.key")`（`LocalizedStringKey`）可以继续用，它随注入的 `\.locale` 正确工作。改文案时按 key 全仓库搜索。
@@ -72,6 +74,10 @@ docs/                     项目记忆与接口文档（改动接口后同步更
    - 内置分类 = 枚举 rawValue（支出 25 类 / 收入 12 类，转账固定 `"transfer"`）；
    - 自定义分类 = 用户输入的**名称**；二级分类 = `父/子` 复合路径（如 `交通/地铁`），分隔符固定 `"/"` 且名称里禁止出现。
    编辑页的类型切换、旧数据归一化与保存校验统一走 `BillEditRules` → `CategoryResolver.isValid(_:kind:)`（`Views/Common/CategoryResolver.swift`），**不要再用自由文本输入分类**；展示名/图标/配色一律通过 `CategoryResolver` 解析，不要直接 `ExpenditureCategory(rawValue:)` 反查。
+10. **标签栏固定 5 项**：首页 / 账本 / **待办** / 趋势 / 设置。待办与备忘在同一个 Tab 内用分段切换（`Views/Todo/TodoTabView.swift`）；**资产不占标签位**，入口是账本页右上角（头像左侧）的按钮（`Views/Asset/AssetView.swift`）。不要把新页面加成第 6 个 Tab。
+11. **待办 / 备忘 / 资产的数据隔离**：查询必须叠加 `PersistenceController` 的 `todoUserPredicate` / `todoTagUserPredicate` / `memoUserPredicate` / `assetAccountUserPredicate` / `assetSnapshotUserPredicate`；写入必带 `createdBy`（与 `updatedBy`）。文案命名空间是 `todo.` / `memo.` / `asset.`，Tab 用 `tab.todo`。
+12. **SwiftData 删除待办必须走对象图删除**：`TodoItem.tags` 是非可选多对多，`context.delete(model:where:)` 会抛 `mandatory MTM nullify inverse`（`NSCocoaErrorDomain` 134050）且被 `try?` 静默吞掉，数据实际删不掉；只有逐个 `context.delete(_:)` 才会级联子任务并清理关系（见 `AuthManager.deleteTodoAndAssetData`）。
+13. **SwiftData 测试夹具必须持有容器**：禁止 `PersistenceController(inMemory: true).container.mainContext` 这种临时实例写法（容器随即销毁，`insert` 直接 SIGTRAP）；用局部 `let controller = ...` 或夹具类持有。
 
 ## 代码风格
 
@@ -126,6 +132,8 @@ Watch 概览 → requestSync → transferUserInfo(action: requestTodayBills)
 | 工程 scheme | 存在无对应文件的遗留 scheme `Copy of iFinance` |
 | 真机部署慢 | 构建本身很快（增量 3～6s、全量约 24s），慢在部署阶段：iOS scheme 依赖 watch target（`Embed Watch Content`），配对手表时每次 Run 都会推送 Watch App，且 Xcode 会附加调试器。改用 `scripts/run-on-device.sh` 可绕过这两步；另注意设备需解锁且已信任电脑 |
 | 记账键盘输入 | 数字键盘的表达式逻辑在 `Views/Transaction/Bills/NumberPadLogic.swift`（`NumberPadExpression`，纯函数 + 单测）。**校验只能针对「当前数字段」（最后一个运算符之后的部分）**——曾经用整串 `displayText` 判断小数位，导致「小数点出现后运算符后面再也输不进数字」；`AddBillView.parseExpression` 负责求值 |
+| SwiftData 待办/标签删除 | `TodoItem.tags` / `TodoTag.items` 是非可选多对多：`context.delete(model:where:)` 抛 `mandatory MTM nullify inverse`（134050）且被 `try?` 静默吞掉（数据删不掉）。待办与标签必须逐个 `context.delete(_:)`（对象图删除），其余 4 类无关系实体可继续批量删除 |
+| SwiftData 测试夹具 | `PersistenceController(inMemory: true).container.mainContext` 这种临时实例写法会让容器随控制器一起释放，`insert`/`save` 直接 SIGTRAP（崩溃点还会飘到别的测试上）。夹具类或局部常量必须持有 `PersistenceController` |
 | 文本解析换行 | Swift 中 `"\r\n"` 是**一个** Character：CSV/文本解析里 `ch == "\n"` 漏掉 CRLF，会把 Windows/Excel 导出的文件当成一整行（`CSVImporter.parseRows` 已修为覆盖 `\n` / `\r\n` / `\r`，新写解析逻辑请照此处理） |
 | 分类体系（第四轮新增） | 自定义分类与二级分类定义存在**本机 UserDefaults**（`CategoryStore`，按账号隔离，键 `custom_categories_v1_<账号>`），**不改三份数据模型**；账单里只存名字或 `父/子` 路径。改名会同步历史账单、删除不会（历史账单保留原分类名）。macOS / watchOS 不识别自定义分类，显示为灰色纯文本 |
 | 分类图标唯一性 | 一级分类图标在同一类型内不得重复、二级分类在同一父级下不得重复；新增/调整分类后必须跑 `iFinanceTests/CategoryIconTests`（同时校验符号在系统中真实存在） |

@@ -25,6 +25,7 @@
 | [macos.md](macos.md) | macOS 端全部类型（含与 iOS 的差异对比） | 维护桌面端 |
 | [watchos.md](watchos.md) | watchOS 端全部类型（含 Watch 端状态与缓存） | 维护手表端 |
 | [data-and-sync.md](data-and-sync.md) | Core Data 模型、多账号隔离、iPhone ↔ Watch 协议、CSV 格式 | 改数据模型或跨端通信 |
+| [todo-asset.md](todo-asset.md) | 待办 / 备忘 / 资产：6 个新实体、纯逻辑接口、视图入口、隔离与快照口径、已知坑 | 改待办页、资产页或对应数据层 |
 
 ## 阅读方式
 
