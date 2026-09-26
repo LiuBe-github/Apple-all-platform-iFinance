@@ -66,16 +66,17 @@ struct ContentView: View {
 
     // MARK: - 「我的」标签图标
 
-    /// 有头像时用头像，无头像时回落到默认人像（与设置页 / 个人中心的默认头像一致）
+    /// 有头像时用头像，无头像时回落到默认人像（与设置页 / 个人中心的默认头像一致）。
+    /// 这里只能用**已经渲染成固定尺寸的圆形缩略图位图**：`.tabItem` 中没有固有尺寸的
+    /// `resizable()` 图片会被拉伸铺满整个标签栏。
     @ViewBuilder
     private var tabAvatarIcon: some View {
-        if let uiImage = AvatarImageCache.shared.image(for: authManager.avatarData) {
-            Image(uiImage: uiImage)
+        if let thumbnail = AvatarImageCache.shared.thumbnail(
+            for: authManager.avatarData,
+            diameter: AppLayout.tabBarIcon
+        ) {
+            Image(uiImage: thumbnail)
                 .renderingMode(.original)
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .frame(width: AppLayout.tabBarIcon, height: AppLayout.tabBarIcon)
-                .clipShape(Circle())
         } else {
             Image(systemName: "person.crop.circle.fill")
         }

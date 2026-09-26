@@ -15,6 +15,9 @@ final class AvatarImageCache {
 
     private var cachedHash: Int?
     private var cachedImage: UIImage?
+    private var cachedThumbnail: UIImage?
+    private var cachedThumbnailHash: Int?
+    private var cachedThumbnailDiameter: CGFloat?
 
     func image(for data: Data?) -> UIImage? {
         guard let data else { return nil }
@@ -28,5 +31,40 @@ final class AvatarImageCache {
         cachedHash = hash
         cachedImage = image
         return image
+    }
+
+    /// 圆形缩略图（标签栏等小尺寸场景）：**按等比例填充后在离屏渲染成固定点尺寸的位图**。
+    /// 注意：切图必须是固定尺寸位图，不能返回 `resizable()` 的 `Image`——
+    /// `TabView` 的 `.tabItem` 里没有固有尺寸的可伸缩图片会被拉伸铺满标签栏。
+    func thumbnail(for data: Data?, diameter: CGFloat) -> UIImage? {
+        guard let data, let image = image(for: data) else { return nil }
+
+        let hash = data.hashValue
+        if hash == cachedThumbnailHash, cachedThumbnailDiameter == diameter, let cachedThumbnail {
+            return cachedThumbnail
+        }
+
+        let size = CGSize(width: diameter, height: diameter)
+        let format = UIGraphicsImageRendererFormat.default()
+        format.scale = UIScreen.main.scale
+        format.opaque = false
+
+        let rendered = UIGraphicsImageRenderer(size: size, format: format).image { _ in
+            UIBezierPath(ovalIn: CGRect(origin: .zero, size: size)).addClip()
+
+            // 等比例填充（aspect fill）后居中绘制
+            let ratio = max(size.width / image.size.width, size.height / image.size.height)
+            let drawSize = CGSize(width: image.size.width * ratio, height: image.size.height * ratio)
+            let origin = CGPoint(
+                x: (size.width - drawSize.width) / 2,
+                y: (size.height - drawSize.height) / 2
+            )
+            image.draw(in: CGRect(origin: origin, size: drawSize))
+        }
+
+        cachedThumbnail = rendered
+        cachedThumbnailHash = hash
+        cachedThumbnailDiameter = diameter
+        return rendered
     }
 }
