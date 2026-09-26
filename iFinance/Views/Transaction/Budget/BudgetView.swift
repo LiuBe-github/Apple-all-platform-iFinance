@@ -532,7 +532,8 @@ struct CategoryRowView: View {
     }
     
     private var barColor: Color {
-        CategoryResolver.color(for: rawValue, kind: kind)
+        // 与同页饼图保持一致：明细列表使用 8 色板（分类身份色在记账/账单页统一红绿）
+        CategoryPalette.chartColor(for: rawValue, kind: kind)
     }
     
     private func formatAmount(_ v: Double) -> String {

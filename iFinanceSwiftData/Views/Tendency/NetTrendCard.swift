@@ -18,6 +18,8 @@ struct NetTrendPoint: Identifiable, Equatable {
     let expense: Double
 
     var net: Double { income - expense }
+    /// 支出柱的绘制值：零轴为界向下（收入柱用正的 income）
+    var expenseBarValue: Double { -expense }
     /// 稳定 id：图表重绘时避免全量 diff
     var id: Date { date }
 }
@@ -299,7 +301,7 @@ struct NetTrendCard: View {
 
                 BarMark(
                     x: .value("date", point.date, unit: isMonthly ? .month : .day),
-                    y: .value("amount", point.expense)
+                    y: .value("amount", point.expenseBarValue)
                 )
                 .foregroundStyle(Color.red.gradient)
                 .position(by: .value("kind", "expense"))
@@ -331,7 +333,8 @@ struct NetTrendCard: View {
                     .foregroundStyle(.secondary.opacity(0.12))
                 AxisValueLabel {
                     if let amount = value.as(Double.self) {
-                        Text(formatAmount(amount)).font(.caption2)
+                        // 零轴下侧是支出，刻度显示绝对值更易读
+                        Text(formatAmount(abs(amount))).font(.caption2)
                     }
                 }
             }

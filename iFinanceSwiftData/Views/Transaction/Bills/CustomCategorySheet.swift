@@ -29,7 +29,6 @@ struct CustomCategorySheet: View {
 
     @State private var name: String = ""
     @State private var icon: String = "tag"
-    @State private var colorHex: String? = nil
     /// 新建一级分类时可一并添加的二级分类（名称 + 自动分配的图标）
     @State private var pendingSubcategories: [(name: String, icon: String)] = []
     @State private var newSubcategoryName: String = ""
@@ -48,7 +47,6 @@ struct CustomCategorySheet: View {
                     VStack(alignment: .leading, spacing: AppSpacing.xl) {
                         nameSection
                         iconSection
-                        colorSection
                         if showsSubcategorySection { subcategorySection }
                     }
                     .padding(AppSpacing.lg)
@@ -164,49 +162,6 @@ struct CustomCategorySheet: View {
         .disabled(taken && !selected)
     }
 
-    // MARK: - 主题色
-
-    private var colorSection: some View {
-        VStack(alignment: .leading, spacing: AppSpacing.sm) {
-            sectionTitle("category.custom.color")
-
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: AppSpacing.sm), count: 6), spacing: AppSpacing.sm) {
-                autoColorButton
-                ForEach(CategoryPalette.customColors, id: \.self) { hex in
-                    Button {
-                        HapticManager.shared.light()
-                        colorHex = hex
-                    } label: {
-                        Circle()
-                            .fill(CategoryPalette.color(hex: hex) ?? .gray)
-                            .frame(width: 30, height: 30)
-                            .overlay(
-                                Circle().strokeBorder(Color.primary.opacity(colorHex == hex ? 0.8 : 0.1), lineWidth: colorHex == hex ? 2 : 1)
-                            )
-                    }
-                    .buttonStyle(ScaleButtonStyle(pressedScale: 0.9))
-                }
-            }
-        }
-    }
-
-    private var autoColorButton: some View {
-        Button {
-            HapticManager.shared.light()
-            colorHex = nil
-        } label: {
-            Text("category.custom.color_auto")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-                .frame(width: 34, height: 34)
-                .background(Circle().fill(Color.primary.opacity(0.06)))
-                .overlay(
-                    Circle().strokeBorder(Color.primary.opacity(colorHex == nil ? 0.6 : 0.1), lineWidth: colorHex == nil ? 2 : 1)
-                )
-        }
-        .buttonStyle(ScaleButtonStyle(pressedScale: 0.9))
-    }
-
     // MARK: - 二级分类（仅新建一级分类时）
 
     private var subcategorySection: some View {
@@ -286,7 +241,7 @@ struct CustomCategorySheet: View {
         do {
             switch mode {
             case .create:
-                let item = try store.add(kind: kind, name: name, icon: icon, colorHex: colorHex, parentKey: parentKey)
+                let item = try store.add(kind: kind, name: name, icon: icon, colorHex: nil, parentKey: parentKey)
                 for sub in pendingSubcategories {
                     _ = try? store.add(kind: kind, name: sub.name, icon: sub.icon, colorHex: nil, parentKey: item.key)
                 }
@@ -294,7 +249,7 @@ struct CustomCategorySheet: View {
             case .edit:
                 guard let editing else { return }
                 let oldPath = store.storedPath(of: editing)
-                try store.update(id: editing.id, name: name, icon: icon, colorHex: colorHex)
+                try store.update(id: editing.id, name: name, icon: icon, colorHex: nil)
                 let newPath = store.storedPath(of: editing, withNewName: name.trimmingCharacters(in: .whitespacesAndNewlines))
                 if oldPath != newPath { onRenamed(oldPath, newPath) }
             }
@@ -311,14 +266,13 @@ struct CustomCategorySheet: View {
         guard let editing else { return }
         name = editing.name
         icon = editing.icon
-        colorHex = editing.colorHex
     }
 
     // MARK: - 辅助
 
     private var selectedColor: Color {
-        if let colorHex, let color = CategoryPalette.color(hex: colorHex) { return color }
-        return CategoryPalette.autoColor(seed: name.isEmpty ? "new" : name, kind: kind)
+        // 分类身份色：支出红、收入绿
+        kind.accentColor
     }
 
     private func isIconTaken(_ symbol: String) -> Bool {

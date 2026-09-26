@@ -485,8 +485,6 @@
 "category.custom.icon" = "アイコンを選択";
 "category.custom.icon_search" = "アイコンを検索";
 "category.custom.icon_in_use" = "使用中";
-"category.custom.color" = "テーマカラー";
-"category.custom.color_auto" = "自動";
 "category.custom.subcategory" = "サブカテゴリ";
 "category.custom.subcategory_placeholder" = "サブカテゴリ名を入力";
 "category.custom.error.empty" = "カテゴリ名を入力してください";

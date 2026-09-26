@@ -169,7 +169,7 @@ rawValue 为中文：`餐饮`、`购物`、`服饰`、`日用`、`数码`、`美
 |------|----------|------|
 | `CustomCategory` | `id / kind / parentKey / name / icon / colorHex / builtInKey / order / createdAt`、`key` | 自定义分类条目；`parentKey` 非空即二级分类（内置父级用 rawValue，自定义父级用 UUID 字符串） |
 | `CategoryStore` | `shared`、`reload(force:)`、`topLevel(_:)`、`subcategories(parentKey:kind:)`、`add(kind:name:icon:colorHex:parentKey:)`、`update(id:name:icon:colorHex:)`、`delete(id:)`、`storedPath(of:)`、`takenIcons(kind:parentKey:)`、`revision` | 本机 UserDefaults JSON（按账号隔离）；名称校验（1–8 字、禁 `/`、同层级去重、一级 20 / 每父 20 上限）；首次使用播种「交通」7 个二级分类 |
-| `CategoryResolver` | `split(_:)`、`parentRaw(_:)`、`displayName(for:kind:)`、`icon(for:kind:)`、`color(for:kind:)`、`isValid(_:kind:)`、`topLevelOptions(kind:)`、`subOptions(forParent:kind:)`、`parentKey(forStoredParent:kind:)` | `@MainActor`；一级选项带 revision 缓存；全 App 唯一分类解析入口 |
+| `CategoryResolver` | `split(_:)`、`parentRaw(_:)`、`displayName(for:kind:)`、`icon(for:kind:)`、`color(for:kind:)`、`isValid(_:kind:)`、`topLevelOptions(kind:)`、`subOptions(forParent:kind:)`、`parentKey(forStoredParent:kind:)` | `@MainActor`；一级选项带 revision 缓存；全 App 唯一分类解析入口。`color(for:kind:)` 第五轮起返回**类型身份色**（支出红 / 收入绿，见 `CategoryKind.accentColor`）；饼图与预算明细请用 `CategoryPalette.chartColor(for:kind:)` |
 | `CategoryIconLibrary` | `groups`（9 组）、`allIcons`、`filtered(keyword:)` | 105 枚精选 SF Symbols，供图标选择器与自动分配使用 |
 
 > 规则：一级分类图标在同一类型内不得重复、二级分类在同一父级下不得重复；新增/调整分类后请运行 `iFinanceTests/CategoryIconTests`（同时校验符号真实存在）。

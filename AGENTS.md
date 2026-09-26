@@ -110,6 +110,8 @@ Watch 概览 → requestSync → transferUserInfo(action: requestTodayBills)
 | 设置页分类管理（改名/删除/二级分类） | `Views/Setting/CategoryManagementView.swift`（含 `SubcategoryManageView`，两版数据访问不同） |
 | 趋势页「总收支」双向柱状图 | `Views/Tendency/NetTrendCard.swift`（`NetTrendBuilder` 纯函数 + 卡片） |
 
+配色规则：**分类身份色**（网格 / 账单行 / 分类管理 / 二级 chips）用 `CategoryKind.accentColor` —— 支出红、收入绿，自定义与二级分类一视同仁；**数据可视化色**（饼图扇区 + 预算页分类明细）用 `CategoryPalette.chartColor(for:kind:)` 的 8 色板，两者不要混用。
+
 ## 已确认的坑（改代码前先读）
 
 | 位置 | 问题 |
@@ -128,6 +130,7 @@ Watch 概览 → requestSync → transferUserInfo(action: requestTodayBills)
 | 分类体系（第四轮新增） | 自定义分类与二级分类定义存在**本机 UserDefaults**（`CategoryStore`，按账号隔离，键 `custom_categories_v1_<账号>`），**不改三份数据模型**；账单里只存名字或 `父/子` 路径。改名会同步历史账单、删除不会（历史账单保留原分类名）。macOS / watchOS 不识别自定义分类，显示为灰色纯文本 |
 | 分类图标唯一性 | 一级分类图标在同一类型内不得重复、二级分类在同一父级下不得重复；新增/调整分类后必须跑 `iFinanceTests/CategoryIconTests`（同时校验符号在系统中真实存在） |
 | 模拟器启动失败 | `xcodebuild test` 偶发 `SBMainWorkspace` 拒绝启动并反复重试（日志刷 `failed to launch cn.liube.iFinance`）：先 `simctl boot` + `bootstatus -b` 手动拉起，仍失败就换一台模拟器设备（本机 iPhone 16 与 iPhone 16 Pro 可互为备份） |
+| 键盘浮层定位 | 键盘上方的浮层（如记账页备注条）**只能有一个位移来源**：要么完全交给系统键盘避让，要么容器 `.ignoresSafeArea(.keyboard)` + 用 `keyboardWillChangeFrame` 算出的 `keyboardOverlap` 手动 `padding(.bottom, ...)`。两者叠加会把控件顶到远离键盘的位置（曾踩过：系统避让 + 手动 `offset` = 双重位移） |
 
 ## 文档维护约定
 

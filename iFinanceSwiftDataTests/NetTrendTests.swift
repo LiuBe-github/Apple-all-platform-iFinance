@@ -29,6 +29,8 @@ struct NetTrendTests {
         #expect(todayPoint?.income == 100)
         #expect(todayPoint?.expense == 40)
         #expect(todayPoint?.net == 60)
+        // 图表方向：收入向上、支出向下（负值）
+        #expect(todayPoint?.expenseBarValue == -40)
         #expect(points.first { $0.date == yesterday }?.income == 0)
     }
 

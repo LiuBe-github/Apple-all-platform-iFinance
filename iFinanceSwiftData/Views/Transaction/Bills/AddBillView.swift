@@ -36,97 +36,228 @@ struct AddBillView: View {
     @State private var alertMessage = ""
     @State private var transferFrom: String = ""
     @State private var transferTo: String = ""
+
+    /// 备注编辑浮层状态（浮层固定在键盘正上方，避免与系统键盘避让叠加）
+    @State private var isNoteEditing = false
+    @State private var keyboardOverlap: CGFloat = 0
+    @FocusState private var noteFieldFocused: Bool
     
     var body: some View {
         NavigationStack {
-            // 主要内容区域（可滚动）
-            ScrollView {
-                VStack(alignment: .leading) {
-                    Group {
-                        if transactionType == .expenditure {
-                            CategoryGridView(kind: .expenditure, selection: $selectedCategoryRaw) {
-                                showingCustomCategorySheet = true
+            ZStack(alignment: .bottom) {
+                // 主要内容区域（可滚动）
+                ScrollView {
+                    VStack(alignment: .leading) {
+                        Group {
+                            if transactionType == .expenditure {
+                                CategoryGridView(kind: .expenditure, selection: $selectedCategoryRaw) {
+                                    showingCustomCategorySheet = true
+                                }
+                            } else if transactionType == .income {
+                                CategoryGridView(kind: .income, selection: $selectedCategoryRaw) {
+                                    showingCustomCategorySheet = true
+                                }
+                            } else {
+                                transferForm
                             }
-                        } else if transactionType == .income {
-                            CategoryGridView(kind: .income, selection: $selectedCategoryRaw) {
-                                showingCustomCategorySheet = true
-                            }
-                        } else {
-                            transferForm
+                        }
+                        .id(transactionType)
+                        .transition(.opacity.combined(with: .move(edge: .bottom)))
+                        .appAnimation(AppMotion.standard, value: transactionType)
+                    }
+                }
+                // 键盘弹出时不顶走页面
+                .ignoresSafeArea(.keyboard, edges: .bottom)
+                // 数字键盘固定在底部；由系统为滚动内容预留等高内边距（修复最后一排分类被遮挡）
+                .safeAreaInset(edge: .bottom, spacing: 0) {
+                    // 备注编辑中隐藏数字键盘：键盘区交给系统键盘 + 上方浮层
+                    if showNumberPad && !isNoteEditing {
+                        NumberPad(
+                            displayText: $displayText,
+                            currentOperator: $currentOperator,
+                            transactionType: $transactionType,
+                            note: $note,
+                            selectedDate: $selectedDate,
+                            onBeginNoteEditing: { beginNoteEditing() },
+                            onSave: { saveBill() }
+                        )
+                        .transition(.move(edge: .bottom))
+                        .background(alignment: .bottom) {
+                            Color(UIColor.systemGroupedBackground)
+                                .ignoresSafeArea(edges: .bottom)
                         }
                     }
-                    .id(transactionType)
-                    .transition(.opacity.combined(with: .move(edge: .bottom)))
-                    .appAnimation(AppMotion.standard, value: transactionType)
+                }
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button {
+                            HapticManager.shared.light()
+                            dismiss()
+                        } label: {
+                            Image(systemName: "xmark")
+                        }
+                    }
+                    ToolbarItem(placement: .title) {
+                        Picker("bill.view_picker", selection:  $transactionType) {
+                            Text("bill.type_expenditure")
+                                .tag(TransactionType.expenditure)
+                            Text("bill.type_income")
+                                .tag(TransactionType.income)
+                            Text("bill.type_transfer")
+                                .tag(TransactionType.transfer)
+                        }
+                        .frame(width: 300)
+                        .pickerStyle(SegmentedPickerStyle())
+                    }
+                }
+                .onChange(of: transactionType) { _, newType in
+                    // 切换类型后若当前分类不属于新类型，回退到该类型的默认分类
+                    guard let kind = CategoryKind(billType: newType == .expenditure ? "expenditure" :
+                                                  newType == .income ? "income" : "transfer") else { return }
+                    if selectedCategoryRaw.map({ CategoryResolver.isValid($0, kind: kind) }) != true {
+                        selectedCategoryRaw = kind == .expenditure
+                            ? ExpenditureCategory.foodAndBeverage.rawValue
+                            : IncomeCategory.salary.rawValue
+                    }
+                }
+                .onAppear { CategoryStore.shared.reload() }
+                .sheet(isPresented: $showingCustomCategorySheet) {
+                    CustomCategorySheet(
+                        mode: .create,
+                        kind: transactionType == .income ? .income : .expenditure
+                    ) { item in
+                        selectedCategoryRaw = item.name
+                    }
+                }
+
+                // 备注输入条：唯一位置由键盘高度决定（不再叠加系统避让）
+                if isNoteEditing {
+                    noteEditingBar
+                        // 浮层挂在安全区底部：减去底部安全区，最终底边落在键盘顶边上方 8pt
+                        .padding(.bottom, max(0, keyboardOverlap + AppSpacing.sm - bottomSafeAreaInset))
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
-            // 键盘弹出时不顶走页面（备注条由 NumberPad 自行浮到键盘上方）
+            // 页面与浮层都不响应键盘安全区，键盘高度只用于浮层的 bottom padding
             .ignoresSafeArea(.keyboard, edges: .bottom)
-            // 数字键盘固定在底部；由系统为滚动内容预留等高内边距（修复最后一排分类被遮挡）
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                if showNumberPad {
-                    NumberPad(
-                        displayText: $displayText,
-                        currentOperator: $currentOperator,
-                        transactionType: $transactionType,
-                        note: $note,
-                        selectedDate: $selectedDate
-                    ) {
-                        saveBill()
-                    }
-                    .transition(.move(edge: .bottom))
-                    .background(alignment: .bottom) {
-                        Color(UIColor.systemGroupedBackground)
-                            .ignoresSafeArea(edges: .bottom)
-                    }
+            .appAnimation(AppMotion.standard, value: isNoteEditing)
+            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillChangeFrameNotification)) { notification in
+                guard let frame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
+                let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double ?? 0.25
+                let windowHeight = keyWindow?.bounds.height ?? UIScreen.main.bounds.height
+                let overlap = max(0, windowHeight - frame.minY)
+                withAnimation(.easeOut(duration: duration)) {
+                    keyboardOverlap = overlap
                 }
             }
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        HapticManager.shared.light()
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                    }
+            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { notification in
+                let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double ?? 0.25
+                withAnimation(.easeOut(duration: duration)) {
+                    keyboardOverlap = 0
                 }
-                ToolbarItem(placement: .title) {
-                    Picker("bill.view_picker", selection:  $transactionType) {
-                        Text("bill.type_expenditure")
-                            .tag(TransactionType.expenditure)
-                        Text("bill.type_income")
-                            .tag(TransactionType.income)
-                        Text("bill.type_transfer")
-                            .tag(TransactionType.transfer)
-                    }
-                    .frame(width: 300)
-                    .pickerStyle(SegmentedPickerStyle())
+                if isNoteEditing { endNoteEditing() }
+            }
+            .onChange(of: isNoteEditing) { _, editing in
+                if editing {
+                    DispatchQueue.main.async { noteFieldFocused = true }
+                } else {
+                    noteFieldFocused = false
                 }
             }
-            .onChange(of: transactionType) { _, newType in
-                // 切换类型后若当前分类不属于新类型，回退到该类型的默认分类
-                guard let kind = CategoryKind(billType: newType == .expenditure ? "expenditure" :
-                                              newType == .income ? "income" : "transfer") else { return }
-                if selectedCategoryRaw.map({ CategoryResolver.isValid($0, kind: kind) }) != true {
-                    selectedCategoryRaw = kind == .expenditure
-                        ? ExpenditureCategory.foodAndBeverage.rawValue
-                        : IncomeCategory.salary.rawValue
-                }
-            }
-            .onAppear { CategoryStore.shared.reload() }
-            .sheet(isPresented: $showingCustomCategorySheet) {
-                CustomCategorySheet(
-                    mode: .create,
-                    kind: transactionType == .income ? .income : .expenditure
-                ) { item in
-                    selectedCategoryRaw = item.name
-                }
+            .onChange(of: noteFieldFocused) { _, focused in
+                if !focused && isNoteEditing { isNoteEditing = false }
             }
         }
         .alert(alertMessage, isPresented: $showingAlert) {
             Button("common.ok", role: .cancel){ }
         }
         
+    }
+
+    // MARK: - 备注输入浮层
+
+    private var noteEditingBar: some View {
+        HStack(spacing: AppSpacing.md) {
+            HStack(spacing: AppSpacing.xs) {
+                Text("¥")
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                Text(displayText)
+                    .font(.system(size: 22, weight: .semibold, design: .rounded))
+                    .foregroundColor(amountColor)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .contentTransition(.numericText())
+            }
+
+            HStack(spacing: AppSpacing.sm) {
+                Image(systemName: "square.and.pencil")
+                    .font(.caption)
+                    .foregroundColor(.blue)
+
+                TextField(L10n.string("bill.note_add"), text: $note)
+                    .font(.subheadline)
+                    .focused($noteFieldFocused)
+                    .submitLabel(.done)
+                    .onSubmit { endNoteEditing() }
+            }
+            .padding(.horizontal, AppSpacing.md)
+            .padding(.vertical, AppSpacing.sm)
+            .background(
+                Capsule().fill(Color.primary.opacity(0.06))
+            )
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Button {
+                HapticManager.shared.light()
+                endNoteEditing()
+            } label: {
+                Text("common.done")
+                    .font(.subheadline.weight(.semibold))
+                    .padding(.horizontal, AppSpacing.md)
+                    .padding(.vertical, AppSpacing.sm)
+                    .background(
+                        Capsule().fill(Color.accentColor.opacity(0.14))
+                    )
+            }
+            .buttonStyle(ScaleButtonStyle(pressedScale: 0.94))
+        }
+        .padding(AppSpacing.md)
+        .background(
+            RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous)
+                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .shadow(color: .black.opacity(0.12), radius: 12, x: 0, y: 4)
+        )
+        .padding(.horizontal, AppSpacing.lg)
+        .appContentWidth()
+    }
+
+    private var amountColor: Color {
+        switch transactionType {
+        case .expenditure: return .red
+        case .income: return .green
+        case .transfer: return .orange
+        }
+    }
+
+    private var keyWindow: UIWindow? {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap(\.windows)
+            .first(where: \.isKeyWindow)
+    }
+
+    private var bottomSafeAreaInset: CGFloat {
+        keyWindow?.safeAreaInsets.bottom ?? 0
+    }
+
+    private func beginNoteEditing() {
+        isNoteEditing = true
+    }
+
+    private func endNoteEditing() {
+        noteFieldFocused = false
+        isNoteEditing = false
     }
     
     // MARK: - 转账表单

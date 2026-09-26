@@ -485,8 +485,6 @@
 "category.custom.icon" = "Choose Icon";
 "category.custom.icon_search" = "Search icons";
 "category.custom.icon_in_use" = "In use";
-"category.custom.color" = "Theme Color";
-"category.custom.color_auto" = "Auto";
 "category.custom.subcategory" = "Subcategory";
 "category.custom.subcategory_placeholder" = "Enter a subcategory name";
 "category.custom.error.empty" = "Please enter a category name";

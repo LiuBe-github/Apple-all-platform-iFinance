@@ -85,24 +85,8 @@ enum CategoryResolver {
     }
 
     static func color(for raw: String, kind: CategoryKind) -> Color {
-        let (parent, child) = split(raw)
-        if let child,
-           let item = categoryItem(named: child, parentName: parent, kind: kind) {
-            if let hex = item.colorHex, let color = CategoryPalette.color(hex: hex) { return color }
-            return CategoryPalette.autoColor(seed: item.name, kind: kind)
-        }
-        if child == nil,
-           let item = CategoryStore.shared.item(named: parent, parentKey: nil, kind: kind) {
-            if let hex = item.colorHex, let color = CategoryPalette.color(hex: hex) { return color }
-            return CategoryPalette.autoColor(seed: item.name, kind: kind)
-        }
-        switch kind {
-        case .expenditure:
-            if let builtIn = ExpenditureCategory(rawValue: parent) { return CategoryPalette.color(for: builtIn) }
-        case .income:
-            if let builtIn = IncomeCategory(rawValue: parent) { return CategoryPalette.color(for: builtIn) }
-        }
-        return CategoryPalette.unknown
+        // 分类身份色统一按类型：支出红、收入绿（不再有每分类主题色）
+        kind.accentColor
     }
 
     /// 内置分类的本地化名（非内置返回 nil）
@@ -148,7 +132,7 @@ enum CategoryResolver {
                     raw: $0.rawValue,
                     title: $0.localizedDisplayName,
                     icon: $0.icon,
-                    color: CategoryPalette.color(for: $0),
+                    color: kind.accentColor,
                     isCustom: false
                 )
             }
@@ -158,7 +142,7 @@ enum CategoryResolver {
                     raw: $0.rawValue,
                     title: $0.localizedDisplayName,
                     icon: $0.icon,
-                    color: CategoryPalette.color(for: $0),
+                    color: kind.accentColor,
                     isCustom: false
                 )
             }
@@ -168,7 +152,7 @@ enum CategoryResolver {
                 raw: item.name,
                 title: displayName(for: item.name, kind: kind),
                 icon: item.icon,
-                color: color(for: item.name, kind: kind),
+                color: kind.accentColor,
                 isCustom: true
             )
         }
@@ -184,7 +168,7 @@ enum CategoryResolver {
                 raw: raw,
                 title: displayName(for: raw, kind: kind),
                 icon: item.icon,
-                color: color(for: raw, kind: kind),
+                color: kind.accentColor,
                 isCustom: true
             )
         }

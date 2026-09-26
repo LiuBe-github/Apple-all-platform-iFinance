@@ -125,3 +125,11 @@
 | D-56 | 趋势页新增「总收支」**双向双柱**（收入向上绿、支出向下红），跨度仅月 / 6 个月 / 年，转账不计入；点选显示收入/支出/净额 | 用户在问答中选择「双向双柱（收入/支出分开）」「月/6 个月/年三档」 | `NetTrendCard`、`NetTrendBuilder`、`TendencyView` 置顶卡片 |
 | D-57 | 趋势页取数窗口定为**最近 24 个月**（计划里写的是约 13 个月，实施时放宽） | 13 个月虽覆盖年视图，但会让「总收支」月度序列与横向回看缺数据；24 个月兼顾性能与回看体验 | `TendencyView` 的 Core Data 谓词 / SwiftData `@Query` |
 | D-58 | 真机提速提供 **Release 运行通道**（`scripts/run-on-device.sh --release`），Debug 配置保持 `-Onone` 不动 | 用户选择「另加优化运行通道」：调试体验与真机流畅度兼得 | `scripts/run-on-device.sh`；文档见 `AGENTS.md` / `docs/PROJECT_MEMORY.md` |
+
+## L. 备注浮层 / 图表方向 / 配色统一（2026-09-26 第五轮）
+
+| 编号 | 决策 | 理由 / 约束 | 影响 |
+|------|------|-------------|------|
+| D-59 | 备注输入条改为**根级浮层 + 键盘高度单一来源定位**：`AddBillView` 持有 `isNoteEditing` / `keyboardOverlap` / `@FocusState`，浮层 `padding(.bottom, keyboardOverlap + 8)`；页面与浮层都 `.ignoresSafeArea(.keyboard)`；`NumberPad` 不再内嵌输入框与键盘位移 | 上一版同时使用「系统键盘避让」与「手动 `offset(y: -keyboardLift)`」，两次位移叠加把输入条顶到离键盘很远处（用户反馈"间隔很大、看不见"）。单一来源才能可预测 | `AddBillView`（两版）、`NumberPad`（备注行改为按钮 + `onBeginNoteEditing`）、`NetTrendTests` 无关 |
+| D-60 | 总收支图**支出柱画负值**（`NetTrendPoint.expenseBarValue = -expense`），Y 轴刻度显示绝对值；`NetTrendBuilder` 的数据语义保持正值不变 | 用户要求「以 0 为界，支出向下、收入向上」；把渲染方向收在模型的一个计算属性里，既能单测又不影响既有聚合测试 | `Views/Tendency/NetTrendCard.swift`（两版）、`NetTrendTests`（两版） |
+| D-61 | 分类**身份色**统一：支出红 `(1.0, 0.27, 0.23)`、收入绿 `(0.18, 0.78, 0.44)`（含自定义与二级分类）；**删除主题色选择**；**饼图与预算页明细保留 8 色调色板** | 用户要求「不做复杂颜色系统，支出红、收入绿」；但饼图若同色则无法区分扇区，用户选择保留现有彩色调色板 | `CategoryResolver.color` → `CategoryKind.accentColor`；新增 `CategoryPalette.chartColor`（仅饼图/明细用）；`CustomCategorySheet` 去掉颜色段；`CategoryStore.colorHex` 保留字段但不再读写 |

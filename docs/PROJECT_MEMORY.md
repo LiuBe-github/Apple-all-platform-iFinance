@@ -302,6 +302,8 @@ Watch 端前缀独立：`add.*`、`category.*`、`summary.*`、`history.*`、`ta
 
 ## 8. 视觉与交互规范
 
+> 键盘浮层约定（第五轮）：键盘上方的浮层只允许一个位移来源——要么交给系统避让，要么容器 `.ignoresSafeArea(.keyboard)` + 按 `keyboardWillChangeFrame` 的 `keyboardOverlap` 手动定位。记账页备注条采用后者（`AddBillView` 根级浮层），`NumberPad` 内不再保留任何键盘位移逻辑。
+
 | 能力 | 实现 | 位置 |
 |------|------|------|
 | 渐变背景 + 呼吸光斑 | `AppBackgroundView`（`TimelineView(.animation(minimumInterval: 1/30))` + 3 个漂移球体） | `iFinance/Views/Common/AppVisualStyle.swift:5` |
@@ -329,6 +331,7 @@ macOS 端有独立副本：`MaciFinance/Views/Common/AppVisualStyle.swift`（130
 
 - **存储**：内置分类 = 枚举 rawValue；自定义分类 = 用户输入名称；二级分类 = `父/子` 复合路径（`CategoryStore.separator = "/"`，名称禁含该字符）。定义本身存在本机 `UserDefaults`（键 `custom_categories_v1_<账号>`、播种标记 `custom_categories_seeded_v1_<账号>`），**不落三份数据模型**，也不随 CSV 导出。
 - **解析**：`CategoryResolver` 是唯一入口——`displayName` / `icon` / `color` / `parentRaw`（聚合用）/ `isValid` / `topLevelOptions`（带版本缓存）；`CategoryKind`（支出/收入）同时提供 `billType` 与 `init?(billType:)`。
+- **配色（第五轮统一）**：分类**身份色** = `CategoryKind.accentColor`（支出红、收入绿，自定义与二级分类一致）；**数据可视化色** = `CategoryPalette.chartColor(for:kind:)`（8 色板，仅用于饼图扇区与预算页分类明细）。`CustomCategory.colorHex` 字段保留但已不再读写。
 - **图标**：`CategoryIconLibrary` 9 组 105 枚精选 SF Symbols；占用规则 = 一级分类在同一类型内不重复、二级分类在同一父级下不重复；`takenIcons(kind:parentKey:)` 提供占用集合。
 - **改名 / 删除**：改名会批量更新该账号历史账单里的名称与子路径（`CategoryManagementView.renameBills`，两版各自实现）；删除只从定义与选择器移除，历史账单保留原名并以灰色兜底样式展示。
 - **播种**：首次使用为内置「交通」写入 7 个二级分类（带 `builtInKey`，展示时跟随语言；用户改名后清空该 key）。

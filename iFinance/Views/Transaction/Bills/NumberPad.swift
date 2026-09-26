@@ -2,7 +2,10 @@
 //  NumberPad.swift
 //  iFinance
 //
-//  数字键盘主视图 - 用于 AddBillView 中的金额输入
+//  数字键盘主视图 - 用于 AddBillView 中的金额输入。
+//  备注输入条不再在键盘内部浮动（那会与系统键盘避让叠加成双重位移），
+//  改为由 AddBillView 的根级浮层按键盘高度定位；这里只保留一个「备注」按钮。
+//  说明：本文件是 iOS 主版与 SwiftData 版的同名副本，改一处请同步另一处。
 //
 
 import SwiftUI
@@ -13,15 +16,13 @@ struct NumberPad: View {
     @Binding var transactionType: AddBillView.TransactionType
     @Binding var note: String
     @Binding var selectedDate: Date
-    @State private var isEditingNote = false
+
     @State private var showDatePicker = false
-    @State private var keyboardHeight: CGFloat = 0
-    /// 输入条实测高度（用于备注编辑时把键盘区折叠掉）
-    @State private var headerHeight: CGFloat = 0
-    @FocusState private var isNoteFocused: Bool
-    
+
+    /// 点备注行时回调（备注输入条由 AddBillView 负责展示与聚焦）
+    let onBeginNoteEditing: () -> Void
     let onSave: (() -> Void)?
-    
+
     var body: some View {
         VStack(spacing: AppSpacing.md) {
             inputHeader
@@ -29,57 +30,17 @@ struct NumberPad: View {
         }
         .padding(.top, AppSpacing.md)
         .padding(.horizontal, AppSpacing.lg)
-        // 备注编辑时只保留输入条（键盘区被系统键盘覆盖），并把输入条顶到键盘上方
-        .frame(height: isFloatingNote ? headerHeight + AppSpacing.md : nil, alignment: .top)
-        .clipped()
         .background(
             Color(UIColor.systemGroupedBackground)
                 .clipShape(
                     RoundedRectangle(cornerRadius: AppRadius.sheet, style: .continuous)
                 )
         )
-        // 用 offset 而非 padding：视觉上浮，但不改变布局高度（避免键盘弹出时把页面内容顶走）
-        .offset(y: -keyboardLift)
-        .appAnimation(AppMotion.standard, value: isFloatingNote)
-        .appAnimation(AppMotion.standard, value: keyboardLift)
-        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillChangeFrameNotification)) { note in
-            guard let frame = note.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
-            let screenHeight = UIScreen.main.bounds.height
-            let overlap = max(0, screenHeight - frame.origin.y)
-            keyboardHeight = overlap
-        }
-        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
-            keyboardHeight = 0
-        }
-        .onChange(of: isNoteFocused) { _, focused in
-            isEditingNote = focused
-        }
         .sheet(isPresented: $showDatePicker) {
             DatePickerView(selectedDate: $selectedDate, onConfirm: {
                 showDatePicker = false
             })
         }
-    }
-
-    // MARK: - 浮动状态
-
-    /// 备注编辑中：键盘覆盖数字键盘，输入条浮到键盘上方
-    private var isFloatingNote: Bool {
-        isNoteFocused || isEditingNote
-    }
-
-    /// 上浮距离（扣除底部安全区，避免多顶一段）
-    private var keyboardLift: CGFloat {
-        guard isFloatingNote else { return 0 }
-        return max(0, keyboardHeight - bottomSafeAreaInset)
-    }
-
-    private var bottomSafeAreaInset: CGFloat {
-        UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .flatMap(\.windows)
-            .first(where: \.isKeyWindow)?
-            .safeAreaInsets.bottom ?? 0
     }
 
     // MARK: - 输入条（金额 + 日期 + 备注）
@@ -94,101 +55,64 @@ struct NumberPad: View {
 
                 Text(displayText)
                     .font(.system(size: 30, weight: .semibold, design: .rounded))
-                    .foregroundColor({
-                        switch transactionType {
-                        case .expenditure: return .red
-                        case .income: return .green
-                        case .transfer: return .orange
-                        }
-                    }())
+                    .foregroundColor(amountColor)
                     .contentTransition(.numericText())
                     .appAnimation(AppMotion.numeric, value: displayText)
 
                 Spacer(minLength: AppSpacing.sm)
-
-                if isFloatingNote {
-                    Button {
-                        HapticManager.shared.light()
-                        isNoteFocused = false
-                        isEditingNote = false
-                    } label: {
-                        Text("common.done")
-                            .font(.caption.weight(.semibold))
-                            .padding(.horizontal, AppSpacing.md)
-                            .padding(.vertical, AppSpacing.sm)
-                            .background(
-                                Capsule().fill(Color.accentColor.opacity(0.14))
-                            )
-                    }
-                    .buttonStyle(ScaleButtonStyle(pressedScale: 0.92))
-                    .transition(.opacity.combined(with: .move(edge: .trailing)))
-                }
             }
 
             Divider()
                 .foregroundStyle(.secondary.opacity(0.2))
 
             HStack(spacing: AppSpacing.md) {
-                if !isFloatingNote {
-                    Button(action: {
-                        HapticManager.shared.light()
-                        showDatePicker = true
-                    }) {
-                        HStack(spacing: AppSpacing.sm) {
-                            Image(systemName: "calendar")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Text(getFormattedDateString(selectedDate))
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                        .padding(.horizontal, AppSpacing.md)
-                        .padding(.vertical, AppSpacing.sm)
-                        .background(
-                            Capsule()
-                                .fill(Color.primary.opacity(0.06))
-                        )
-                    }
-                    .buttonStyle(ScaleButtonStyle(pressedScale: 0.92))
-
-                    Spacer(minLength: AppSpacing.sm)
-                }
-
-                HStack(spacing: AppSpacing.sm) {
-                    Image(systemName: "square.and.pencil")
-                        .font(.caption2)
-                        .foregroundColor(note.isEmpty ? .secondary : .blue)
-
-                    ZStack(alignment: .leading) {
-                        if note.isEmpty && !isEditingNote {
-                            Text("bill.note_add")
-                                .foregroundColor(.gray)
-                                .font(.caption)
-                        }
-
-                        TextField("", text: $note)
+                Button(action: {
+                    HapticManager.shared.light()
+                    showDatePicker = true
+                }) {
+                    HStack(spacing: AppSpacing.sm) {
+                        Image(systemName: "calendar")
                             .font(.caption)
-                            .foregroundColor(.primary)
-                            .focused($isNoteFocused)
-                            .submitLabel(.done)
-                            .onTapGesture {
-                                isEditingNote = true
-                                isNoteFocused = true
-                            }
-                            .onSubmit {
-                                isEditingNote = false
-                                isNoteFocused = false
-                            }
+                            .foregroundColor(.secondary)
+                        Text(getFormattedDateString(selectedDate))
+                            .font(.caption)
+                            .foregroundColor(.secondary)
                     }
-                    .frame(maxWidth: isFloatingNote ? .infinity : 140, alignment: .trailing)
+                    .padding(.horizontal, AppSpacing.md)
+                    .padding(.vertical, AppSpacing.sm)
+                    .background(
+                        Capsule()
+                            .fill(Color.primary.opacity(0.06))
+                    )
                 }
-                .padding(.horizontal, AppSpacing.md)
-                .padding(.vertical, AppSpacing.sm)
-                .background(
-                    Capsule()
-                        .fill(Color.primary.opacity(0.06))
-                )
-                .frame(maxWidth: isFloatingNote ? .infinity : nil, alignment: .trailing)
+                .buttonStyle(ScaleButtonStyle(pressedScale: 0.92))
+
+                Spacer(minLength: AppSpacing.sm)
+
+                Button {
+                    HapticManager.shared.light()
+                    onBeginNoteEditing()
+                } label: {
+                    HStack(spacing: AppSpacing.sm) {
+                        Image(systemName: "square.and.pencil")
+                            .font(.caption2)
+                            .foregroundColor(note.isEmpty ? .secondary : .blue)
+
+                        Text(note.isEmpty ? L10n.string("bill.note_add") : note)
+                            .font(.caption)
+                            .foregroundColor(note.isEmpty ? .gray : .primary)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                    }
+                    .padding(.horizontal, AppSpacing.md)
+                    .padding(.vertical, AppSpacing.sm)
+                    .background(
+                        Capsule()
+                            .fill(Color.primary.opacity(0.06))
+                    )
+                }
+                .buttonStyle(ScaleButtonStyle(pressedScale: 0.94))
+                .frame(maxWidth: 180, alignment: .trailing)
             }
         }
         .padding(.horizontal, AppSpacing.lg)
@@ -197,11 +121,6 @@ struct NumberPad: View {
             RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous)
                 .fill(Color(UIColor.secondarySystemGroupedBackground))
         )
-        .onGeometryChange(for: CGFloat.self) { proxy in
-            proxy.size.height
-        } action: { height in
-            headerHeight = height
-        }
     }
 
     // MARK: - 数字键盘区
@@ -311,7 +230,19 @@ struct NumberPad: View {
         }
         .padding(.horizontal, AppSpacing.xs)
     }
-    
+
+    // MARK: - 辅助
+
+    private var amountColor: Color {
+        switch transactionType {
+        case .expenditure: return .red
+        case .income: return .green
+        case .transfer: return .orange
+        }
+    }
+
+    // MARK: - 输入处理
+
     private func handleNumberTap(_ number: String) {
         // 触感反馈：数字按键 — 轻量高频
         HapticManager.shared.light()
@@ -323,14 +254,14 @@ struct NumberPad: View {
         }
         displayText = updated
     }
-    
+
     private func handleDeleteTap() {
         // 触感反馈：删除操作
         HapticManager.shared.rigid()
 
         displayText = NumberPadExpression.deleteLast(from: displayText)
     }
-    
+
     private func handleOperationTap(_ primaryOp: String, altOp: String) {
         // 触感反馈：运算符
         HapticManager.shared.medium()
@@ -342,7 +273,7 @@ struct NumberPad: View {
             currentOperator = String(last)
         }
     }
-    
+
     private func handlePercentage() {
         // 触感反馈：百分比转换
         HapticManager.shared.medium()
@@ -350,7 +281,7 @@ struct NumberPad: View {
         // 百分比操作 - 将当前金额除以100
         displayText = NumberPadExpression.applyPercent(to: displayText)
     }
-    
+
     private func getFormattedDateString(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium

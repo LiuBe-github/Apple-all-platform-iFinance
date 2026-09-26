@@ -32,6 +32,8 @@ final class NetTrendTests: XCTestCase {
         XCTAssertEqual(todayPoint?.income ?? 0, 100, accuracy: 0.001)
         XCTAssertEqual(todayPoint?.expense ?? 0, 40, accuracy: 0.001)
         XCTAssertEqual(todayPoint?.net ?? 0, 60, accuracy: 0.001)
+        // 图表方向：收入为正（向上），支出为负（向下）
+        XCTAssertEqual(todayPoint?.expenseBarValue ?? 0, -40, accuracy: 0.001)
 
         let yesterdayPoint = points.first { $0.date == yesterday }
         XCTAssertEqual(yesterdayPoint?.income ?? 0, 20, accuracy: 0.001)

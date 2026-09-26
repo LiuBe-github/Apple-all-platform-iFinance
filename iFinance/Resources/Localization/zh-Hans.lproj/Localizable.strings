@@ -485,8 +485,6 @@
 "category.custom.icon" = "选择图标";
 "category.custom.icon_search" = "搜索图标";
 "category.custom.icon_in_use" = "使用中";
-"category.custom.color" = "主题色";
-"category.custom.color_auto" = "自动";
 "category.custom.subcategory" = "二级分类";
 "category.custom.subcategory_placeholder" = "输入二级分类名称";
 "category.custom.error.empty" = "请输入分类名称";

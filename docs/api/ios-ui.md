@@ -20,7 +20,7 @@
 | `Views/Transaction/Bills/CategoryGridView.swift` | `CategoryGridView`、`CategoryGridCell` | 分类网格：内置 + 自定义 + 「+ 自定义」入口 + 二级分类 chips（记账页与编辑页共用） |
 | `Views/Transaction/Bills/CustomCategorySheet.swift` | `CustomCategorySheet` | 自定义分类 sheet（名称 / 图标 / 主题色 / 二级分类；含图标占用校验） |
 | `Views/Setting/CategoryManagementView.swift` | `CategoryManagementView`、`SubcategoryManageView` | 设置页分类管理（改名同步账单、删除保留账单、二级分类增删改；两版数据访问不同） |
-| `Views/Tendency/NetTrendCard.swift` | `NetTrendCard`、`NetTrendPoint`、`NetTrendBuilder` | 趋势页「总收支」双向柱状图（收入向上 / 支出向下，月 / 6 个月 / 年） |
+| `Views/Tendency/NetTrendCard.swift` | `NetTrendCard`、`NetTrendPoint`、`NetTrendBuilder` | 趋势页「总收支」双向柱状图：以零轴为界，收入柱用正值向上、支出柱用 `expenseBarValue`（负值）向下，Y 轴刻度显示绝对值；跨度月 / 6 个月 / 年 |
 | `Views/Transaction/Bills/EditBillView.swift` | `EditBillView` | 编辑 / 删除账单 |
 | `Views/Transaction/Bills/CategoryPickerView.swift` | `CategoryPickerView` | 分类选择页（只列当前类型的分类，点选回写并返回） |
 | `Views/Transaction/Bills/BillEditRules.swift` | `BillEditRules` | 编辑页类型/分类联动规则（纯函数） |
@@ -98,6 +98,8 @@ enum Tab { case home, transaction, tendency, setting }
 ## 4. 记账链路（Transaction）
 
 ### `NumberPad`（`Views/Transaction/Bills/NumberPad.swift:10`）
+
+> 第五轮变更：备注输入不再内嵌于键盘。`NumberPad` 的备注行是**按钮**（显示「添加备注」或已填内容），点击回调 `onBeginNoteEditing()`；备注输入条由 `AddBillView` 的根级浮层负责（`isNoteEditing` / `keyboardOverlap` / `@FocusState noteFieldFocused`，浮层 `padding(.bottom, keyboardOverlap + 8)`，容器 `.ignoresSafeArea(.keyboard)`）。备注编辑期间数字键盘隐藏。
 
 输入规则由 `NumberPadExpression`（`NumberPadLogic.swift`）实现：
 

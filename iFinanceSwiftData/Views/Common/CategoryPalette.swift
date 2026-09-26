@@ -24,12 +24,6 @@ enum CategoryPalette {
     /// 无法解析的分类（历史脏数据）用中性灰
     static let unknown = Color(red: 0.55, green: 0.55, blue: 0.60)
 
-    /// 自定义分类可选的主题色（十六进制，供图标/饼图使用）
-    static let customColors: [String] = [
-        "#2E9BFF", "#4DC770", "#FF9919", "#BF59FF", "#FF4D4D", "#1AC0D9",
-        "#FFCC19", "#8C8C99", "#F26A9B", "#5C7CFA", "#20C997", "#B07CFF"
-    ]
-
     static func color(index: Int) -> Color {
         let count = colors.count
         return colors[((index % count) + count) % count]
@@ -43,18 +37,7 @@ enum CategoryPalette {
         color(index: IncomeCategory.allCases.firstIndex(of: category) ?? 0)
     }
 
-    /// 十六进制颜色（#RRGGBB）
-    static func color(hex: String) -> Color? {
-        var value = hex.trimmingCharacters(in: .whitespacesAndNewlines)
-        if value.hasPrefix("#") { value.removeFirst() }
-        guard value.count == 6, let raw = UInt64(value, radix: 16) else { return nil }
-        let red = Double((raw >> 16) & 0xFF) / 255
-        let green = Double((raw >> 8) & 0xFF) / 255
-        let blue = Double(raw & 0xFF) / 255
-        return Color(red: red, green: green, blue: blue)
-    }
-
-    /// 未指定主题色时的稳定自动配色（同名分类永远得到同一颜色）
+    /// 稳定自动配色（同名分类永远得到同一颜色）
     static func autoColor(seed: String, kind: CategoryKind) -> Color {
         let offset = kind == .expenditure ? 0 : 3
         let hash = seed.unicodeScalars.reduce(0) { partial, scalar in
@@ -62,12 +45,39 @@ enum CategoryPalette {
         }
         return color(index: hash + offset)
     }
+
+    /// 数据可视化专用取色（饼图扇区 + 预算页分类明细列表）：内置按枚举顺序取 8 色板，自定义按名称稳定取色。
+    /// 分类身份色（网格 / 账单行 / 管理页）请用 `CategoryKind.accentColor`。
+    static func chartColor(for rawValue: String, kind: CategoryKind) -> Color {
+        let parent = rawValue.split(separator: "/").first.map(String.init) ?? rawValue
+        switch kind {
+        case .expenditure:
+            if let builtIn = ExpenditureCategory(rawValue: parent),
+               let index = ExpenditureCategory.allCases.firstIndex(of: builtIn) {
+                return color(index: index)
+            }
+        case .income:
+            if let builtIn = IncomeCategory(rawValue: parent),
+               let index = IncomeCategory.allCases.firstIndex(of: builtIn) {
+                return color(index: index)
+            }
+        }
+        return autoColor(seed: parent, kind: kind)
+    }
 }
 
 /// 饼图使用的分类种类：决定分类展示名与配色
 enum CategoryKind: String, Codable, CaseIterable {
     case expenditure
     case income
+
+    /// 分类身份色：支出统一红、收入统一绿（含自定义分类与二级分类）
+    var accentColor: Color {
+        switch self {
+        case .expenditure: return Color(red: 1.0, green: 0.27, blue: 0.23)
+        case .income: return Color(red: 0.18, green: 0.78, blue: 0.44)
+        }
+    }
 
     /// 账单里的类型字符串
     var billType: String {
@@ -90,8 +100,8 @@ enum CategoryKind: String, Codable, CaseIterable {
         CategoryResolver.displayName(for: rawValue, kind: self)
     }
 
-    @MainActor
+    /// 数据可视化色（饼图与同页明细共用；分类身份色见 `accentColor`）
     func color(for rawValue: String) -> Color {
-        CategoryResolver.color(for: rawValue, kind: self)
+        CategoryPalette.chartColor(for: rawValue, kind: self)
     }
 }

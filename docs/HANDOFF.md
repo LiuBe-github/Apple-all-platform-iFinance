@@ -22,7 +22,7 @@ xcodebuild build -project iFinance.xcodeproj -scheme iFinance \
 | 项 | 状态 |
 |----|------|
 | 分支 / 远端 | `codex/platform-18-27`，起点 `main` @ `fd6b1fb`，**未推送远端** |
-| 提交数 | 26 次（20 本文件 · 21 `f082fce` reset 脚本 · 22 `262c4d0` 登录降级 + CSV 修复 · 23 `fc87ab3` 修复与图标批次 · 24 `a5d7129` 分类体系与总收支图 · 25 `9d2b147` 性能与构建 · 26 文档同步；台账见 [memory/work-history.md](../memory/work-history.md)） |
+| 提交数 | 27 次（20 本文件 · 21 `f082fce` reset 脚本 · 22 `262c4d0` 登录降级 + CSV 修复 · 23 `fc87ab3` 修复与图标批次 · 24 `a5d7129` 分类体系与总收支图 · 25 `9d2b147` 性能与构建 · 26 `b155546` 文档同步 · 27 备注浮层 / 图表方向 / 配色统一；台账见 [memory/work-history.md](../memory/work-history.md)） |
 | 工作区 | 干净（交接前仅存在本轮已提交的改动） |
 | 代码规模 | `iFinance` 12,779 行 · `iFinanceSwiftData` 12,445 行 · `MaciFinance` 3,663 行 · `WatchiFinance Watch App` 723 行 |
 | 测试规模 | `iFinanceTests` 15 个 XCTestCase / 97 个用例 · `iFinanceSwiftDataTests` 38 个用例 · `MaciFinanceTests` 30 个用例 |
@@ -144,6 +144,7 @@ scripts/run-on-device.sh -s iFinance --release
 | OI-02/03/04 | 邮箱验证码绑定、CloudKit 同步与本地通知（stub）、macOS CSV/JSON 导出 TODO | 🟡 | 前两项需付费账号/服务端，见 open-items 的 A 区 |
 | OI-30 | 自定义分类 / 二级分类仅 iOS 支持；定义不入 CSV，macOS 与其它设备显示为灰色纯文本 | 🟡 | 需要跨端一致时再评估（要动三份模型与 macOS 界面） |
 | OI-33 | 第四轮的键盘浮层、网格滚到底、图表手势、总收支图**观感未经人工确认** | 🟡 | 在 Xcode / 真机上按验收清单逐条过一遍 |
+| OI-42 | 第五轮改动后的备注条间距（验收：底边距键盘 ≤ 8pt、页面不位移）与总收支图零轴方向、分类红绿配色**待人工确认** | 🟡 | 在 Xcode / 真机确认 |
 | OI-13/14 | iOS 上界已可运行（27.0 模拟器）；**watchOS 27** 与下界（macOS 15 / watchOS 11）仍仅编译级验证 | 🟡 | watchOS 27 / 下界需真机或对应系统验证后回填 PRD 与 memory |
 
 ## 9. 接手人自检清单
