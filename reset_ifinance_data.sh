@@ -17,11 +17,11 @@ fi
 echo "📱 目标模拟器: $DEVICE_ID"
 
 # 找到 App 的数据目录
-APP_CONTAINER=$(xcrun simctl get_app_container "$DEVICE_ID" "com.liube.iFinance" data)
+APP_CONTAINER=$(xcrun simctl get_app_container "$DEVICE_ID" "cn.liube.iFinance" data)
 
 if [[ -z "$APP_CONTAINER" ]] || [[ ! -d "$APP_CONTAINER" ]]; then
     echo "❌ 找不到 App 容器。可能未安装或 App 名不同。"
-    echo "   请检查 bundle identifier 是否为 com.liube.iFinance"
+    echo "   请检查 bundle identifier 是否为 cn.liube.iFinance"
     exit 1
 fi
 
@@ -38,20 +38,20 @@ fi
 
 # 清除 UserDefaults
 echo "🧹 清除 UserDefaults..."
-defaults delete com.liube.iFinance "AuthLastLoginIdentifier" 2>/dev/null || true
-defaults delete com.liube.iFinance "AuthIsLoggedIn" 2>/dev/null || true
-defaults delete com.liube.iFinance "AuthLastActiveAt" 2>/dev/null || true
-defaults delete com.liube.iFinance "AuthUserIdentifier" 2>/dev/null || true
-defaults delete com.liube.iFinance "AuthEmail" 2>/dev/null || true
-defaults delete com.liube.iFinance "AuthPhone" 2>/dev/null || true
-defaults delete com.liube.iFinance "AuthPasswordHash" 2>/dev/null || true
-defaults delete com.liube.iFinance "AuthPasswordSalt" 2>/dev/null || true
-defaults delete com.liube.iFinance "UserProfileNickname" 2>/dev/null || true
+defaults delete cn.liube.iFinance "AuthLastLoginIdentifier" 2>/dev/null || true
+defaults delete cn.liube.iFinance "AuthIsLoggedIn" 2>/dev/null || true
+defaults delete cn.liube.iFinance "AuthLastActiveAt" 2>/dev/null || true
+defaults delete cn.liube.iFinance "AuthUserIdentifier" 2>/dev/null || true
+defaults delete cn.liube.iFinance "AuthEmail" 2>/dev/null || true
+defaults delete cn.liube.iFinance "AuthPhone" 2>/dev/null || true
+defaults delete cn.liube.iFinance "AuthPasswordHash" 2>/dev/null || true
+defaults delete cn.liube.iFinance "AuthPasswordSalt" 2>/dev/null || true
+defaults delete cn.liube.iFinance "UserProfileNickname" 2>/dev/null || true
 echo "✅ UserDefaults 已清除"
 
 # 停止 App（如果正在运行）
 echo "⏹️  停止 App..."
-xcrun simctl terminate "$DEVICE_ID" "com.liube.iFinance" 2>/dev/null || true
+xcrun simctl terminate "$DEVICE_ID" "cn.liube.iFinance" 2>/dev/null || true
 
 echo ""
 echo "🎉 所有账号数据已清除！现在可以重新打开 App 注册新账号。"
