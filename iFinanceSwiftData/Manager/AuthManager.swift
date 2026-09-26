@@ -242,6 +242,7 @@ final class AuthManager: ObservableObject {
 
     @discardableResult
     func loginWithProvider(_ provider: SocialProvider, identifier: String) -> String? {
+        guard provider == .apple else { return "auth.coming_soon" }
         guard !identifier.isEmpty else { return "auth.provider_failed" }
 
         let context = self.context

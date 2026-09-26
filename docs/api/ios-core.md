@@ -59,7 +59,7 @@ Published：`isAuthenticated`、`hasAccount`、`currentEmail`、`currentPhone`�
 | `bootstrap()` | `Void` | 旧版 UserDefaults 凭证迁移 + 7 天会话校验（`sessionLifetime`，`:64`/`:136`） |
 | `register(email:phone:password:confirmPassword:fieldType:)` | `String?` | 校验邮箱/手机号正则、密码 ≥ 6；重复返回 `auth.account_exists` |
 | `login(email:phone:password:fieldType:)` | `String?` | 先按 identifier 查，再回退按 email/phone 字段查 |
-| `loginWithProvider(_:identifier:)` | `String?` | `wechat`/`qq`/`apple`，不存在则创建 |
+| `loginWithProvider(_:identifier:)` | `String?` | 仅放行 `apple`（不存在则创建）；`wechat`/`qq` 返回 `auth.coming_soon`（未开放，防占位建号） |
 | `handleSignInWithApple(result:)` | `String?` | 取消返回 `nil`，其它失败 `auth.apple_failed` |
 | `logout()` / `deleteAccount()` / `deleteAllAccounts()` | `Void` | 删除账号用 `NSBatchDeleteRequest` 清账单（`:345`/`:368`） |
 | `updateNickname(_:)`、`updateEmail(newEmail:password:)`、`updatePhone(newPhone:password:)`、`updatePassword(...)`、`resetPassword(...)` | `String?` | 返回本地化错误 key |
@@ -152,7 +152,18 @@ rawValue 为中文：`餐饮`、`购物`、`服饰`、`日用`、`数码`、`美
 
 作用：让 `String(localized:)`、`NSLocalizedString` 以及系统控件文案（分享面板、Face ID 提示、系统弹窗）跟随 App 内选择的语言。新增文案不要再用 `String(localized:)`，统一走 `L10n.string`。
 
-## 10. 未覆盖 / 存疑
+## 10. CSV 导入：`CSVImporter`（`Helper/CSVImporter.swift`）
+
+| 成员 | 签名 | 说明 |
+|------|------|------|
+| `parseRows(_:)` | `static func parseRows(_ input: String) -> [[String]]` | 解析 CSV 文本：支持引号包裹、`""` 转义、CRLF / LF / CR 换行、跳过空行 |
+| `makeBill(row:context:identifier:)` | `static func makeBill(row: [String], context: NSManagedObjectContext, identifier: String) -> Bill?` | 列数 ≥ 5、`type ∈ {income, expenditure, transfer}`、金额按 `en_US_POSIX` 解析；合法则建 `Bill` 并写入 `id/createdAt/createdBy/updatedAt/updatedBy`，非法返回 `nil`（调用方计入 skipped） |
+
+调用方：`SettingView.importCSV(from:)`（导入按当前账号归属）。格式化器为 `static let`（`ISO8601DateFormatter` + `yyyy-MM-dd HH:mm:ss` 回退）。
+
+> 坑：Swift 里 `"\r\n"` 是**一个** Character，换行判断必须同时覆盖 `\n` / `\r\n` / `\r`，否则 Windows / Excel 导出的 CSV 会被当成一整行。
+
+## 11. 未覆盖 / 存疑
 
 - `AuthManager` 的 Apple 登录需真机与已登录 Apple ID 才能完整验证；本仓库仅在编译与模拟器层面验证。
 - 生物锁在真实 Face ID 设备上的行为（失败次数、系统弹窗）未验证。

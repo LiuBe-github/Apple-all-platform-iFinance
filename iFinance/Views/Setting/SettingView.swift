@@ -525,38 +525,19 @@ struct SettingView: View {
     private func importCSV(from url: URL) {
         do {
             let content = try String(contentsOf: url, encoding: .utf8)
-            let rows = parseCSVRows(content)
+            let rows = CSVImporter.parseRows(content)
             guard rows.count > 1 else {
                 showResult(title: L10n.string("settings.import_failed"), message: L10n.string("settings.import_invalid"))
                 return
             }
-            let iso = ISO8601DateFormatter()
-            let fallback = DateFormatter()
-            fallback.locale = Locale(identifier: "en_US_POSIX")
-            fallback.dateFormat = "yyyy-MM-dd HH:mm:ss"
+            let identifier = AuthManager.shared.userIdentifier
             var inserted = 0, skipped = 0
             for row in rows.dropFirst() {
-                guard row.count >= 5 else {
+                if CSVImporter.makeBill(row: row, context: viewContext, identifier: identifier) != nil {
+                    inserted += 1
+                } else {
                     skipped += 1
-                    continue
                 }
-                let type = row[1].trimmingCharacters(in: .whitespacesAndNewlines)
-                guard ["income","expenditure","transfer"].contains(type) else {
-                    skipped += 1
-                    continue
-                }
-                let date = iso.date(from: row[0].trimmingCharacters(in: .whitespacesAndNewlines)) ?? fallback.date(from: row[0])
-                guard let amt = Decimal(string: row[3], locale: Locale(identifier: "en_US_POSX")) else {
-                    skipped += 1
-                    continue
-                }
-                let bill = Bill(context: viewContext)
-                bill.date = date ?? Date()
-                bill.type = type
-                bill.category = row[2].isEmpty ? nil : row[2]
-                bill.note = row[4].isEmpty ? nil : row[4]
-                bill.amount = NSDecimalNumber(decimal: amt)
-                inserted += 1
             }
             if viewContext.hasChanges {
                 try viewContext.save()
@@ -569,43 +550,6 @@ struct SettingView: View {
 
     private func csvEscape(_ v: String) -> String {
         v.replacingOccurrences(of: "\"", with: "\"\"")
-    }
-
-    private func parseCSVRows(_ input: String) -> [[String]] {
-        var rows: [[String]] = [], curRow: [String] = [], curField = "", inQ = false
-        let chars = Array(input)
-        var i = 0
-        while i < chars.count {
-            let ch = chars[i]
-            if ch == "\"" {
-                if inQ && i + 1 < chars.count && chars[i + 1] == "\"" {
-                    curField.append("\"")
-                    i += 1
-                } else {
-                    inQ.toggle()
-                }
-            } else if ch == "," && !inQ {
-                curRow.append(curField); curField = ""
-            } else if ch == "\n" && !inQ {
-                curRow.append(curField)
-                if !curRow.allSatisfy({ $0.isEmpty }) {
-                    rows.append(curRow)
-                }
-                curRow = []
-                curField = ""
-            }
-            else if ch != "\r" {
-                curField.append(ch)
-            }
-            i += 1
-        }
-        if !curField.isEmpty || !curRow.isEmpty {
-            curRow.append(curField)
-            if !curRow.allSatisfy({ $0.isEmpty }) {
-                rows.append(curRow)
-            }
-        }
-        return rows
     }
 
     private func showResult(title: String, message: String) {

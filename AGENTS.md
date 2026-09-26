@@ -35,7 +35,7 @@ xcodebuild test -project iFinance.xcodeproj -scheme iFinanceSwiftData -destinati
 scripts/run-on-device.sh -s iFinance
 ```
 
-测试目标：`iFinanceTests`（XCTest，38 用例）、`MaciFinanceTests`（Swift Testing，`@Test`）、watch/UI 测试为模板占位。
+测试目标：`iFinanceTests`（XCTest，12 个测试类）、`iFinanceSwiftDataTests`（Swift Testing，10 个套件）、`MaciFinanceTests`（Swift Testing，9 个套件）、watch/UI 测试为模板占位。
 测试统一使用 `PersistenceController(inMemory: true)`，不触碰磁盘数据。
 
 ## 目录地图
@@ -98,14 +98,13 @@ Watch 概览 → requestSync → transferUserInfo(action: requestTodayBills)
 | iOS 27 / watchOS 27 模拟器运行时 | 本机 Xcode 27 的 `-downloadPlatform` 返回 “not available for download”，上界只能做编译级验证（真机由作者验证） |
 | macOS 15 / watchOS 11 下界 | 本机无法运行这两个系统，只能编译 + API 可用性审查 |
 | `iFinanceSwiftData` 命名兼容层 | `PersistenceController` / `ModelContainer.viewContext` / `Amount` 计算属性是为了复用 iOS 视图代码而保留的同名 API，改造视图时注意区分两版实现 |
-| `reset_ifinance_data.sh` | 使用 `com.liube.iFinance`，实际 Bundle ID 是 `cn.liube.iFinance`，清理无效 |
-| `iFinance/Views/Setting/SettingView.swift` | CSV 导入未写 `createdBy` 等字段（导入数据查不到）；`Locale(identifier: "en_US_POSX")` 拼写错误 |
 | `MaciFinance/Views/SettingsView.swift:158` | CSV/JSON 导出仍是 TODO |
 | `WatchiFinance Watch App/Models/WatchDataModel.swift` | iPhone 不可达时账单只进本地缓存，没有补传队列 |
 | iOS 语言切换 | 走 `exit(0)` 重启进程；改语言相关逻辑时不要假设热切换 |
 | 工程 scheme | 存在无对应文件的遗留 scheme `Copy of iFinance` |
 | 真机部署慢 | 构建本身很快（增量 3～6s、全量约 24s），慢在部署阶段：iOS scheme 依赖 watch target（`Embed Watch Content`），配对手表时每次 Run 都会推送 Watch App，且 Xcode 会附加调试器。改用 `scripts/run-on-device.sh` 可绕过这两步；另注意设备需解锁且已信任电脑 |
 | 记账键盘输入 | 数字键盘的表达式逻辑在 `Views/Transaction/Bills/NumberPadLogic.swift`（`NumberPadExpression`，纯函数 + 单测）。**校验只能针对「当前数字段」（最后一个运算符之后的部分）**——曾经用整串 `displayText` 判断小数位，导致「小数点出现后运算符后面再也输不进数字」；`AddBillView.parseExpression` 负责求值 |
+| 文本解析换行 | Swift 中 `"\r\n"` 是**一个** Character：CSV/文本解析里 `ch == "\n"` 漏掉 CRLF，会把 Windows/Excel 导出的文件当成一整行（`CSVImporter.parseRows` 已修为覆盖 `\n` / `\r\n` / `\r`，新写解析逻辑请照此处理） |
 
 ## 文档维护约定
 

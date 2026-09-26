@@ -205,6 +205,7 @@
 "transaction.empty" = "明細がありません。最初の1件を追加しましょう。";
 
 "auth.apple_frontend_only" = "Appleログインは現在UIのみで、実認証は未接続です。";
+"auth.coming_soon" = "WeChat / QQログインはまだ利用できません。今後にご期待ください。";
 "auth.current_password_wrong" = "現在のパスワードが正しくありません";
 "auth.email_empty" = "メールアドレスを入力してください";
 "auth.invalid_credentials" = "アカウントまたはパスワードが正しくありません";

@@ -192,11 +192,11 @@ struct LoginView: View {
 
             HStack(spacing: 12) {
                 socialButton(title: L10n.string("auth.provider_wechat"), systemImage: "message.fill", color: Color.green) {
-                    errorMessage = authManager.loginWithProvider(.wechat, identifier: "wx_\(UUID().uuidString)")
+                    errorMessage = L10n.string("auth.coming_soon")
                 }
 
                 socialButton(title: L10n.string("auth.provider_qq"), systemImage: "bubble.left.and.bubble.right.fill", color: Color.blue) {
-                    errorMessage = authManager.loginWithProvider(.qq, identifier: "qq_\(UUID().uuidString)")
+                    errorMessage = L10n.string("auth.coming_soon")
                 }
             }
 

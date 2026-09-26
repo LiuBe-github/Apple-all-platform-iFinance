@@ -1,8 +1,8 @@
 # 工作历史（codex/platform-18-27）
 
-> 分支起点：`main` @ `fd6b1fb` ｜ 当前共 **20 次提交**，`177 files changed, +19241 / −2030`（含本文件所在提交，实测值见 `git diff --shortstat main...HEAD`）
+> 分支起点：`main` @ `fd6b1fb` ｜ 当前共 **22 次提交**，`180 files changed, +19515 / −2106`（含本文件所在提交，实测值见 `git diff --shortstat main...HEAD`）
 > 分支未推送远端。每次完成新改动请**在表尾追加一行**；由于提交哈希在写入文件时尚未生成，最新一行用「*(最新一次提交)*」占位，**下次提交时把真实 SHA 回填到上一行**。
-> 历史行的 SHA 已核对：1~19 可直接用于 `git show`（第 20 行是当前提交的占位）。
+> 历史行的 SHA 已核对：1~21 可直接用于 `git show`（第 22 行是当前提交的占位）。
 
 ## 时间线
 
@@ -27,7 +27,9 @@
 | 17 | `509b9cf` | fix | 编辑页：分类改推入式选择页（只列当前类型分类）、类型切换清空并要求重选、类型补转账、日期精确到时分；新增 `BillEditRules` 归一化旧脏数据 | 新增 3+3 条规则单测；四端编译；三套测试；审计通过 |
 | 18 | `db152dd` | docs | 新增 `docs/PRD.md`（11 模块功能需求、10 条业务规则、验收清单、路线图、已知限制）并接入 README / AGENTS / PROJECT_MEMORY 索引 | 11 个 markdown 链接校验 |
 | 19 | `8acaaed` | docs | 根据本次协作历史建立 `memory/` 记忆文件夹（7 份：索引 / 速查 / 决策 / 工作历史 / 待办 / 环境 / 协作约定） | 18 个 markdown 链接校验通过（仅文档改动，未跑构建） |
-| 20 | *(最新一次提交)* | docs | 新增 `docs/HANDOFF.md` 交接文档（接手清单、环境准备、十条铁律、代码地图、验证四件套、风险摘录）并接入 README / AGENTS / PROJECT_MEMORY / docs/api / memory 索引；修正 `work-history.md` 的提交数与统计偏差（补记第 11 行 `b275f02`） | 19 个 markdown 文件、0 失效链接（仅文档改动，未跑构建） |
+| 20 | `74cb9e5` | docs | 新增 `docs/HANDOFF.md` 交接文档（接手清单、环境准备、十条铁律、代码地图、验证四件套、风险摘录）并接入 README / AGENTS / PROJECT_MEMORY / docs/api / memory 索引；修正 `work-history.md` 的提交数与统计偏差（补记第 11 行 `b275f02`） | 19 个 markdown 文件、0 失效链接（仅文档改动，未跑构建） |
+| 21 | `f082fce` | fix | 修复 `reset_ifinance_data.sh` 的 Bundle ID（12 处 `com.liube.iFinance` → `cn.liube.iFinance`），模拟器数据清理脚本恢复可用 | 脚本 diff 核对（未跑构建） |
+| 22 | *(最新一次提交)* | fix | 接手复核并落地第二轮改动：微信/QQ 登录降级「即将支持」+ `AuthManager.loginWithProvider` 拒绝非 Apple 建号（三端）；CSV 导入抽 `CSVImporter` 并补齐 `createdBy`/审计字段、修正 `en_US_POSIX` 拼写；**修 CRLF 换行解析**（Swift `"\r\n"` 是单个 Character，两版同步）；配套文案/文档/记忆更新 | 四端编译 exit=0；本地化审计四 target 通过；两版 App 在 iPhone 16 / iOS 18.6 与 **iPhone 17 / iOS 27.0（上界）** 安装启动冒烟正常（PID 存活、无崩溃）；**未跑全套单测**（用户指示"基本功能能用就行"），CSV 解析改用本地脚本验证 CRLF/LF/CR 三种换行 |
 
 ## 验证方式说明（沿用本轮约定）
 

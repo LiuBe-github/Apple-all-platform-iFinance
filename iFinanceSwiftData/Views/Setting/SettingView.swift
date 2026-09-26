@@ -575,6 +575,8 @@ struct SettingView: View {
         v.replacingOccurrences(of: "\"", with: "\"\"")
     }
 
+    /// 解析 CSV 文本（支持引号包裹、"" 转义、CRLF/LF/CR 换行）
+    /// - Note: Swift 中 `"\r\n"` 是一个 Character，换行判断需同时覆盖 `\n` / `\r\n` / `\r`
     private func parseCSVRows(_ input: String) -> [[String]] {
         var rows: [[String]] = [], curRow: [String] = [], curField = "", inQ = false
         let chars = Array(input)
@@ -590,7 +592,7 @@ struct SettingView: View {
                 }
             } else if ch == "," && !inQ {
                 curRow.append(curField); curField = ""
-            } else if ch == "\n" && !inQ {
+            } else if (ch == "\n" || ch == "\r\n" || ch == "\r") && !inQ {
                 curRow.append(curField)
                 if !curRow.allSatisfy({ $0.isEmpty }) {
                     rows.append(curRow)

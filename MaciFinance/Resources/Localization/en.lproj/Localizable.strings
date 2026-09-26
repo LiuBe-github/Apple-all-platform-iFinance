@@ -205,6 +205,7 @@
 "transaction.empty" = "No bills yet. Add your first bill.";
 
 "auth.apple_frontend_only" = "Apple Sign In is currently UI-only and not connected to real authentication.";
+"auth.coming_soon" = "WeChat / QQ sign-in is not available yet. Stay tuned!";
 "auth.current_password_wrong" = "Current password is incorrect";
 "auth.email_empty" = "Email cannot be empty";
 "auth.invalid_credentials" = "Incorrect account or password";

@@ -251,9 +251,9 @@ Watch 记账                iPhone
 | 表头 | `date,type,category,amount,note` |
 | 日期 | ISO8601 导出；导入时回退解析 `yyyy-MM-dd HH:mm:ss`（`en_US_POSIX`） |
 | 导出范围 | **全部用户的账单**（未按 `createdBy` 过滤，`SettingView.swift:597`），按 `date` 升序 |
-| 导入校验 | `type ∈ {income, expenditure, transfer}`，行字段数 ≥ 5，金额用 `Decimal(string:)` |
-| 已知缺陷 | 导入未写 `createdBy/createdAt/updatedAt/updatedBy`（`:641`），记录会因隔离 predicate 而查不到；locale 字符串误写为 `en_US_POSX`（`:637`） |
-| SwiftData 版 | 已修正：导入写入 `createdBy/updatedBy` 与审计字段，并修正 locale 为 `en_US_POSIX`（`iFinanceSwiftData/Views/Setting/SettingView.swift`） |
+| 导入校验 | `type ∈ {income, expenditure, transfer}`，行字段数 ≥ 5，金额用 `Decimal(string:)`（`en_US_POSIX`）；解析与映射逻辑在 `iFinance/Helper/CSVImporter.swift`（`parseRows` / `makeBill`），导入写入 `id/createdAt/createdBy/updatedAt/updatedBy`，记录归属当前账号 |
+| 换行兼容 | CRLF / LF / CR 均可解析（Swift 中 `"\r\n"` 是单个 Character，不能用 `ch == "\n"` 判断） |
+| SwiftData 版 | 同等修复：导入写入 `createdBy/updatedBy` 与审计字段，locale 为 `en_US_POSIX`（`iFinanceSwiftData/Views/Setting/SettingView.swift`） |
 | macOS | 未实现（`MaciFinance/Views/SettingsView.swift:158` 为 TODO） |
 
 ---

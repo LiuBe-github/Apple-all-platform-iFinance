@@ -205,6 +205,7 @@
 "transaction.empty" = "當前還沒有帳單，記一筆吧！";
 
 "auth.apple_frontend_only" = "Apple 登入目前僅保留介面展示，尚未接入真實鑑權。";
+"auth.coming_soon" = "微信 / QQ 登入暫未開放，敬請期待！";
 "auth.current_password_wrong" = "目前密碼不正確";
 "auth.email_empty" = "電子郵件不能為空";
 "auth.invalid_credentials" = "帳號或密碼錯誤";

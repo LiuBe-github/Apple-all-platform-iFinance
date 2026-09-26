@@ -258,6 +258,7 @@
 
 "transaction.empty" = "当前还没有账单哦，记一笔吧！😄";
 "auth.apple_frontend_only" = "Apple 登录暂仅保留界面展示，未接入真实鉴权。";
+"auth.coming_soon" = "微信 / QQ 登录暂未开放，敬请期待！";
 
 // 生物识别锁
 "lock.face_id" = "Face ID";

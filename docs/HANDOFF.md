@@ -15,17 +15,17 @@ xcodebuild build -project iFinance.xcodeproj -scheme iFinance \
   -destination 'generic/platform=iOS Simulator' -derivedDataPath /tmp/dd_ios -quiet
 ```
 
-三条最要紧的信息：**① 四端矩阵**（iOS 18–27 主版本 + SwiftData 版、macOS 15–27、watchOS 11–27）；**② 两条铁律**（账单 `type` 与 `category` 必须匹配；新增文案一律 `L10n.string`）；**③ 最紧的待办**是微信/QQ 登录目前是「点一次就新建一个账号」的占位实现（见 §8 的 OI-01）。
+三条最要紧的信息：**① 四端矩阵**（iOS 18–27 主版本 + SwiftData 版、macOS 15–27、watchOS 11–27）；**② 两条铁律**（账单 `type` 与 `category` 必须匹配；新增文案一律 `L10n.string`）；**③ 最紧的待办**是微信/QQ 登录的真实接入（已先降级为「即将支持」提示，见 §8 的 OI-01）。
 
 ## 1. 交接快照
 
 | 项 | 状态 |
 |----|------|
 | 分支 / 远端 | `codex/platform-18-27`，起点 `main` @ `fd6b1fb`，**未推送远端** |
-| 提交数 | 20 次（本文件为第 20 次；提交台账见 [memory/work-history.md](../memory/work-history.md)） |
+| 提交数 | 22 次（第 20 次为本文件；第 21 次 `f082fce` 修 reset 脚本 Bundle ID；第 22 次为登录降级 + CSV 导入修复；台账见 [memory/work-history.md](../memory/work-history.md)） |
 | 工作区 | 干净（交接前仅存在本轮已提交的改动） |
-| 代码规模 | `iFinance` 10,654 行 · `iFinanceSwiftData` 10,429 行 · `MaciFinance` 3,662 行 · `WatchiFinance Watch App` 723 行 |
-| 测试规模 | `iFinanceTests` 11 个 XCTestCase / 72 个用例 · `iFinanceSwiftDataTests` 10 套件 / 27 个用例 · `MaciFinanceTests` 9 套件 / 29 个用例 |
+| 代码规模 | `iFinance` 10,694 行 · `iFinanceSwiftData` 10,432 行 · `MaciFinance` 3,663 行 · `WatchiFinance Watch App` 723 行 |
+| 测试规模 | `iFinanceTests` 12 个 XCTestCase / 78 个用例 · `iFinanceSwiftDataTests` 11 套件 / 28 个用例 · `MaciFinanceTests` 8 套件 / 30 个用例 |
 | 外部依赖 | **无**：无第三方库、无服务端、运行时不发网络请求，数据只存本地 |
 | 签名 | `DEVELOPMENT_TEAM = 77MC3D43Z4`、`CODE_SIGN_STYLE = Automatic` —— **接手人必须换成自己的 Team ID**（否则真机与部分构建会失败） |
 | 文档存量 | `AGENTS.md`、`README.md`、`docs/`（PRD + 项目记忆 + 7 份接口文档 + 本文件）、`memory/`（7 份会话记忆） |
@@ -36,9 +36,9 @@ xcodebuild build -project iFinance.xcodeproj -scheme iFinance \
 |----|-------------|
 | Xcode | 27.0（Build `27A266a`），SDK 为 iOS 27 / macOS 27 / watchOS 27；工程 `SWIFT_VERSION = 5.0` |
 | 宿主系统 | macOS 27.0（本轮验证环境） |
-| 模拟器运行时 | iOS 18.4、18.6（下界验证主力）；watchOS 26.2 / 26.4 / 26.5 |
-| 上界运行时 | iOS 27 / watchOS 27 **本机不可下载**（`xcodebuild -downloadPlatform` 返回 not available），只能做编译级验证 |
-| 已验证设备 | iPhone 16、iPhone SE(3rd)、iPad Pro 11"(M4) 模拟器；iPhone 16 Pro 真机（UDID `00008140-000C05692013C01C`，需解锁并信任电脑） |
+| 模拟器运行时 | iOS 18.4、18.6（下界主力）、**iOS 27.0（上界，已安装）**；watchOS 26.2 / 26.4 / 26.5 |
+| 上界运行时 | **iOS 27.0 已可运行验证**（设备为 iPhone 17 / 18 系列）；watchOS 27 仍不可下载，只能编译级验证 |
+| 已验证设备 | iPhone 16、iPhone SE(3rd)、iPad Pro 11"(M4)、iPhone 17 / 18（iOS 27.0）模拟器；iPhone 16 Pro 真机（UDID `00008140-000C05692013C01C`，需解锁并信任电脑） |
 | 真机部署注意 | scheme 依赖 watch target（`Embed Watch Content`）且 Xcode 会附加调试器，因此 Run 会慢；用 `scripts/run-on-device.sh -s iFinance` 跳过这两步 |
 
 首次打开工程后请先做三件事：① 把 4 个 target 的 `DEVELOPMENT_TEAM` 改成自己的；② 确认已安装 iOS 18.6 模拟器运行时；③ 跑一遍 §0 的命令确认基线可构建。
@@ -91,7 +91,7 @@ xcodebuild build -project iFinance.xcodeproj -scheme iFinance \
 2. **改动**：分阶段小步提交（功能与视觉 / 性能 / 文档各自独立），提交信息用中文写清「做了什么 + 怎么验证的」；**不要用 `git add -A`**（曾把用户正在编辑的空图片集误提交），只添加本次相关路径。
 3. **验证四件套**：
    - 四端编译：`iFinance`、`iFinanceSwiftData`、`MaciFinance`、`WatchiFinance Watch App`（后两端确认未被牵连）；
-   - 三套测试**串行**全绿：`iFinanceTests`（iOS 18.6 模拟器）、`iFinanceSwiftDataTests`（同）、`MaciFinanceTests`（本机 macOS）；
+   - 三套测试**串行**全绿：`iFinanceTests`（iOS 18.6 模拟器）、`iFinanceSwiftDataTests`（同）、`MaciFinanceTests`（本机 macOS）；用户 2026-09-26 指示「基本功能能用即可」时，可只保留编译 + 审计 + 冒烟（见 [memory/working-agreements.md](../memory/working-agreements.md)）；
    - `python3 scripts/check_localization.py`（四 target 通过）；
    - 模拟器安装 + 启动冒烟（必要时三尺寸：iPhone SE / iPhone 16 / iPad）。
 4. **文档同步**：`docs/PRD.md` 状态列 → `docs/api/*`（接口变化）→ `AGENTS.md` 坑表 → `memory/`（`work-history.md` 追加一行、`decision-log.md` 记取舍、`open-items.md` 改状态）。
@@ -115,11 +115,11 @@ xcodebuild test -project iFinance.xcodeproj -scheme MaciFinance       -destinati
 | 平台 / 版本 | 编译 | 运行 | 说明 |
 |-------------|------|------|------|
 | iOS 18.4 / 18.6 | ✅ | ✅ 模拟器 | 主力验证环境 |
-| iOS 27 | ✅ | ❌ | 运行时不可下载，待真机验证 |
+| iOS 27.0 | ✅ | ✅ 模拟器 | 运行时已安装（iPhone 17 / 18 系列）；2026-09-26 实测两版 App 可安装启动 |
 | macOS 27 | ✅ | ✅ 本机 | 可直接跑 MaciFinanceTests |
 | macOS 15 | ✅ | ❌ | 仅编译 + API 审查 |
 | watchOS 26.x | ✅ | ✅ 模拟器 | watch 端冒烟 |
-| watchOS 11 / 27 | ✅ | ❌ | 11 无法运行；27 运行时不可下载 |
+| watchOS 11 / 27 | ✅ | ❌ | 11 无法运行；watchOS 27 运行时不可下载 |
 
 1. **测试必须串行**：并行跑多个 `xcodebuild test` 会出现测试宿主互相干扰（`Early unexpected exit`、随机失败）。
 2. **UI 测试在 Xcode 27 克隆模拟器上会崩溃**（XCTest ↔ Swift Testing 互操作递归）：属于工具链问题，App 正常启动不受影响；日常验证请用 `-only-testing:` 跳过 UI 测试。`~/Library/Logs/DiagnosticReports/iFinance-*.ips` 里的崩溃全部来自测试宿主。
@@ -133,29 +133,28 @@ xcodebuild test -project iFinance.xcodeproj -scheme MaciFinance       -destinati
 
 | 编号 | 事项 | 级别 | 建议 |
 |------|------|------|------|
-| OI-01 | **微信 / QQ 登录是占位实现**：点击即生成随机标识建号，**每次点击都会新建账号** | 🔴 | 短期先降级为「即将支持」；真接入需要企业主体 + 服务端换 token |
-| OI-08 | iOS 主版本 CSV 导入未写 `createdBy` 等字段（导入数据查不到）、`Locale(identifier: "en_US_POSX")` 拼写错误 | 🟡 | 照 SwiftData 版已修写法同步 |
-| OI-09 | `reset_ifinance_data.sh` 的 Bundle ID 写错（`com.liube.iFinance`），清理无效 | 🟡 | 改成 `cn.liube.iFinance` |
-| OI-05 | Watch 离线账单不会补传（不可达时只写本地缓存） | 🟡 | 加发送队列 + `sessionReachabilityDidChange` 重试 |
+| OI-01 | **微信 / QQ 登录未真实接入**（已降级为「即将支持」提示 + AuthManager 拒绝建号，占位隐患已消除） | 🟡 | 真接入需要企业主体 + 服务端换 token，见 PRD §7.2 |
+| OI-05 | Watch 离线账单不会补传（不可达时只写本地缓存） | 🟡 | 已定方案：去掉 `isReachable` guard 直接走 `transferUserInfo` 系统队列（decision-log D-48） |
 | OI-02/03/04 | 邮箱验证码绑定、CloudKit 同步与本地通知（stub）、macOS CSV/JSON 导出 TODO | 🟡 | 前两项需付费账号/服务端，见 open-items 的 A 区 |
-| OI-13/14 | 上界（iOS 27 / watchOS 27）与下界（macOS 15 / watchOS 11）仅编译级验证 | 🟡 | 真机验证后把结论回填 PRD 与 memory |
+| OI-13/14 | iOS 上界已可运行（27.0 模拟器）；**watchOS 27** 与下界（macOS 15 / watchOS 11）仍仅编译级验证 | 🟡 | watchOS 27 / 下界需真机或对应系统验证后回填 PRD 与 memory |
 
 ## 9. 接手人自检清单
 
 - [ ] 切到 `codex/platform-18-27`，`git status --porcelain` 无输出；
 - [ ] 把 4 个 target 的 `DEVELOPMENT_TEAM` 换成自己的，签名成功；
 - [ ] 四端编译通过；
-- [ ] 三套测试串行全绿（含 iOS 18.6 模拟器运行时已安装）；
+- [ ] 三套测试串行全绿（含 iOS 18.6 模拟器运行时已安装；用户明确"基本功能能用即可"时可跳过，见 §6）；
 - [ ] `python3 scripts/check_localization.py` 四 target 通过；
 - [ ] 模拟器安装并启动 `iFinance` 与 `iFinanceSwiftData`，概况页正常、无崩溃日志；
+- [ ] 在 iOS 27.0 模拟器上跑一次两版 App 的启动冒烟（上界验证）；
 - [ ] 读完 `AGENTS.md` / `docs/PRD.md` / `memory/README.md`，理解 §4 十条铁律；
-- [ ] 就 OI-01（占位登录）做出处理决定；
+- [ ] 就 OI-01（微信/QQ 真实接入）做出排期决定；
 - [ ] 明确本轮改动是否推送远端（当前约定：由用户决定，默认不推送）。
 
 ## 10. 归属与联系
 
 - 仓库：`LiuBe-github/Apple-all-platform-iFinance`（本机工作副本即本目录）；工程 `iFinance.xcodeproj`。
-- 提交归属：本分支 20 次提交由本轮协作产出，尚未推送；如需对外发布，先与作者确认签名与版本号策略。
+- 提交归属：本分支 22 次提交由本轮协作产出，尚未推送；如需对外发布，先与作者确认签名与版本号策略。
 - 文档维护：本文件是**入口级**交接文档，每轮工作结束时更新 §1 快照表（提交数 / HEAD / 状态）与 §8 的风险摘录；细节变化写进 `memory/`。
 
 ---

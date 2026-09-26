@@ -200,7 +200,7 @@ description.shouldInferMappingModelAutomatically = true
 - 视图层沿用 Core Data 版的写法，靠三个兼容点保持零改动复制：`PersistenceController.currentUserIdentifier` / `billUserPredicate`、`ModelContainer.viewContext` 扩展（内部即 `mainContext`）、`Bill.amountDouble` / `amountString` 计算属性（替代 `amount?.doubleValue` / `amount?.stringValue`）。
 - 因此**两版视图代码是两份文件**，改一处不会自动同步另一处；共同的字符串资源是唯一真正共享的部分。
 - SwiftData 版不注册 `WCSession`（不联动 Watch）、不启用 CloudKit 与本地通知，数据从空库开始（不迁移 Core Data 历史数据）。
-- SwiftData 版的 CSV 导入会写入 `createdBy`/`updatedBy` 与审计字段，并修正了 Core Data 版的 `en_US_POSX` locale 拼写问题（Core Data 版保持原样）。
+- 两版 CSV 导入均会写入 `createdBy`/`updatedBy` 与审计字段，locale 均为 `en_US_POSIX`；Core Data 版的解析逻辑抽在 `iFinance/Helper/CSVImporter.swift`（`parseRows` / `makeBill`），两版解析均支持 CRLF / LF / CR 换行。
 
 ## 5. 认证与账号体系（iOS）
 
@@ -336,21 +336,18 @@ macOS 端有独立副本：`MaciFinance/Views/Common/AppVisualStyle.swift`（130
 
 ## 10. 已知问题与技术债
 
-1. **`reset_ifinance_data.sh` 的 Bundle ID 前缀错误**：脚本使用 `com.liube.iFinance`（`reset_ifinance_data.sh:20`、`:41`），工程实际为 `cn.liube.iFinance`（`project.pbxproj:732`）。`xcrun simctl get_app_container` 会取不到容器，`defaults delete` 也全部命中不存在的域（脚本以 `|| true` 静默跳过），实际清理效果不可靠。
-2. **CSV 导入缺少账号字段**：导入的 `Bill` 未写 `createdBy`，会被 `billUserPredicate` 过滤掉（`iFinance/Views/Setting/SettingView.swift:641`）。
-3. **CSV 解析的小数 locale 拼写错误**：`Locale(identifier: "en_US_POSX")`（`SettingView.swift:637`），应为 `en_US_POSIX`。
-4. **CloudKit 同步与本地通知为禁用 stub**：`CloudKitSyncManager` / `NotificationManager` 所有系统调用被注释，接口返回固定值或空实现（需付费开发者账号）；UI 入口仍存在（`iCloudSyncView`）。
-5. **Watch 端离线账单不会补传**：`sendBill` 在不可达时仅本地缓存（`WatchDataModel.swift:100`），无重试队列。
-6. **`Notification.Name.didRequestAddBill` / `didRequestBudgetView` 无任何发送方或订阅方**（`iFinance/Manager/NotificationManager.swift:97`），属于遗留扩展点。
-7. **macOS 端功能缺口**：CSV/JSON 导出为 TODO（`MaciFinance/Views/SettingsView.swift:158`）；无生物锁、无 Watch 联动、无本地通知。
-8. **两份 Core Data 模型与两份 AuthManager 手动同步**：iOS 与 macOS 各自实现，字段演进而未同步时会出现平台间行为不一致（模型当前字段一致，实现细节不同）。
-9. **遗留 scheme `Copy of iFinance`** 无对应 `.xcscheme` 文件，建议从工程中清理。
-10. **测试覆盖偏工具层**：UI 层与 Watch 端几乎无自动化测试（`WatchiFinance Watch AppTests` 仅模板用例）。
-11. **UI 测试在 Xcode 27 下崩溃**：`iFinanceUITestsLaunchTests` 在克隆模拟器上会触发 XCTest ↔ Swift Testing 互操作递归（栈深 900+）后 SIGSEGV，崩溃日志为 `~/Library/Logs/DiagnosticReports/iFinance-*.ips`；普通启动不受影响，日常验证请用 `-only-testing:iFinanceTests` 之类参数跳过 UI 测试。
-12. **上界运行时不可用**：本机 Xcode 27 的 `xcodebuild -downloadPlatform iOS|watchOS` 返回 “not available for download”，iOS 27 / watchOS 27 无法在本机模拟器验证，只能编译级验证（需真机确认）。
-13. **下界不可运行**：macOS 15 / watchOS 11 无法在本机运行，采用「编译 + API 可用性审查」验证；若需真机结论需自行安装对应系统。
-14. **SwiftData 版与 Core Data 版视图代码双份维护**：同名 API 兼容层让复制成本很低，但视图改动需要同步两处（见 §4.7）。
-15. **测试必须串行执行**：同时运行多个 `xcodebuild test`（尤其含 UI 测试的 scheme）会出现测试宿主互相干扰，表现为 `Early unexpected exit` 与 UI 测试超时；验证时请一次只跑一个 scheme，并用 `-only-testing:` 限定单元测试。
+1. **CloudKit 同步与本地通知为禁用 stub**：`CloudKitSyncManager` / `NotificationManager` 所有系统调用被注释，接口返回固定值或空实现（需付费开发者账号）；UI 入口仍存在（`iCloudSyncView`）。
+2. **Watch 端离线账单不会补传**：`sendBill` 在不可达时仅本地缓存（`WatchDataModel.swift:100`），无重试队列（已定修复方向：去掉 `isReachable` guard 直接走 `transferUserInfo` 系统队列，见 memory/decision-log.md D-48）。
+3. **`Notification.Name.didRequestAddBill` / `didRequestBudgetView` 无任何发送方或订阅方**（`iFinance/Manager/NotificationManager.swift:97`），属于遗留扩展点。
+4. **macOS 端功能缺口**：CSV/JSON 导出为 TODO（`MaciFinance/Views/SettingsView.swift:158`）；无生物锁、无 Watch 联动、无本地通知。
+5. **两份 Core Data 模型与两份 AuthManager 手动同步**：iOS 与 macOS 各自实现，字段演进而未同步时会出现平台间行为不一致（模型当前字段一致，实现细节不同）。
+6. **遗留 scheme `Copy of iFinance`** 无对应 `.xcscheme` 文件，建议从工程中清理。
+7. **测试覆盖偏工具层**：UI 层与 Watch 端几乎无自动化测试（`WatchiFinance Watch AppTests` 仅模板用例）。
+8. **UI 测试在 Xcode 27 下崩溃**：`iFinanceUITestsLaunchTests` 在克隆模拟器上会触发 XCTest ↔ Swift Testing 互操作递归（栈深 900+）后 SIGSEGV，崩溃日志为 `~/Library/Logs/DiagnosticReports/iFinance-*.ips`；普通启动不受影响，日常验证请用 `-only-testing:iFinanceTests` 之类参数跳过 UI 测试。
+9. **watchOS 27 运行时不可用**：`xcodebuild -downloadPlatform watchOS` 返回 “not available for download”，watchOS 27 只能编译级验证（iOS 27.0 模拟器运行时已安装，可运行验证）。
+10. **下界不可运行**：macOS 15 / watchOS 11 无法在本机运行，采用「编译 + API 可用性审查」验证；若需真机结论需自行安装对应系统。
+11. **SwiftData 版与 Core Data 版视图代码双份维护**：同名 API 兼容层让复制成本很低，但视图改动需要同步两处（见 §4.7）。
+12. **测试必须串行执行**：同时运行多个 `xcodebuild test`（尤其含 UI 测试的 scheme）会出现测试宿主互相干扰，表现为 `Early unexpected exit` 与 UI 测试超时；验证时请一次只跑一个 scheme，并用 `-only-testing:` 限定单元测试。
 
 ## 11. 高频任务操作指引
 

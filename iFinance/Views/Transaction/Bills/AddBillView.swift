@@ -15,7 +15,7 @@ struct AddBillView: View {
         case income
         case transfer
     }
-    
+  
     // 网格视图的行数和列数
     
     @Environment(\.dismiss) private var dismiss

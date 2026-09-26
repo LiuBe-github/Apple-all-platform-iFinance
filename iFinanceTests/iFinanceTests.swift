@@ -261,6 +261,13 @@ final class iFinanceTests: XCTestCase {
         XCTAssertEqual(result, "auth.invalid_credentials")
     }
 
+    // MARK: - AuthManager 第三方登录防护
+
+    func testLoginWithProviderRejectsWeChatAndQQ() {
+        XCTAssertEqual(AuthManager.shared.loginWithProvider(.wechat, identifier: "wx_test"), "auth.coming_soon")
+        XCTAssertEqual(AuthManager.shared.loginWithProvider(.qq, identifier: "qq_test"), "auth.coming_soon")
+    }
+
     // MARK: - 支出分类测试
 
     func testExpenditureCategoryAllCases() {

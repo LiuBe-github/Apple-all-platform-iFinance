@@ -1,6 +1,6 @@
 # 本机环境与验证能力
 
-> 记录时间：2026-09-26 ｜ 更换 Xcode / 安装运行时 / 换设备后请更新本节。
+> 记录时间：2026-09-26（第二轮更新：iOS 27.0 模拟器运行时已安装）｜ 更换 Xcode / 安装运行时 / 换设备后请更新本节。
 
 ## 1. 工具链
 
@@ -15,11 +15,11 @@
 
 | 平台 | 已安装 | 说明 |
 |------|--------|------|
-| iOS | 18.4、18.6 | 用于下界运行验证（iPhone 16 / iPhone SE(3rd) / iPad Pro 11"(M4) 均已创建） |
+| iOS | 18.4、18.6、**27.0** | 18.x 用于下界验证（iPhone 16 / iPhone SE(3rd) / iPad Pro 11"(M4)）；**27.0 现已安装**，设备为 iPhone 17 / 18 系列，上界可运行验证 |
 | watchOS | 26.2、26.4、26.5 | 用于 watch 端运行验证 |
-| iOS 27 / watchOS 27 | ❌ 不可用 | `xcodebuild -downloadPlatform iOS\|watchOS` 返回 “not available for download”，`-buildVersion 27.0` 同样失败 |
+| watchOS 27 | ❌ 不可用 | `xcodebuild -downloadPlatform watchOS` 仍返回 “not available for download”，只能编译级验证 |
 
-结论：**上界（27.x）只能编译级验证**；下界（macOS 15 / watchOS 11）本机也无法运行，属编译 + API 审查级验证。
+结论：**iOS 上界（27.0）已可在模拟器运行验证**（2026-09-26 复查发现运行时已装好，型号为 iPhone 17 / 18 系列）；watchOS 27 仍只能编译级验证；下界（macOS 15 / watchOS 11）本机无法运行，属编译 + API 审查级验证。
 
 ## 3. 真机
 
@@ -49,7 +49,7 @@
 | 平台/版本 | 编译 | 运行 | 说明 |
 |-----------|------|------|------|
 | iOS 18.4 / 18.6 | ✅ | ✅ 模拟器 | 主力验证环境（`-only-testing:` 跑单测） |
-| iOS 27 | ✅ | ❌ | 运行时不可下载，待真机验证 |
+| iOS 27.0 | ✅ | ✅ 模拟器 | 运行时已安装（iPhone 17 / 18 系列）；2026-09-26 实测两版 App 在 iPhone 17 上安装启动正常 |
 | macOS 27 | ✅ | ✅ 本机 | `xcodebuild test -scheme MaciFinance -destination 'platform=macOS'` |
 | macOS 15 | ✅ | ❌ | 无法本机运行 |
 | watchOS 26.x | ✅ | ✅ 模拟器 | watch 端冒烟 |
@@ -62,6 +62,7 @@
 3. **并行构建会争抢同一个 DerivedData**：`error: unable to attach DB ... database is locked`。并行验证时给每个 scheme 指定独立 `-derivedDataPath`。
 4. **`simctl spawn defaults write` 的可见域**：写入 App 的偏好（如 `app_language`）后，App 能读到；但 App 自己写入的 `AppleLanguages` 不会出现在 `defaults read` 里（写在 App 自身域），验证机制时应依赖 `Logger` 日志（subsystem `com.liube.ifinance`，category `Localization`）。
 5. **日志级别**：`Logger.info/debug` 不落盘，`log show` 查不到；状态类日志请用 `notice`（项目里隐私遮罩、AppleLanguages 同步都是 `notice`）。
+6. **模拟器可能卡在 Shutdown**：`xcodebuild test` 自动启动模拟器失败时会反复重试并调用 `simctl diagnose`（最长 600s，看起来像"卡住"）。处理：先 `xcrun simctl boot <UDID>` + `xcrun simctl bootstatus <UDID> -b` 手动拉起，再跑测试，并用 `-destination 'id=<UDID>'` 显式指定设备。
 
 ## 7. 常用验证命令
 

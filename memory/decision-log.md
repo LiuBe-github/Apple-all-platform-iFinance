@@ -88,6 +88,14 @@
 | D-44 | 文档状态必须真实：已实现 ✅ / 部分实现 🚧 / 禁用未实现 💤 | 避免把"占位实现"写成"已支持" | [docs/PRD.md](../docs/PRD.md) |
 | D-45 | 本次建立 `memory/` 文件夹，沉淀会话级决策与待办 | 用户要求「根据历史对话生成记忆文件夹」 | 本文件夹 |
 
+## I. 占位登录降级与 CSV 导入修复（2026-09-26 第二轮）
+
+| 编号 | 决策 | 理由 / 约束 | 影响 |
+|------|------|-------------|------|
+| D-46 | 微信/QQ 登录降级为**双层防护**：视图点击仅显示「即将支持」（复用内联 `errorMessage`），`AuthManager.loginWithProvider` 入口 `guard provider == .apple` 拒绝建号 | 占位实现每次点击都新建账号（🔴 隐患）；视图提示保留入口外观，guard 防未来/遗留调用点静默建号 | 三端 `LoginView` + 三份 `AuthManager`；新增 key `auth.coming_soon`（不复用 `auth.apple_frontend_only`／`bill.transfer_todo`，语义与命名空间不符） |
+| D-47 | CSV 导入逻辑抽为 `iFinance/Helper/CSVImporter.swift` 纯函数（`parseRows` + `makeBill`），换取单元测试覆盖 | `parseCSVRows` 原是 `SettingView` 私有方法无法触达；「导入数据因缺 `createdBy` 而不可见」是真实回归点，必须钉住 | 新增 `CSVImporterTests`（4 用例）；`SettingView.importCSV` 改为调用；SwiftData 版已修不动 |
+| D-48 | **备案（本轮不实施）**：OI-05 Watch 离线补传倾向直接依赖 `transferUserInfo` 系统队列（去掉 `isReachable` guard），放弃自建 pending 队列 | `transferUserInfo` 本身是系统级可靠排队（iPhone 暂不可达也保证送达），现有 guard 属过度保守；iPhone 端已按 id 幂等去重，重发安全 | 实施时改 `WatchDataModel.sendBill` / `requestSync` 并同步 `docs/api/data-and-sync.md` §2.3/§2.6 |
+
 ## 被否决或搁置的方案
 
 | 曾被考虑的方案 | 为何没采用 |
@@ -97,3 +105,10 @@
 | 保留折线图作为可切换图表类型 | 用户判断与柱状图区分度低（D-39） |
 | 用系统 `List`/`Form` 重构全站卡片以更贴 HIG | 属"大改"，用户明确只要 token 统一 + 组件校准（D-11） |
 | SwiftData 版共享主版本的开机语言同步 | 两版各自独立进程与 Bundle ID，分别调用 `LocalizationSync` 即可 |
+
+## J. 交接后第一轮修复（2026-09-26 第三轮）
+
+| 编号 | 决策 | 理由 / 约束 | 影响 |
+|------|------|-------------|------|
+| D-49 | CSV 解析的换行判断改为同时覆盖 `\n` / `\r\n` / `\r`（两版同步） | 接手复核时跑出 `CSVImporterTests.testParseRowsHandlesQuotesEscapesAndCRLF` 失败：Swift 中 `"\r\n"` 是**一个** Character，原判断 `ch == "\n"` 命中不了，Windows/Excel 导出的 CSV 会被解析成单行、整份导入失败（旧实现同样有坑，抽 `CSVImporter` 时被测试钉出） | `iFinance/Helper/CSVImporter.swift`、`iFinanceSwiftData/Views/Setting/SettingView.swift`；新增 LF-only 回归用例；AGENTS 坑表「文本解析换行」 |
+| D-50 | 本轮验证强度按用户指示收窄：**不强制跑全套单测**，"基本功能能用即可" | 用户 2026-09-26 明确指示「这个别测试了吧，基本功能能用就行」；仍有四端编译 + 本地化审计 + 启动冒烟兜底，CSV 解析用本地脚本验证三种换行 | 验证记录口径见 [work-history.md](work-history.md) 第 22 行；后续大改动仍建议跑齐三套测试 |

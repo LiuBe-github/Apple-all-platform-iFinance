@@ -95,6 +95,17 @@ struct PersistenceTests {
     }
 }
 
+// MARK: - 第三方登录防护（微信/QQ 未开放，拒绝占位建号）
+
+@MainActor
+struct SocialProviderGuardTests {
+    @Test
+    func rejectsWeChatAndQQ() {
+        #expect(AuthManager.shared.loginWithProvider(.wechat, identifier: "wx_test") == "auth.coming_soon")
+        #expect(AuthManager.shared.loginWithProvider(.qq, identifier: "qq_test") == "auth.coming_soon")
+    }
+}
+
 // MARK: - Bill 模型测试
 
 struct BillModelTests {

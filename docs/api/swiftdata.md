@@ -96,7 +96,7 @@ Published 状态：`isAuthenticated`、`hasAccount`、`currentEmail`、`currentP
 | `handleAppDidBecomeActive()` / `handleAppWillResignActive()` | `Void` | 刷新 `AuthLastActiveAt` |
 | `register(email:phone:password:confirmPassword:fieldType:)` | `String?` | 返回本地化错误 key（如 `auth.account_exists`），成功返回 `nil` |
 | `login(email:phone:password:fieldType:)` | `String?` | 同上 |
-| `loginWithProvider(_:identifier:)` | `String?` | 第三方登录，不存在则创建账号 |
+| `loginWithProvider(_:identifier:)` | `String?` | 仅放行 `apple`（不存在则创建账号）；`wechat`/`qq` 返回 `auth.coming_soon`（未开放） |
 | `handleSignInWithApple(result:)` | `String?` | 处理 `ASAuthorization` 结果 |
 | `logout()` | `Void` | 清 UserDefaults 登录态与内存状态 |
 | `deleteAccount()` | `Void` | `delete(model: Bill.self, where:)` + 删除 `UserProfile` + 登出 |
