@@ -40,7 +40,8 @@ enum CategoryBreakdown {
         var counts: [String: Int] = [:]
 
         for bill in bills {
-            guard bill.type == type, let date = bill.date, window.contains(date) else { continue }
+            // 历史账单可能存着中文类型，先归一化再比
+            guard BillMath.normalizedType(bill.type) == type, let date = bill.date, window.contains(date) else { continue }
             guard let raw = bill.category?.trimmingCharacters(in: .whitespacesAndNewlines), !raw.isEmpty else { continue }
             // 二级分类（「父/子」）按一级分类聚合；此处保持纯函数（不依赖主线程隔离的解析层）
             let key = String(raw.split(separator: "/").first ?? Substring(raw))

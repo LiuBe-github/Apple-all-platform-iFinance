@@ -94,6 +94,8 @@ struct iFinanceSwiftDataApp: App {
                     .notice("首帧就绪：\(launchMs, privacy: .public)ms")
                 #endif
                 authManager.bootstrap()
+                // 历史账单可能存着中文类型（模型旧默认值「支出」），启动时一次性改写
+                persistenceController.normalizeLegacyBillTypes()
                 biometricLock.evaluateBiometricCapability()
                 biometricLock.requestLock()
             }

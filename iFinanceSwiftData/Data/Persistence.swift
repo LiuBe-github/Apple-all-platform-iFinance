@@ -9,6 +9,7 @@
 
 import Foundation
 import SwiftData
+import os
 
 struct PersistenceController {
 
@@ -64,6 +65,39 @@ struct PersistenceController {
         } catch {
             fatalError("SwiftData 容器初始化失败：\(error)")
         }
+    }
+
+    // MARK: - 账单类型归一化（一次性数据修正）
+
+    /// 把库里所有非规范类型（历史中文值「支出 / 收入 / 转账」、空值）改写成
+    /// `expenditure / income / transfer`：只动 `Bill.type` 一个字段，幂等，可重复执行。
+    /// 覆盖库内所有账号（这是数据口径修正，不按账号隔离）。
+    /// - Returns: 本次改写的账单数（0 表示无需处理）
+    @MainActor
+    @discardableResult
+    func normalizeLegacyBillTypes() -> Int {
+        let context = container.mainContext
+        let canonical = ["expenditure", "income", "transfer"]
+        let descriptor = FetchDescriptor<Bill>(
+            predicate: #Predicate<Bill> { bill in
+                bill.type == nil || !canonical.contains(bill.type ?? "")
+            }
+        )
+        guard let legacy = try? context.fetch(descriptor), !legacy.isEmpty else { return 0 }
+
+        let now = Date()
+        for bill in legacy {
+            bill.type = BillMath.normalizedType(bill.type)
+            bill.updatedAt = now
+            bill.updatedBy = "system.billTypeMigration"
+        }
+        try? context.save()
+
+        #if DEBUG
+        Logger(subsystem: "com.liube.ifinance.swiftdata", category: "BillTypeMigration")
+            .notice("账单类型归一化：改写 \(legacy.count, privacy: .public) 条")
+        #endif
+        return legacy.count
     }
 
     // MARK: - 用户数据隔离

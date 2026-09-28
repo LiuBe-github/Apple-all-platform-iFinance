@@ -127,4 +127,26 @@ final class MemoMarkdownTests: XCTestCase {
         XCTAssertEqual(MemoMarkdownRenderer.parse("> 引用").style, .quote)
         XCTAssertEqual(MemoMarkdownRenderer.parse("普通文本").style, .plain)
     }
+
+    // MARK: - 一次性格式指令闸门（修「点格式按钮卡死」）
+
+    func testRequestGateAppliesEachRequestOnce() {
+        var gate = MemoMarkdownRequestGate()
+        let request = MemoMarkdownRequest(command: .bold)
+
+        XCTAssertTrue(gate.shouldApply(request), "首次遇到该请求应放行")
+        XCTAssertFalse(gate.shouldApply(request), "同一条请求被 SwiftUI 反复重绘时不能重复套用")
+
+        let another = MemoMarkdownRequest(command: .bold)
+        XCTAssertTrue(gate.shouldApply(another), "新请求（新 id）应放行")
+    }
+
+    func testRequestGateResetAllowsReapplyingSameRequest() {
+        var gate = MemoMarkdownRequestGate()
+        let request = MemoMarkdownRequest(command: .bullet)
+
+        XCTAssertTrue(gate.shouldApply(request))
+        gate.reset()
+        XCTAssertTrue(gate.shouldApply(request))
+    }
 }

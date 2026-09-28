@@ -114,7 +114,7 @@ final class WatchSessionManager: NSObject {
             var dict: [String: Any] = [
                 "id": bill.id?.uuidString ?? UUID().uuidString,
                 "amount": bill.amount?.doubleValue ?? 0,
-                "type": bill.type ?? "expenditure",
+                "type": BillMath.normalizedType(bill.type),
                 "category": bill.category ?? "",
                 "date": ISO8601DateFormatter().string(from: bill.date ?? Date())
             ]

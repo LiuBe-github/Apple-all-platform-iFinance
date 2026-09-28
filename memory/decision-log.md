@@ -187,3 +187,11 @@
 | D-82 | `MarkdownTextEditor` **编辑中不回灌文本**：`updateUIView` 在 `uiView.isFirstResponder` 时直接返回，只有非编辑态（打开 sheet 载入内容）才同步；同时移除「每次按键都上报选区」的回调 | 输入法组合（marked text）期间 binding 常落后一两个字，`uiView.text = text` 会打断组合、清掉候选，表现为「打字非常卡」；选区回调每次按键都改父状态，额外触发整页重绘 | `MarkdownTextEditor.swift`（两版逐字节一致） |
 | D-83 | 账单编辑页**不再用 `.disabled` 静默禁用保存**，改为点击后按具体原因弹提示；并在打开时归一化类型（`BillEditRules.normalizedType`）、金额输入归一化（`BillAmountInput`） | 用户报「改金额没影响、再打开又是旧值」：旧数据的 `Bill.type` 是模型默认值「支出」等中文 → 分段控件无匹配项、分类校验永远失败 → 保存按钮永久禁用，点按毫无反应（改动根本没写库）。静默禁用是根因放大器 | `BillEditRules.swift`（两版逐字节一致）、`EditBillView`（两版）、新增 `BillInputTests` 7 条 |
 
+## S. 账单类型统一口径 + 备忘格式按钮（2026-09-28 第十二轮）
+
+| 编号 | 决策 | 理由 | 落地 |
+|------|------|------|------|
+| D-84 | 历史账单里的中文类型**启动时一次性改写**（用户选择）：`PersistenceController.normalizeLegacyBillTypes` 用谓词只捞非规范值，改写 `type`（顺带 `updatedAt/updatedBy = system.billTypeMigration`），幂等、覆盖库内所有账号；模型 `type` 默认值同步从「支出」改为 `expenditure` | 只修展示层会让库里的脏值一直存在（预算谓词、CSV 导出守卫都会漏），而编辑器逐条保存又太慢。一次性改写后所有按类型过滤的谓词自动正确 | `iFinance/Persistence.swift`、`iFinanceSwiftData/Data/Persistence.swift`、两份 `.xcdatamodeld`；测试 `BillTypeMigrationTests`（两版） |
+| D-85 | 所有「按类型比较 / 求和」统一走 `BillMath`（`isExpenditure/isIncome/isTransfer/signedAmount`）：支出为负、收入为正、**转账不计入结余**；替换 `DayGroupCard.dayNet`、`TransactionRowView`（符号/颜色/分类解析）、`HomeView` 今日收支、`PeriodSummary`、`CategoryBreakdown`、趋势聚合、CSV 导入导出、Watch payload | 之前直接比 `bill.type == "expenditure"`：中文旧值被当成收入（结余加而不是减）、转账被算进当日结余。集中到一处才能保证口径一致且可单测 | `BillEditRules.swift`（两版同名副本）；`BillInputTests` 覆盖中文/规范/垃圾/空值 |
+| D-86 | 备忘格式指令改为**带 id 的一次性请求** + `MemoMarkdownRequestGate`；输入法组合期间工具栏置灰（用户选择）；应用前 `unmarkText()` 兜底；触觉反馈从 `updateUIView` 移到按钮 | 原实现把指令放在 `@State` 里异步清空，而写入 `uiView.text` 会触发重绘 → 清空之前又被套用一次，形成「反复加格式」的循环；叠加输入法组合期改文本 = App 卡死 + 候选栏狂跳 | `MemoMarkdown.swift`（请求与闸门）、`MarkdownTextEditor.swift`（request + isComposing）、`MemoEditSheet`（禁用态 + 提示文案） |
+

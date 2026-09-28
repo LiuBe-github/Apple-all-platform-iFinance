@@ -36,12 +36,17 @@ struct TransactionRowView: View {
         case unknown
     }
 
+    /// 类型一律走 `BillMath` 归一化：历史账单可能存着中文类型（「支出」等）
+    private var normalizedType: String {
+        BillMath.normalizedType(bill.type)
+    }
+
     private var billKind: CategoryKind? {
-        CategoryKind(billType: bill.type ?? "")
+        CategoryKind(billType: normalizedType)
     }
 
     private var resolvedCategory: BillCategory {
-        if bill.type == "transfer" { return .transfer }
+        if BillMath.isTransfer(bill.type) { return .transfer }
         guard let raw = bill.category, let kind = billKind,
               CategoryResolver.isValid(raw, kind: kind) else { return .unknown }
         return kind == .expenditure ? .expenditure : .income
@@ -85,7 +90,7 @@ struct TransactionRowView: View {
     // MARK: - 金额
     private var amount: Double {
         let v = bill.amount?.doubleValue ?? 0
-        return bill.type == "expenditure" ? -v : v
+        return BillMath.signedAmount(type: bill.type, amount: v)
     }
     
     private var amountText: String {
@@ -95,7 +100,7 @@ struct TransactionRowView: View {
     }
     
     private var amountColor: Color {
-        if bill.type == "transfer" {
+        if BillMath.isTransfer(bill.type) {
             return .secondary
         }
         return amount >= 0

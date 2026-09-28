@@ -199,7 +199,7 @@ struct TrendCard: View {
         
         var total: Double = 0
         for bill in allBills {
-            guard bill.type == billType, let date = bill.date else {
+            guard BillMath.normalizedType(bill.type) == billType, let date = bill.date else {
                 continue
             }
             // 获取账单日期的小时开始时间

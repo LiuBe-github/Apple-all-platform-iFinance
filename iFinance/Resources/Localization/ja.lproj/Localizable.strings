@@ -654,3 +654,4 @@
 "memo.toolbar.bullet" = "箇条書き";
 "memo.toolbar.checklist" = "チェックリスト";
 "memo.toolbar.quote" = "引用";
+"memo.markdown.composing_hint" = "変換を確定すると書式を適用できます";

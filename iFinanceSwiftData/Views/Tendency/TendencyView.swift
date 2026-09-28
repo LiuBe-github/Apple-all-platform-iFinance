@@ -204,7 +204,7 @@ struct TendencyView: View {
         // 按日期聚合金额
         var dailyTotals: [Date: Double] = [:]
         for bill in allBills {
-            guard bill.type == billType,
+            guard BillMath.normalizedType(bill.type) == billType,
                   let date = bill.date,
                   date >= start,
                   date < tomorrow else { continue }  // 使用 < tomorrow 而非 <= today

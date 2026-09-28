@@ -66,7 +66,7 @@ docs/                     项目记忆与接口文档（改动接口后同步更
 4. **新增文案一律用 `L10n.string("...")`**：`String(localized:)` 与 `NSLocalizedString` 已全量统一替换（它们走系统语言、不跟随 App 内语言）。`Text("some.key")`（`LocalizedStringKey`）可以继续用，它随注入的 `\.locale` 正确工作。改文案时按 key 全仓库搜索。
    - 语言切换时会调用 `LocalizationSync.apply(_:)` 写入 `UserDefaults["AppleLanguages"]` 并重启，让系统控件（分享面板、Face ID 提示、系统弹窗）也跟随 App 内语言；App 启动时 `LocalizationSync.syncIfNeeded()` 兜底修正。
    - 提交前建议运行 `python3 scripts/check_localization.py`：扫描代码引用的 key 与四语言包比对（缺失/语言间不一致会返回非零码），「未被引用」仅为提示。
-5. **类型字符串**：`Bill.type` 运行时值是 `"expenditure"` / `"income"` / `"transfer"`（不是模型默认值「支出」）。
+5. **类型字符串（必须走 `BillMath`）**：`Bill.type` 运行时值是 `"expenditure"` / `"income"` / `"transfer"`（模型默认值已改为 `expenditure`，历史上可能存在「支出/收入/转账」中文值，启动时会被自动改写）。**禁止再直接写 `bill.type == "expenditure"`**——统一用 `BillMath.isExpenditure/isIncome/isTransfer/signedAmount`（支出为负、收入为正、转账不计入），否则历史账单会被当成收入、统计与导出全线算错。
 6. **金额**：Core Data 中是 `Decimal`，代码里用 `NSDecimalNumber` 赋值；Watch 传输用 `Double`。
 7. **禁用功能不要"顺手接上"**：`CloudKitSyncManager`、`NotificationManager` 是刻意保留的 stub（需付费开发者账号，所有系统调用已注释）；`iCloudSyncView` 入口仍在。
 8. **后台隐私遮罩**：进入后台/非活跃时由 `BiometricLockManager.activatePrivacyShield()` 触发、`.appPrivacyShield(_:)` 对整页做高斯模糊，**仅在用户开启应用锁（`BiometricLockEnabled`）时生效**；改动场景生命周期或锁状态机时不要破坏这条链路，新增页面无需单独处理（入口已统一包裹）。

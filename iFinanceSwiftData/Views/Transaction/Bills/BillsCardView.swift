@@ -168,11 +168,11 @@ private struct DayGroupCard: View {
         bills.sorted { ($0.date ?? Date()) > ($1.date ?? Date()) }
     }
     
-    /// 当日净额：收入为正，支出为负
+    /// 当日净额：收入为正、支出为负、**转账不计入**。
+    /// 走 `BillMath` 统一口径（兼容历史中文类型，别再直接比 `bill.type == "expenditure"`）。
     private var dayNet: Double {
         bills.reduce(0.0) { total, bill in
-            let amt = bill.amountDouble
-            return bill.type == "expenditure" ? total - amt : total + amt
+            total + BillMath.signedAmount(type: bill.type, amount: bill.amountDouble)
         }
     }
     

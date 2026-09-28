@@ -6,6 +6,7 @@
 //
 
 internal import CoreData
+import os
 
 struct PersistenceController {
     static let shared = PersistenceController()
@@ -89,7 +90,41 @@ struct PersistenceController {
         // 调试钩子：启动时检查是否需要清空所有数据
         if !inMemory {
             runStartupHooksIfNeeded()
+            // 历史账单可能存着中文类型（模型旧默认值「支出」），启动时一次性改写
+            // 注意：这里必须显式传容器上下文，不能在 init 里访问 `PersistenceController.shared`（会死锁）
+            Self.normalizeLegacyBillTypes(in: container.viewContext)
         }
+    }
+
+    // MARK: - 账单类型归一化（一次性数据修正）
+
+    /// 把库里所有非规范类型（历史中文值「支出 / 收入 / 转账」、空值）改写成
+    /// `expenditure / income / transfer`：只动 `Bill.type` 一个字段，幂等，可重复执行。
+    /// 覆盖库内所有账号（这是数据口径修正，不按账号隔离）。
+    /// - Returns: 本次改写的账单数（0 表示无需处理）
+    @discardableResult
+    static func normalizeLegacyBillTypes(in context: NSManagedObjectContext) -> Int {
+        let request: NSFetchRequest<Bill> = Bill.fetchRequest()
+        // 先按谓词只捞「非规范」的行：没有命中就等同于一次空查询，启动开销可忽略
+        request.predicate = NSPredicate(
+            format: "type == nil OR NOT (type IN %@)",
+            ["expenditure", "income", "transfer"]
+        )
+        guard let legacy = try? context.fetch(request), !legacy.isEmpty else { return 0 }
+
+        let now = Date()
+        for bill in legacy {
+            bill.type = BillMath.normalizedType(bill.type)
+            bill.updatedAt = now
+            bill.updatedBy = "system.billTypeMigration"
+        }
+        try? context.save()
+
+        #if DEBUG
+        Logger(subsystem: "com.liube.ifinance", category: "BillTypeMigration")
+            .notice("账单类型归一化：改写 \(legacy.count, privacy: .public) 条")
+        #endif
+        return legacy.count
     }
 
     // MARK: - 启动钩子

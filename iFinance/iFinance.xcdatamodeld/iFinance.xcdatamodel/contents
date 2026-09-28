@@ -8,7 +8,7 @@
         <attribute name="date" attributeType="Date" defaultDateTimeInterval="790680240" usesScalarValueType="NO"/>
         <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="note" optional="YES" attributeType="String" defaultValueString="无备注"/>
-        <attribute name="type" attributeType="String" defaultValueString="支出"/>
+        <attribute name="type" attributeType="String" defaultValueString="expenditure"/>
         <attribute name="updatedAt" attributeType="Date" defaultDateTimeInterval="790680300" usesScalarValueType="NO"/>
         <attribute name="updatedBy" attributeType="String" defaultValueString="user"/>
     </entity>

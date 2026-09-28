@@ -654,3 +654,4 @@
 "memo.toolbar.bullet" = "Bullet List";
 "memo.toolbar.checklist" = "Checklist";
 "memo.toolbar.quote" = "Quote";
+"memo.markdown.composing_hint" = "Finish typing the current word to use formatting";

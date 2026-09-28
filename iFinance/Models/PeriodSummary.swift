@@ -103,7 +103,8 @@ extension PeriodSummary {
                 guard let date = bill.date, range.contains(date) else { continue }
                 count += 1
                 let amount = bill.amount?.decimalValue ?? 0
-                switch bill.type {
+                // 走 BillMath 归一化：历史账单可能是中文类型
+                switch BillMath.normalizedType(bill.type) {
                 case "income":      income += amount
                 case "expenditure": expense += amount
                 default:            break

@@ -73,8 +73,8 @@ enum CSVImporter {
     /// - Parameter identifier: 当前账号标识，写入 createdBy / updatedBy（账单可见性依赖）
     static func makeBill(row: [String], context: NSManagedObjectContext, identifier: String) -> Bill? {
         guard row.count >= 5 else { return nil }
-        let type = row[1].trimmingCharacters(in: .whitespacesAndNewlines)
-        guard validTypes.contains(type) else { return nil }
+        // 历史导出文件可能带中文类型（支出/收入/转账）：归一化后再校验，垃圾值仍然跳过
+        guard let type = BillEditRules.canonicalType(row[1].trimmingCharacters(in: .whitespacesAndNewlines)) else { return nil }
         let date = isoFormatter.date(from: row[0].trimmingCharacters(in: .whitespacesAndNewlines))
             ?? fallbackDateFormatter.date(from: row[0])
         guard let amount = Decimal(string: row[3], locale: posixLocale) else { return nil }

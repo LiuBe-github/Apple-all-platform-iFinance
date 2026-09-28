@@ -68,12 +68,13 @@ struct HomeView: View {
     @State private var shareError: String?
 
     // MARK: - 当日统计计算属性
+    // 类型一律走 `BillMath`：兼容历史中文类型（「支出」等），转账不计入
     private var todayIncome: Decimal {
-        todayBills.filter { $0.type == "income" }.reduce(Decimal(0)) { $0 + ($1.amount ?? 0) }
+        todayBills.filter { BillMath.isIncome($0.type) }.reduce(Decimal(0)) { $0 + ($1.amount ?? 0) }
     }
 
     private var todayExpense: Decimal {
-        todayBills.filter { $0.type == "expenditure" }.reduce(Decimal(0)) { $0 + ($1.amount ?? 0) }
+        todayBills.filter { BillMath.isExpenditure($0.type) }.reduce(Decimal(0)) { $0 + ($1.amount ?? 0) }
     }
 
     private var todayBalance: Decimal {

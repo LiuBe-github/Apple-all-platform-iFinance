@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import os
 internal import CoreData
 
 struct EditBillView: View {
@@ -183,10 +184,17 @@ struct EditBillView: View {
     }
     
     private func saveBill() {
+        #if DEBUG
+        Logger(subsystem: "com.liube.ifinance", category: "BillSave").notice("进入保存 amountString=\(amountString, privacy: .public) 解析值=\(String(describing: amountValue), privacy: .public)")
+        #endif
+
         guard let amountDouble = amountValue, amountDouble > 0 else {
             HapticManager.shared.error()
             alertMessageKey = "bill.amount_invalid_msg"
             showingAlert = true
+            #if DEBUG
+            Logger(subsystem: "com.liube.ifinance", category: "BillSave").error("被金额校验拦下：amountString=\(amountString, privacy: .public)")
+            #endif
             return
         }
 
@@ -194,6 +202,9 @@ struct EditBillView: View {
             HapticManager.shared.error()
             alertMessageKey = "bill.choose_category"
             showingAlert = true
+            #if DEBUG
+            Logger(subsystem: "com.liube.ifinance", category: "BillSave").error("被分类校验拦下：type=\(selectedType, privacy: .public) category=\(categoryForSaving ?? "-", privacy: .public)")
+            #endif
             return
         }
         
@@ -208,9 +219,15 @@ struct EditBillView: View {
         do {
             try viewContext.save()
             HapticManager.shared.success()
+            #if DEBUG
+            Logger(subsystem: "com.liube.ifinance", category: "BillSave").notice("保存成功 amount=\(amountDouble, privacy: .public) 库内值=\(bill.amount?.doubleValue ?? -1, privacy: .public)")
+            #endif
             dismiss()
         } catch {
-            print("❌ 保存账单失败: \(error)")
+            HapticManager.shared.error()
+            Logger(subsystem: "com.liube.ifinance", category: "BillSave").error("保存账单失败：\(error.localizedDescription, privacy: .public)")
+            alertMessageKey = "bill.save_failed"
+            showingAlert = true
         }
     }
     

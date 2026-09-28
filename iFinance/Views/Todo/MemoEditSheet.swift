@@ -22,7 +22,9 @@ struct MemoEditSheet: View {
     @State private var errorMessage: String?
     @State private var showsDeleteConfirm = false
     @State private var showsMarkdownPreview = false
-    @State private var pendingCommand: MemoMarkdownCommand?
+    @State private var markdownRequest: MemoMarkdownRequest?
+    /// 输入法是否正在组合（候选栏显示中）：组合期间格式按钮置灰
+    @State private var isComposing = false
 
     private var isEditing: Bool { note != nil }
 
@@ -52,7 +54,8 @@ struct MemoEditSheet: View {
                                 } else {
                                     MarkdownTextEditor(
                                         text: $content,
-                                        pendingCommand: $pendingCommand
+                                        request: $markdownRequest,
+                                        isComposing: $isComposing
                                     )
                                     .frame(minHeight: AppLayout.editorMinHeight)
                                     .background(
@@ -145,28 +148,41 @@ struct MemoEditSheet: View {
         .appAnimation(AppMotion.quick, value: showsMarkdownPreview)
     }
 
-    /// 快捷语法工具栏：把语法作用在当前选区上（无选区时插入成对标记并把光标置于中间）
+    /// 快捷语法工具栏：把语法作用在当前选区上（无选区时插入成对标记并把光标置于中间）。
+    /// 输入法正在拼字（候选栏显示中）时按钮置灰——此阶段改写文本会打断输入法组合。
     private var markdownToolbar: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: AppSpacing.sm) {
-                ForEach(MemoMarkdownCommand.allCases) { command in
-                    Button {
-                        pendingCommand = command
-                    } label: {
-                        Image(systemName: command.icon)
-                            .font(AppTypography.secondary)
-                            .foregroundStyle(.primary)
-                            .frame(width: AppLayout.iconTile, height: AppLayout.iconTile)
-                            .background(
-                                Circle().fill(Color(UIColor.secondarySystemBackground))
-                            )
+        VStack(alignment: .leading, spacing: AppSpacing.xs) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: AppSpacing.sm) {
+                    ForEach(MemoMarkdownCommand.allCases) { command in
+                        Button {
+                            HapticManager.shared.light()
+                            markdownRequest = MemoMarkdownRequest(command: command)
+                        } label: {
+                            Image(systemName: command.icon)
+                                .font(AppTypography.secondary)
+                                .foregroundStyle(isComposing ? Color.secondary : Color.primary)
+                                .frame(width: AppLayout.iconTile, height: AppLayout.iconTile)
+                                .background(
+                                    Circle().fill(Color(UIColor.secondarySystemBackground))
+                                )
+                        }
+                        .buttonStyle(.scalePress)
+                        .disabled(isComposing)
+                        .accessibilityLabel(Text(LocalizedStringKey(command.titleKey)))
                     }
-                    .buttonStyle(.scalePress)
-                    .accessibilityLabel(Text(LocalizedStringKey(command.titleKey)))
                 }
+                .padding(.vertical, 1)
             }
-            .padding(.vertical, 1)
+
+            if isComposing {
+                Text("memo.markdown.composing_hint")
+                    .font(AppTypography.tiny)
+                    .foregroundStyle(.tertiary)
+                    .transition(.opacity)
+            }
         }
+        .appAnimation(AppMotion.quick, value: isComposing)
     }
 
     /// 预览：逐行渲染（行级样式在视图层设置，避免 `AttributedString` 的 SwiftUI 属性作用域拖慢类型检查）

@@ -654,3 +654,4 @@
 "memo.toolbar.bullet" = "列表";
 "memo.toolbar.checklist" = "待辦清單";
 "memo.toolbar.quote" = "引用";
+"memo.markdown.composing_hint" = "輸入法候選上屏後即可使用格式";

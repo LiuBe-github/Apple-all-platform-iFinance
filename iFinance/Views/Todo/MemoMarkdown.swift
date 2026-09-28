@@ -60,6 +60,39 @@ struct MemoMarkdownEditResult: Equatable {
     let selection: NSRange
 }
 
+// MARK: - 一次性格式指令
+
+/// 工具栏下发的一次性格式指令。
+/// 带 `id` 是因为 `updateUIView` 会被 SwiftUI 反复调用（每次重绘一次），
+/// 只有靠 id 才能保证「同一条指令只落地一次」——早期实现靠异步清空状态，
+/// 重绘发生在清空之前就会把同一条指令反复套用（文本不断加长、视图树抖动，
+/// 配合输入法组合期篡改文本 = App 卡死 + 候选栏狂跳）。
+struct MemoMarkdownRequest: Equatable, Identifiable {
+    let id: UUID
+    let command: MemoMarkdownCommand
+
+    init(command: MemoMarkdownCommand, id: UUID = UUID()) {
+        self.id = id
+        self.command = command
+    }
+}
+
+/// 请求闸门（纯逻辑，可单测）：记住最近一次已应用的请求 id
+struct MemoMarkdownRequestGate: Equatable {
+    private(set) var lastAppliedID: UUID?
+
+    /// 首次遇到该 id 返回 true，之后返回 false
+    mutating func shouldApply(_ request: MemoMarkdownRequest) -> Bool {
+        guard request.id != lastAppliedID else { return false }
+        lastAppliedID = request.id
+        return true
+    }
+
+    mutating func reset() {
+        lastAppliedID = nil
+    }
+}
+
 enum MemoMarkdownEditor {
 
     /// 行首前缀（列表 / 勾选框 / 引用）

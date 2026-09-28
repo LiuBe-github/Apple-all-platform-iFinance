@@ -448,11 +448,11 @@ private struct BillNoteRow: View {
     }
 
     private var typeColor: Color {
-        bill.type == "expenditure" ? .red : .green
+        BillMath.isExpenditure(bill.type) ? .red : .green
     }
 
     private var typeLabel: String {
-        bill.type == "expenditure"
+        BillMath.isExpenditure(bill.type)
             ? L10n.string("bill.type_expenditure")
             : L10n.string("bill.type_income")
     }

@@ -54,7 +54,7 @@ struct BudgetCardView: View {
         else { return [] }
 
         return allUserBills.filter { bill in
-            guard bill.type == "expenditure", bill.amount != nil, let date = bill.date else { return false }
+            guard BillMath.isExpenditure(bill.type), bill.amount != nil, let date = bill.date else { return false }
             return date >= startOfMonth && date < endOfMonth
         }
     }

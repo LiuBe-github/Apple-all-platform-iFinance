@@ -19,12 +19,23 @@ enum BillEditRules {
     /// 类型分段控件没有对应 tag、`CategoryKind(billType:)` 也解析不出来，
     /// 结果是**保存按钮永远禁用**——用户改完金额点保存毫无反应（金额也就没写进库）。
     static func normalizedType(_ raw: String?) -> String {
-        switch raw {
+        canonicalType(raw) ?? "expenditure"
+    }
+
+    /// 规范类型；只认已知写法（含历史数据里的中文旧值），无法识别返回 nil
+    static func canonicalType(_ raw: String?) -> String? {
+        switch raw?.trimmingCharacters(in: .whitespacesAndNewlines) {
         case "income", "收入": return "income"
         case "transfer", "转账": return "transfer"
         case "expenditure", "支出": return "expenditure"
-        default: return "expenditure"
+        default: return nil
         }
+    }
+
+    /// 库里存的值是否不是规范写法（中文旧值 / 空值 / 垃圾值 / 大小写或空白差异都算）
+    static func needsNormalization(_ raw: String?) -> Bool {
+        guard let canonical = canonicalType(raw) else { return true }
+        return raw?.trimmingCharacters(in: .whitespacesAndNewlines) != canonical
     }
 
     /// 切换类型后分类的初始值：转账固定为 transfer，支出/收入清空（要求重新选择）
@@ -49,6 +60,51 @@ enum BillEditRules {
     static func normalizedCategory(_ category: String?, for type: String) -> String? {
         if type == transferType { return transferCategory }
         return isValid(category, for: type) ? category : nil
+    }
+}
+
+// MARK: - 账单类型的统一口径
+
+/// 所有「按类型比较 / 按类型求和」的地方都走这里，禁止再直接写 `bill.type == "expenditure"`。
+/// 历史账单可能存着中文类型（模型旧默认值「支出」），直接比字符串会把它当成收入：
+/// 当日结余、首页收支、预算已用、周期概况、趋势饼图、CSV 导出都会算错。
+enum BillMath {
+
+    static func normalizedType(_ raw: String?) -> String {
+        BillEditRules.normalizedType(raw)
+    }
+
+    static func canonicalType(_ raw: String?) -> String? {
+        BillEditRules.canonicalType(raw)
+    }
+
+    /// 是否为支出（含历史中文值）
+    static func isExpenditure(_ raw: String?) -> Bool {
+        normalizedType(raw) == "expenditure"
+    }
+
+    /// 是否为收入（含历史中文值）
+    static func isIncome(_ raw: String?) -> Bool {
+        normalizedType(raw) == "income"
+    }
+
+    /// 是否为转账（含历史中文值）
+    static func isTransfer(_ raw: String?) -> Bool {
+        normalizedType(raw) == "transfer"
+    }
+
+    /// 是否计入收支统计：转账不计入
+    static func countsInTotals(_ raw: String?) -> Bool {
+        !isTransfer(raw)
+    }
+
+    /// 该账单对「结余 / 净额」的贡献：收入为正、支出为负、转账为 0
+    static func signedAmount(type: String?, amount: Double) -> Double {
+        switch normalizedType(type) {
+        case "income": return amount
+        case "transfer": return 0
+        default: return -amount
+        }
     }
 }
 

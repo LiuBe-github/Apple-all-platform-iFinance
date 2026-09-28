@@ -525,7 +525,8 @@ struct SettingView: View {
             var lines = ["date,type,category,amount,note"]
             for b in bills {
                 let d = iso.string(from: b.date ?? Date())
-                lines.append("\(d),\(csvEscape(b.type ?? "")),\(csvEscape(b.category ?? "")),\(b.amount?.stringValue ?? "0"),\(csvEscape(b.note ?? ""))")
+                // 导出写规范类型：历史中文值也要能再次导入
+                lines.append("\(d),\(BillMath.normalizedType(b.type)),\(csvEscape(b.category ?? "")),\(b.amount?.stringValue ?? "0"),\(csvEscape(b.note ?? ""))")
             }
             exportDocument = BillCSVDocument(text: lines.joined(separator: "\n"))
             isExporting = true
