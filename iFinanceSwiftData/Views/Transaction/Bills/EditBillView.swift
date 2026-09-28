@@ -27,6 +27,9 @@ struct EditBillView: View {
     @State private var alertMessageKey = "bill.amount_invalid_msg"
     /// 最近一次保存结果（调试诊断行显示：写入值 → 库内回读值）
     @State private var lastSaveSummary = "—"
+    /// 打开账单时的原始类型 / 分类：用于判断用户是否主动改了类型
+    @State private var originalType = "expenditure"
+    @State private var originalCategory: String?
     @State private var showingDeleteConfirmation = false
     
     init(bill: Bill) {
@@ -41,6 +44,8 @@ struct EditBillView: View {
         _note = State(initialValue: bill.note ?? "")
         _categoryRawValue = State(initialValue: BillEditRules.normalizedCategory(bill.category, for: normalizedType))
         _selectedDate = State(initialValue: bill.date ?? Date())
+        _originalType = State(initialValue: normalizedType)
+        _originalCategory = State(initialValue: bill.category)
     }
     
     var body: some View {
@@ -163,14 +168,29 @@ struct EditBillView: View {
         (amountValue ?? 0) > 0
     }
 
-    /// 分类必须与当前类型匹配（转账固定 transfer）
+    /// 保存是否放行：类型没变时沿用原分类（历史空分类/不合法分类也不再拦改金额）
     private var hasValidCategory: Bool {
-        BillEditRules.isValid(categoryForSaving, for: selectedType)
+        BillEditRules.canSave(
+            selectedType: selectedType,
+            selectedCategory: categoryForSaving,
+            originalType: originalType,
+            originalCategory: originalCategory
+        )
     }
 
-    /// 保存时写入的分类
+    /// 保存时写入的分类。
+    /// - 转账固定 `transfer`；
+    /// - 用户选了分类就用选的；
+    /// - 类型没变且没重选时**保留库里原来的值**（历史账单可能是空分类或旧的不合法分类，不能被清空）。
     private var categoryForSaving: String? {
-        selectedType == BillEditRules.transferType ? BillEditRules.transferCategory : categoryRawValue
+        if selectedType == BillEditRules.transferType {
+            return BillEditRules.transferCategory
+        }
+        if let raw = categoryRawValue, !raw.isEmpty {
+            return raw
+        }
+        let typeUnchanged = BillEditRules.normalizedType(selectedType) == BillEditRules.normalizedType(originalType)
+        return typeUnchanged ? originalCategory : nil
     }
 
     /// 分类行内容：已选显示图标 + 本地化名称，未选显示占位

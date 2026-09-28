@@ -94,4 +94,37 @@ final class BillInputTests: XCTestCase {
         XCTAssertEqual(BillEditRules.normalizedType("垃圾值"), "expenditure")
         XCTAssertEqual(BillEditRules.canonicalType("转账"), "transfer")
     }
+
+    // MARK: - 保存放行规则（类型没变就不拦，历史脏分类也能改金额）
+
+    func testCanSaveAllowsLegacyCategoryWhenTypeUnchanged() {
+        // 历史账单：分类为空
+        XCTAssertTrue(BillEditRules.canSave(
+            selectedType: "expenditure", selectedCategory: nil,
+            originalType: "支出", originalCategory: nil
+        ))
+        // 历史账单：分类与类型不匹配（脏数据）——只改金额也必须能存
+        XCTAssertTrue(BillEditRules.canSave(
+            selectedType: "income", selectedCategory: "餐饮",
+            originalType: "收入", originalCategory: "餐饮"
+        ))
+    }
+
+    func testCanSaveRequiresCategoryAfterTypeChange() {
+        // 改了类型但没选分类 → 拦下（要求重选）
+        XCTAssertFalse(BillEditRules.canSave(
+            selectedType: "income", selectedCategory: nil,
+            originalType: "expenditure", originalCategory: "餐饮"
+        ))
+        // 改了类型并选了合法分类 → 放行
+        XCTAssertTrue(BillEditRules.canSave(
+            selectedType: "income", selectedCategory: "工资",
+            originalType: "expenditure", originalCategory: "餐饮"
+        ))
+        // 类型不变但主动换了合法分类 → 放行
+        XCTAssertTrue(BillEditRules.canSave(
+            selectedType: "expenditure", selectedCategory: "购物",
+            originalType: "expenditure", originalCategory: "餐饮"
+        ))
+    }
 }

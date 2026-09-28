@@ -61,6 +61,24 @@ enum BillEditRules {
         if type == transferType { return transferCategory }
         return isValid(category, for: type) ? category : nil
     }
+
+    /// 保存是否放行。
+    /// 关键规则：**类型没变就允许保存**——历史账单的分类可能是空的或不合法（显示层本来就支持「未分类」），
+    /// 如果拿分类校验去拦，用户连「改一个金额错别字」都做不到，而且早期实现是 `.disabled` 静默禁用，
+    /// 表现为「改了金额没反应、再打开又是旧值」。只有用户主动改了类型时，才要求重新选择合法分类。
+    @MainActor
+    static func canSave(
+        selectedType: String,
+        selectedCategory: String?,
+        originalType: String?,
+        originalCategory: String?
+    ) -> Bool {
+        let typeUnchanged = normalizedType(selectedType) == normalizedType(originalType)
+        if typeUnchanged, (selectedCategory ?? "") == (originalCategory ?? "") {
+            return true   // 类型与分类都没动：原样保存（含历史空分类 / 不合法分类）
+        }
+        return isValid(selectedCategory, for: selectedType)
+    }
 }
 
 // MARK: - 账单类型的统一口径

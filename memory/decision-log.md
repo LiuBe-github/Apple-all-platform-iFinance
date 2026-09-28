@@ -195,3 +195,9 @@
 | D-85 | 所有「按类型比较 / 求和」统一走 `BillMath`（`isExpenditure/isIncome/isTransfer/signedAmount`）：支出为负、收入为正、**转账不计入结余**；替换 `DayGroupCard.dayNet`、`TransactionRowView`（符号/颜色/分类解析）、`HomeView` 今日收支、`PeriodSummary`、`CategoryBreakdown`、趋势聚合、CSV 导入导出、Watch payload | 之前直接比 `bill.type == "expenditure"`：中文旧值被当成收入（结余加而不是减）、转账被算进当日结余。集中到一处才能保证口径一致且可单测 | `BillEditRules.swift`（两版同名副本）；`BillInputTests` 覆盖中文/规范/垃圾/空值 |
 | D-86 | 备忘格式指令改为**带 id 的一次性请求** + `MemoMarkdownRequestGate`；输入法组合期间工具栏置灰（用户选择）；应用前 `unmarkText()` 兜底；触觉反馈从 `updateUIView` 移到按钮 | 原实现把指令放在 `@State` 里异步清空，而写入 `uiView.text` 会触发重绘 → 清空之前又被套用一次，形成「反复加格式」的循环；叠加输入法组合期改文本 = App 卡死 + 候选栏狂跳 | `MemoMarkdown.swift`（请求与闸门）、`MarkdownTextEditor.swift`（request + isComposing）、`MemoEditSheet`（禁用态 + 提示文案） |
 
+## T. 编辑页保存放行规则（2026-09-28 第十三轮）
+
+| 编号 | 决策 | 理由 | 落地 |
+|------|------|------|------|
+| D-87 | 保存放行改为 `BillEditRules.canSave`：**类型没变就放行**（历史空分类 / 与类型不匹配的脏分类原样保留），只有用户主动改类型才要求重选合法分类；写库时的分类改为「选了就用选的 / 没选且类型没变 → 保留库内原值」 | 用户反复反馈「改金额没反应、再打开还是旧值」。分类校验把「只想改金额」的场景也拦住了，而且早期实现是 `.disabled` 静默禁用；显示层本来就支持「未分类」，保存层不该更强硬。顺手修掉「保存会把历史不合法分类清空」的数据风险 | `BillEditRules.swift` + `EditBillView.swift`（两版）；`BillInputTests` 新增 canSave 用例 |
+
