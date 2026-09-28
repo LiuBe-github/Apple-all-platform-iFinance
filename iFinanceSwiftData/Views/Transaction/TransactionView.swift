@@ -22,6 +22,21 @@ struct TransactionView: View {
     @Query(filter: PersistenceController.billUserPredicate, sort: \Bill.date, order: .reverse, animation: .default)
     private var bills: [Bill]
 
+    // MARK: - 账单内容指纹（用于刷新预算卡）
+
+    /// 只比数量会漏掉「编辑金额」这类改动，所以把金额 / 类型 / 分类 / 日期一起纳入指纹。
+    private var billRevision: Int {
+        var hasher = Hasher()
+        for bill in bills {
+            hasher.combine(bill.id)
+            hasher.combine(bill.amountDouble)
+            hasher.combine(bill.type)
+            hasher.combine(bill.category)
+            hasher.combine(bill.date)
+        }
+        return hasher.finalize()
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -64,6 +79,10 @@ struct TransactionView: View {
                     // 短暂延迟让用户看到加载指示器
                     try? await Task.sleep(nanoseconds: 800_000_000)
                     // 刷新预算卡片（改变 id 强制重新创建视图和 FetchRequest）
+                    budgetCardRefreshId += 1
+                }
+                .onChange(of: billRevision) { _, _ in
+                    // 新增 / 编辑（含改金额）/ 删除账单后，强制重建预算卡
                     budgetCardRefreshId += 1
                 }
             }

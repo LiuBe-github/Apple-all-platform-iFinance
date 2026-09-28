@@ -27,6 +27,8 @@ struct TodoListView: View {
     ) private var todos: [TodoItem]
 
     @State private var showsClearConfirm = false
+    /// 已展开子任务的待办（按 todo.id）
+    @State private var expandedIDs: Set<UUID> = []
 
     // MARK: - 行模型
 
@@ -177,39 +179,48 @@ struct TodoListView: View {
 
     private func rowView(_ row: Row, in group: TodoGroup) -> some View {
         let item = row.item
+        let subtasks = sortedSubtasks(of: item)
+        let isExpanded = expandedIDs.contains(row.id)
 
-        return HStack(alignment: .top, spacing: AppSpacing.md) {
-            Button {
-                toggleDone(item)
-            } label: {
-                Image(systemName: item.isDone ? "checkmark.circle.fill" : "circle")
-                    .font(.title3)
-                    .foregroundStyle(item.isDone ? completedColor : Color.secondary)
-                    .frame(width: AppLayout.iconTile, height: AppLayout.iconTile)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.scalePress)
-            .accessibilityLabel(Text(LocalizedStringKey(item.isDone ? "todo.group.completed" : "todo.segment.todo")))
-            .accessibilityAddTraits(item.isDone ? [.isSelected] : [])
-
-            VStack(alignment: .leading, spacing: AppSpacing.xs) {
-                titleRow(row)
-                if let note = item.note, !note.isEmpty {
-                    Text(note)
-                        .font(AppTypography.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
+        return VStack(alignment: .leading, spacing: AppSpacing.sm) {
+            HStack(alignment: .top, spacing: AppSpacing.md) {
+                Button {
+                    toggleDone(item)
+                } label: {
+                    Image(systemName: item.isDone ? "checkmark.circle.fill" : "circle")
+                        .font(.title3)
+                        .foregroundStyle(item.isDone ? completedColor : Color.secondary)
+                        .frame(width: AppLayout.iconTile, height: AppLayout.iconTile)
+                        .contentShape(Rectangle())
                 }
-                metaRow(row, in: group)
-            }
+                .buttonStyle(.scalePress)
+                .accessibilityLabel(Text(LocalizedStringKey(item.isDone ? "todo.group.completed" : "todo.segment.todo")))
+                .accessibilityAddTraits(item.isDone ? [.isSelected] : [])
 
-            Spacer(minLength: 0)
+                VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                    titleRow(row)
+                    if let note = item.note, !note.isEmpty {
+                        Text(note)
+                            .font(AppTypography.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                    metaRow(row, in: group)
+                }
+
+                Spacer(minLength: 0)
+            }
+            .contentShape(Rectangle())
+            .onTapGesture { onSelect(item) }
+
+            // 行内展开子任务：直接勾选，不必进入编辑页
+            if isExpanded, !subtasks.isEmpty {
+                subtaskList(subtasks, of: item)
+            }
         }
         .padding(AppSpacing.md)
         .appGlassCard(cornerRadius: AppRadius.row)
-        .contentShape(Rectangle())
-        .onTapGesture { onSelect(item) }
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .contain)
     }
 
     private func titleRow(_ row: Row) -> some View {
@@ -244,6 +255,7 @@ struct TodoListView: View {
         let subtasks = item.subtasks
         let tags = item.tags.sorted { ($0.name ?? "") < ($1.name ?? "") }
         let doneSubtasks = subtasks.filter(\.isDone).count
+        let isExpanded = expandedIDs.contains(row.id)
 
         HStack(spacing: AppSpacing.sm) {
             if let due = item.dueDate {
@@ -258,14 +270,22 @@ struct TodoListView: View {
             }
 
             if !subtasks.isEmpty {
-                HStack(spacing: 2) {
-                    Image(systemName: "checklist")
-                    Text("\(doneSubtasks)/\(subtasks.count)")
-                        .monospacedDigit()
+                Button {
+                    toggleExpanded(row.id)
+                } label: {
+                    HStack(spacing: 2) {
+                        Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+                        Image(systemName: "checklist")
+                        Text("\(doneSubtasks)/\(subtasks.count)")
+                            .monospacedDigit()
+                    }
+                    .font(AppTypography.tiny)
+                    .foregroundStyle(.secondary)
+                    .contentShape(Rectangle())
                 }
-                .font(AppTypography.tiny)
-                .foregroundStyle(.secondary)
+                .buttonStyle(.plain)
                 .accessibilityLabel(Text("todo.field.subtasks"))
+                .accessibilityValue(Text("\(doneSubtasks)/\(subtasks.count)"))
             }
 
             ForEach(tags.prefix(3)) { tag in
@@ -274,6 +294,64 @@ struct TodoListView: View {
 
             Spacer(minLength: 0)
         }
+    }
+
+    // MARK: - 子任务（行内展开 / 勾选）
+
+    private func subtaskList(_ subtasks: [TodoSubtask], of item: TodoItem) -> some View {
+        VStack(alignment: .leading, spacing: AppSpacing.xs) {
+            Divider().opacity(0.4)
+
+            ForEach(subtasks) { subtask in
+                Button {
+                    toggleSubtask(subtask, of: item)
+                } label: {
+                    HStack(spacing: AppSpacing.sm) {
+                        Image(systemName: subtask.isDone ? "checkmark.circle.fill" : "circle")
+                            .font(AppTypography.secondary)
+                            .foregroundStyle(subtask.isDone ? completedColor : Color.secondary)
+
+                        Text(subtask.title)
+                            .font(AppTypography.secondary)
+                            .strikethrough(subtask.isDone, color: .secondary)
+                            .foregroundStyle(subtask.isDone ? Color.secondary : Color.primary)
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+
+                        Spacer(minLength: 0)
+                    }
+                    .frame(minHeight: AppLayout.iconTile)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text(subtask.title))
+                .accessibilityValue(Text(LocalizedStringKey(subtask.isDone ? "todo.group.completed" : "todo.segment.todo")))
+                .accessibilityAddTraits(subtask.isDone ? [.isSelected] : [])
+            }
+        }
+        .padding(.leading, AppSpacing.xl)
+    }
+
+    private func sortedSubtasks(of item: TodoItem) -> [TodoSubtask] {
+        item.subtasks.sorted { $0.createdAt < $1.createdAt }
+    }
+
+    private func toggleExpanded(_ id: UUID) {
+        HapticManager.shared.selectionChanged()
+        if expandedIDs.contains(id) {
+            expandedIDs.remove(id)
+        } else {
+            expandedIDs.insert(id)
+        }
+    }
+
+    /// 行内勾选子任务（不改动父待办的完成状态）
+    private func toggleSubtask(_ subtask: TodoSubtask, of item: TodoItem) {
+        HapticManager.shared.light()
+        subtask.isDone.toggle()
+        item.updatedAt = Date()
+        item.updatedBy = PersistenceController.currentUserIdentifier
+        try? viewContext.save()
     }
 
     @ViewBuilder

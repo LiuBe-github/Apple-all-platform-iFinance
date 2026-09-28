@@ -393,6 +393,7 @@ macOS 端有独立副本：`MaciFinance/Views/Common/AppVisualStyle.swift`（130
 15. **Core Data 代码生成的类型契约**：整数属性只生成 `Int16/Int32/Int64`（没有 `Int`），非标量属性（String / Date / Decimal / UUID）默认生成**可选**类型。因此新增实体的纯逻辑与 SwiftData 实体统一用 `Int16`，Core Data 侧读取时要 `?? ""` / `?.doubleValue ?? 0`（两版视图的差异都集中在这里，不要试图把两版强行写成逐字节一致）。
 16. **标签栏放图片的两个坑**（`Views/ContentView.swift` 的「我的」标签）：① `.tabItem` 里放 `.resizable()` 图片会被拉伸铺满整个标签栏——必须传**固定尺寸位图**；② 标签栏会把**非符号图片当模板**渲染（整块纯色填充），SwiftUI 层 `.renderingMode(.original)` 不足以阻止，必须对 `UIImage` 调 `withRenderingMode(.alwaysOriginal)`。两版各有一条 `AvatarThumbnailTests` 锁定这两条约束。
 17. **`UserProfile.avatarData` 是 Core Data 外部二进制存储**（`allowsExternalBinaryDataStorage="YES"`）：字节实际落在 `<store>_SUPPORT/_EXTERNAL_DATA/`，列里存引用。**不要用裸 SQL 往这一列写图片字节**——Core Data 会把字节当引用读，轻则 `avatarData` 读到 nil，重则启动时抛 `NSInternalInconsistencyException: Missing bytes from file at path .../_EXTERNAL_DATA`（`AuthManager.bootstrap()` 里崩）。要给模拟器造带头像的账号请走 App 内流程或 Core Data API。
+18. **不要在 View 上写「比较实体内容」的 `Equatable`**：`DayGroupCard` 曾实现 `static func ==`，用 `zip(lhs.bills, rhs.bills).allSatisfy { $0.amount == $1.amount }` 判断「内容是否变化」。但数组两侧持有的是**同一批** `NSManagedObject` / `@Model` 实例，比较时读到的都是当前值，**恒为相等**——编辑金额后 SwiftUI 会跳过重绘，表现为「改了金额没有任何影响」。已删除该 `Equatable`（`BillsCardView`），并给 `TransactionView` 加「账单内容指纹」（数量 + 金额 + 类型 + 分类 + 日期）用于强制刷新预算卡。
 
 ## 11. 高频任务操作指引
 

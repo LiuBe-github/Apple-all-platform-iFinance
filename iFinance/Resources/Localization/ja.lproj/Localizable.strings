@@ -635,3 +635,22 @@
 "asset.a11y.summary" = "%1$d 種類の資産、合計 ¥%2$@";
 "asset.edit" = "口座を編集";
 "asset.delete_confirm" = "この口座を削除しますか？この操作は取り消せません。";
+
+// MARK: - 标签管理 / 备忘 Markdown（第十轮）
+
+"todo.tag.manage" = "タグを管理";
+"todo.tag.rename" = "名前を変更";
+"todo.tag.rename_title" = "タグ名を変更";
+"todo.tag.delete_confirm_title" = "タグを削除しますか？";
+"todo.tag.delete_confirm_message" = "このタグを使っているやることからタグだけが外れます（やることは残ります）。";
+"memo.markdown.edit" = "編集";
+"memo.markdown.preview" = "プレビュー";
+"memo.markdown.empty" = "まだ内容がありません";
+"memo.toolbar.bold" = "太字";
+"memo.toolbar.italic" = "斜体";
+"memo.toolbar.strikethrough" = "取り消し線";
+"memo.toolbar.code" = "インラインコード";
+"memo.toolbar.heading" = "見出し";
+"memo.toolbar.bullet" = "箇条書き";
+"memo.toolbar.checklist" = "チェックリスト";
+"memo.toolbar.quote" = "引用";

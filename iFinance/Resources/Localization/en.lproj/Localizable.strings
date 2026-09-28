@@ -635,3 +635,22 @@
 "asset.a11y.summary" = "%1$d asset types, total ¥%2$@";
 "asset.edit" = "Edit Account";
 "asset.delete_confirm" = "Delete this account? This can't be undone.";
+
+// MARK: - 标签管理 / 备忘 Markdown（第十轮）
+
+"todo.tag.manage" = "Manage Tags";
+"todo.tag.rename" = "Rename";
+"todo.tag.rename_title" = "Rename Tag";
+"todo.tag.delete_confirm_title" = "Delete this tag?";
+"todo.tag.delete_confirm_message" = "The tag is removed from any to-dos that use it; the to-dos themselves stay.";
+"memo.markdown.edit" = "Edit";
+"memo.markdown.preview" = "Preview";
+"memo.markdown.empty" = "Nothing yet";
+"memo.toolbar.bold" = "Bold";
+"memo.toolbar.italic" = "Italic";
+"memo.toolbar.strikethrough" = "Strikethrough";
+"memo.toolbar.code" = "Inline Code";
+"memo.toolbar.heading" = "Heading";
+"memo.toolbar.bullet" = "Bullet List";
+"memo.toolbar.checklist" = "Checklist";
+"memo.toolbar.quote" = "Quote";

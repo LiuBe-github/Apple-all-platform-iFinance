@@ -635,3 +635,22 @@
 "asset.a11y.summary" = "共 %1$d 类资产，合计 ¥%2$@";
 "asset.edit" = "编辑账户";
 "asset.delete_confirm" = "确定要删除这个账户吗？此操作无法撤销。";
+
+// MARK: - 标签管理 / 备忘 Markdown（第十轮）
+
+"todo.tag.manage" = "管理标签";
+"todo.tag.rename" = "重命名";
+"todo.tag.rename_title" = "重命名标签";
+"todo.tag.delete_confirm_title" = "删除标签？";
+"todo.tag.delete_confirm_message" = "删除后，使用该标签的待办会移除这个标签（待办本身保留）。";
+"memo.markdown.edit" = "编辑";
+"memo.markdown.preview" = "预览";
+"memo.markdown.empty" = "还没有内容";
+"memo.toolbar.bold" = "粗体";
+"memo.toolbar.italic" = "斜体";
+"memo.toolbar.strikethrough" = "删除线";
+"memo.toolbar.code" = "行内代码";
+"memo.toolbar.heading" = "标题";
+"memo.toolbar.bullet" = "列表";
+"memo.toolbar.checklist" = "待办清单";
+"memo.toolbar.quote" = "引用";

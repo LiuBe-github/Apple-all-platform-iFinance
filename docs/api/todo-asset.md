@@ -14,6 +14,9 @@
 | `iFinanceSwiftData/Data/AssetEntities.swift` | SwiftData `@Model` | `AssetAccount` / `AssetSnapshot` |
 | `iFinance/iFinance.xcdatamodeld`、`MaciFinance/MaciFinance.xcdatamodeld` | Core Data 模型 | 上述 6 个实体（`codeGenerationType="class"`，属性由 Xcode 生成） |
 | `iFinance/Views/Todo/`、`iFinanceSwiftData/Views/Todo/` | 视图 | `TodoTabView` / `TodoListView` / `TodoEditSheet` / `MemoListView` / `MemoEditSheet` |
+| `…/Views/Todo/TodoTagManageSheet.swift` | 视图（两版同名副本） | 标签管理：重命名 / 删除（删除只解除关联） |
+| `…/Views/Todo/MemoMarkdown.swift` | 纯逻辑（两版逐字节一致） | `MemoMarkdownCommand` / `MemoMarkdownEditor.apply(_:to:selection:)` / `MemoMarkdownRenderer` |
+| `…/Views/Todo/MarkdownTextEditor.swift` | 视图（两版逐字节一致） | `UITextView` 包装：选区回传 + 工具栏语法指令就地应用 |
 | `iFinance/Views/Asset/`、`iFinanceSwiftData/Views/Asset/` | 视图 | `AssetView` / `AssetEditSheet` / `AssetDonutChart` / `AssetTypeBreakdown` / `AssetChartStyle` / `AssetAmount` |
 
 > 两版同名视图只允许「数据栈差异」：`@FetchRequest` ↔ `@Query`、`@Environment(\.managedObjectContext)` ↔ `@Environment(\.modelContext)`、
@@ -140,6 +143,17 @@ enum AssetBreakdown {
 把带 `repeatRule` 的条目勾选完成时，用 `TodoRecurrence.nextDraft` 生成下一期（复制标签与子任务、子任务重置未完成）；
 「已完成」分组头提供「清除已完成」（二次确认 alert）。备忘列表用 `MemoSorting.sorted` 置顶优先。
 
+**子任务**：有子任务的父行显示 `chevron + checklist 2/5` 按钮，点按在列表内原地展开子任务清单（`expandedIDs` 状态），
+每个子任务一行、直接勾选（`toggleSubtask`），不进入编辑页；勾选子任务**不联动**父待办的完成状态。
+
+**标签**：编辑页标签区提供「新建标签」与「管理标签」两个入口；`TodoTagManageSheet` 支持重命名（`TodoTagRules` 校验）与
+删除（二次确认、只解除待办与标签的关联、行内显示被引用条数）。
+
+**备忘 Markdown**：`MemoEditSheet` 的正文区有「编辑 / 预览」分段与 8 个快捷语法按钮（粗体 / 斜体 / 删除线 / 行内代码 /
+标题 / 列表 / 待办清单 / 引用）。`MemoMarkdownEditor.apply(_:to:selection:)` 是纯函数：行内语法包裹或去掉包裹选区（无选区时插入成对标记并把光标置于中间），
+行首语法对选中的每一行加 / 去前缀。`MemoMarkdownRenderer.attributedString(from:)` 把行级前缀转成符号（`•` / `☐` / `☑` / `▎`）后交给系统解析行内语法；
+列表摘要用 `plainPreview(from:lineLimit:)` 显示去掉标记的纯文本。打开已有备忘默认进「预览」，新建时留在「编辑」。
+
 资产页：总资产卡（`AssetAmount` + `.appAmountStyle` / `.appNumericTransition`）→ `AssetDonutChart`（`SectorMark` + `chartAngleSelection` + 中心读数 + 明细列表兼图例）
 → 分类型账户列表（组头小计、组内余额降序、负数红色、点行编辑、`swipeActions` 删除）。编辑 sheet 用 `AssetEditSheet`
 （类型九宫格、± 切换负数余额、计入总资产开关、删除二次确认），表单宽度 `AppLayout.formMaxWidth`。
@@ -170,5 +184,6 @@ enum AssetBreakdown {
 | `iFinanceTests/TodoLogicTests`（两版同名） | 分组（逾期 / 今天 / 未来 7 天 / 以后 / 无日期 / 已完成）、排序（优先级 → 截止日 → 创建时间）、重复规则推进（月末 / 闰年）、标签校验、备忘置顶排序 |
 | `iFinanceTests/TodoEditRulesTests` | 编辑待办时的字段校验与重复规则联动 |
 | `iFinanceTests/TodoRenderSmokeTests` / `iFinanceSwiftDataTests/TodoRenderSmokeTests` | 待办与备忘视图真实渲染冒烟（不崩溃） |
+| `iFinanceTests/MemoMarkdownTests`（两版各一份，11 条） | 快捷语法（包裹 / 去包裹 / 无选区插入 / 行首前缀切换）、渲染去标记、行级前缀转换、`plainPreview` |
 | `iFinanceTests/AssetBreakdownTests`（两版同名） | 总额 / 负债 / 净资产、类型占比与固定顺序、快照差值（含上一条净额为 0 时比率为 nil）、同日 upsert 下标 |
 | `iFinanceTests/TodoAssetIsolationTests` / `iFinanceSwiftDataTests/TodoAssetTests` | 账号隔离（换 `createdBy` 查不到他人数据）、删除联动（6 类数据清空且保留其它账号） |

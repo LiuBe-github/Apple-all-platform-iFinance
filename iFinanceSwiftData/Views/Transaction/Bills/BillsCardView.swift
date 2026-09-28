@@ -143,7 +143,7 @@ struct BillsCardView: View {
 }
 
 // MARK: - 单日分组卡片
-private struct DayGroupCard: View, Equatable {
+private struct DayGroupCard: View {
     let date:  Date
     let bills: [Bill]
 
@@ -159,15 +159,11 @@ private struct DayGroupCard: View, Equatable {
         return f
     }()
 
-    // 基于账单数据内容判断是否需要重新计算 dayNet
-    // 比较方式：日期 + 账单数量 + 每笔账单的金额和类型
-    static func == (lhs: DayGroupCard, rhs: DayGroupCard) -> Bool {
-        lhs.date == rhs.date && lhs.bills.count == rhs.bills.count &&
-        zip(lhs.sortedBills, rhs.sortedBills).allSatisfy { bill1, bill2 in
-            bill1.amount == bill2.amount && bill1.type == bill2.type
-        }
-    }
-    
+    // 说明：这里曾经实现过自定义 `Equatable` 用来「按内容判断是否重算 dayNet」，
+    // 但两侧数组持有的是同一批 NSManagedObject / @Model 实例，比较时读到的都是**当前值**，
+    // 永远相等——金额被编辑后 SwiftUI 会跳过重绘（当日净额与列表不刷新）。
+    // 已改为交给 SwiftUI 默认的重绘规则（视图值不含 Equatable 时按身份重绘）。
+
     private var sortedBills: [Bill] {
         bills.sorted { ($0.date ?? Date()) > ($1.date ?? Date()) }
     }

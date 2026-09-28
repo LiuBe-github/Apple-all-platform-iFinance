@@ -35,6 +35,7 @@ struct TodoEditSheet: View {
     @State private var subtasks: [SubtaskDraft] = []
     @State private var newSubtaskTitle = ""
     @State private var isTagSheetPresented = false
+    @State private var isTagManagePresented = false
     @State private var errorMessage: String?
     @State private var showsDeleteConfirm = false
 
@@ -85,6 +86,9 @@ struct TodoEditSheet: View {
                 TodoTagSheet(existingNames: allTags.compactMap(\.name)) { created in
                     selectedTagIDs.insert(created.id ?? UUID())
                 }
+            }
+            .sheet(isPresented: $isTagManagePresented) {
+                TodoTagManageSheet()
             }
             .onChange(of: repeatRule) { _, newValue in
                 // 重复必须有基准日期，否则「完成后生成下一期」无法计算
@@ -227,13 +231,25 @@ struct TodoEditSheet: View {
                 }
             }
 
-            Button {
-                presentTagSheet()
-            } label: {
-                Label("todo.tag.add", systemImage: "plus.circle")
-                    .font(AppTypography.caption.weight(.semibold))
+            HStack(spacing: AppSpacing.xl) {
+                Button {
+                    presentTagSheet()
+                } label: {
+                    Label("todo.tag.add", systemImage: "plus.circle")
+                        .font(AppTypography.caption.weight(.semibold))
+                }
+                .buttonStyle(.scalePress)
+
+                if !allTags.isEmpty {
+                    Button {
+                        isTagManagePresented = true
+                    } label: {
+                        Label("todo.tag.manage", systemImage: "slider.horizontal.3")
+                            .font(AppTypography.caption.weight(.semibold))
+                    }
+                    .buttonStyle(.scalePress)
+                }
             }
-            .buttonStyle(.scalePress)
         }
     }
 

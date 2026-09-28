@@ -169,3 +169,13 @@
 | D-74 | 资产快照口径：**每个自然日一条，同日覆盖写**；账户新增 / 编辑 / 删除保存后按当天 upsert（`date` 取当天 00:00，`createdBy` 必填） | 快照用于「较上次变化」，粒度太细（每次改动一条）会让差值失去意义；只有一条记录时显示「首次记录」而不是假的变化值 | `AssetBreakdown.upsertIndex(for:in:calendar:)`；`AssetView.persistSnapshot()`；单测 `AssetBreakdownTests.testUpsertIndexMatchesSameDay` |
 | D-75 | 重复待办**必须先设截止日**才会在完成时生成下一期（`TodoRecurrence.nextDraft` 在无 `dueDate` 时返回 nil） | 重复规则本质是「按截止日推进一档」；没有锚点日期时生成的新条目仍然没有日期，只会产生无意义的副本链 | `TodoRecurrence`（两版副本）；PRD TODO-04 写明该前提 |
 | D-76 | 测试夹具必须用**局部常量持有 `PersistenceController`**，禁止写成 `PersistenceController(inMemory: true).container.mainContext` 这种临时实例链 | 临时实例被释放后容器随之销毁，随后的 `insert`/`save` 会直接触发 SwiftData 内部断言（SIGTRAP，崩溃点还会飘到别的测试上，极难定位）。已用对照用例（持有 = 通过 / 不持有 = 崩溃）确认 | `iFinanceSwiftDataTests/TodoAssetTests.swift` 的 `TodoAssetTestHarness`；同类写法在 `SwiftDataCoreTests.SwiftDataTestContext` 早已正确 |
+
+## Q. 待办/备忘体验与账单刷新（2026-09-28 第十轮）
+
+| 编号 | 决策 | 理由 | 落地 |
+|------|------|------|------|
+| D-77 | 子任务改为**列表内原地展开勾选**（父行显示 `chevron + checklist 2/5`，展开区单独热区），勾选子任务**不联动**父待办完成状态 | 用户反馈「子任务要点进编辑页才能完成」太低效。不联动是为了避免「误勾一个子任务就整条待办被判定完成」——父待办仍由左侧圆圈显式控制 | `TodoListView`（两版）新增 `expandedIDs`、`subtaskList`、`toggleSubtask` |
+| D-78 | 标签支持**重命名 / 删除**（新增 `TodoTagManageSheet`，入口在编辑页标签区「管理标签」）：重命名沿用 `TodoTagRules`（1–8 字、忽略大小写与音标去重）；删除**只解除关联**（待办保留）并二次确认，行内显示被引用条数 | 用户反馈「标签不能删也不能改」。标签是轻量分类，删除时连带删待办风险太大；改名不需要迁移历史数据（待办持有的是关系而不是名称副本） | `Views/Todo/TodoTagManageSheet.swift`（两版同名副本，仅数据栈差异） |
+| D-79 | 备忘正文支持 **Markdown 子集**：渲染（标题/列表/勾选/引用/粗体/斜体/删除线/行内代码/链接）+ 8 条快捷语法；编辑器用 `UITextView` 包装以拿到选区（SwiftUI `TextEditor` 不暴露选区，无法把语法作用在选中文字上）；打开已有备忘默认进「预览」 | 用户要求「正文增加 MD 语法渲染和快捷语法输入」。要精确包住选中文字必须有选区，`UIViewRepresentable` 是最小代价方案；默认预览符合「打开是想看内容」的直觉，新建时留在编辑 | `MemoMarkdown.swift`（纯逻辑，两版逐字节一致）、`MarkdownTextEditor.swift`、`MemoEditSheet`（编辑/预览分段 + 工具栏）、`MemoListView` 摘要去标记；`MemoMarkdownTests` 11 条 |
+| D-80 | 修「只改账单金额不生效」：**删除 `DayGroupCard` 的自定义 `Equatable`**（两侧持同一批实体，比较恒等 → 触发「没变化」跳过重绘），并给 `TransactionView` 加**账单内容指纹**（id + 金额 + 类型 + 分类 + 日期）在变化时重建预算卡 | 用户反馈「修改账单的金额之后，不会有影响」。根因是自定义 `==` 读的是同一批对象的当前值，永远相等；只比数量（`bills.count`）同样漏掉「编辑金额」这类改动 | `BillsCardView`（两版）、`TransactionView.billRevision` + `.onChange` |
+

@@ -635,3 +635,22 @@
 "asset.a11y.summary" = "共 %1$d 類資產，合計 ¥%2$@";
 "asset.edit" = "編輯帳戶";
 "asset.delete_confirm" = "確定要刪除這個帳戶嗎？此操作無法撤銷。";
+
+// MARK: - 标签管理 / 备忘 Markdown（第十轮）
+
+"todo.tag.manage" = "管理標籤";
+"todo.tag.rename" = "重新命名";
+"todo.tag.rename_title" = "重新命名標籤";
+"todo.tag.delete_confirm_title" = "刪除標籤？";
+"todo.tag.delete_confirm_message" = "刪除後，使用該標籤的待辦會移除這個標籤（待辦本身保留）。";
+"memo.markdown.edit" = "編輯";
+"memo.markdown.preview" = "預覽";
+"memo.markdown.empty" = "還沒有內容";
+"memo.toolbar.bold" = "粗體";
+"memo.toolbar.italic" = "斜體";
+"memo.toolbar.strikethrough" = "刪除線";
+"memo.toolbar.code" = "行內程式碼";
+"memo.toolbar.heading" = "標題";
+"memo.toolbar.bullet" = "列表";
+"memo.toolbar.checklist" = "待辦清單";
+"memo.toolbar.quote" = "引用";

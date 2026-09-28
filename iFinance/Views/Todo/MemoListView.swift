@@ -115,7 +115,7 @@ struct MemoListView: View {
             }
 
             if !title.isEmpty, !content.isEmpty {
-                Text(content)
+                Text(MemoMarkdownRenderer.plainPreview(from: content, lineLimit: 2))
                     .font(AppTypography.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
@@ -135,8 +135,10 @@ struct MemoListView: View {
         .accessibilityElement(children: .combine)
     }
 
+    /// 标题缺省时取正文首行（去掉 Markdown 标记）
     private func firstLine(of content: String) -> String {
-        content.split(whereSeparator: \.isNewline).first.map(String.init) ?? L10n.string("memo.title")
+        let preview = MemoMarkdownRenderer.plainPreview(from: content, lineLimit: 1)
+        return preview.isEmpty ? L10n.string("memo.title") : preview
     }
 
     private var emptyState: some View {

@@ -56,6 +56,8 @@ enum AppLayout {
     /// 图表高度（紧凑 / 常规）
     static let chartHeightCompact: CGFloat = 150
     static let chartHeightRegular: CGFloat = 190
+    /// 备忘编辑器的最小高度
+    static let editorMinHeight: CGFloat = 220
     /// 热力图单元格
     static let heatmapCell: CGFloat = 12
     /// 标签栏图标（「我的」标签用头像时的圆形直径）
