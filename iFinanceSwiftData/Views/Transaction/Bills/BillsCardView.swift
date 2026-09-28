@@ -50,6 +50,8 @@ struct BillsCardView: View {
     private var bills: [Bill]
 
     @State private var selectedTimeRange: TimeRange = .thisMonth
+    /// 收到 `.billDidChange` 后自增，用于强制重算当日结余等派生值
+    @State private var billRefreshToken = 0
     var selectedCategory: Binding<String?>?
     var selectedNote: Binding<String?>?
 
@@ -89,6 +91,8 @@ struct BillsCardView: View {
     var body: some View {
         // 每次渲染只做一次过滤 + 分组（原先 body 内引用两次会导致重复计算）
         let groups = groupedBills
+        // 读取刷新令牌：让「账单保存成功」能强制走一次 body（当日结余因此必定重算）
+        let _ = billRefreshToken
         return VStack(spacing: AppSpacing.md) {
             // 时间范围选择器
             timeRangePicker
@@ -108,6 +112,9 @@ struct BillsCardView: View {
             .id(selectedTimeRange)
             .transition(.opacity.combined(with: .move(edge: .bottom)))
             .appAnimation(AppMotion.standard, value: selectedTimeRange)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .billDidChange)) { _ in
+            billRefreshToken &+= 1
         }
     }
     
@@ -218,7 +225,9 @@ private struct DayGroupCard: View {
             VStack(spacing: 0) {
                 ForEach(Array(sortedBills.enumerated()), id: \.element.persistentModelID) { index, bill in
                     NavigationLink(
-                        destination: EditBillView(bill: bill).toolbar(.hidden, for: .tabBar)
+                        destination: EditBillView(bill: bill)
+                            .id(bill.updatedAt ?? .distantPast)   // 保存后身份变化 → 下次进入重新初始化表单，不用旧 @State
+                            .toolbar(.hidden, for: .tabBar)
                     ) {
                         TransactionRowView(bill: bill)
                     }

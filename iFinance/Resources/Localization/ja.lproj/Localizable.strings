@@ -655,3 +655,4 @@
 "memo.toolbar.checklist" = "チェックリスト";
 "memo.toolbar.quote" = "引用";
 "memo.markdown.composing_hint" = "変換を確定すると書式を適用できます";
+"bill.save_not_persisted" = "保存の検証に失敗しました。金額が保存されていません。もう一度お試しください。";

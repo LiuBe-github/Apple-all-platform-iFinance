@@ -655,3 +655,4 @@
 "memo.toolbar.checklist" = "待办清单";
 "memo.toolbar.quote" = "引用";
 "memo.markdown.composing_hint" = "输入法候选上屏后即可使用格式";
+"bill.save_not_persisted" = "保存校验失败：金额没有写进数据库，请重试（已记录诊断日志）";

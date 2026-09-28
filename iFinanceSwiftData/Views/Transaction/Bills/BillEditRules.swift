@@ -68,6 +68,12 @@ enum BillEditRules {
 /// 所有「按类型比较 / 按类型求和」的地方都走这里，禁止再直接写 `bill.type == "expenditure"`。
 /// 历史账单可能存着中文类型（模型旧默认值「支出」），直接比字符串会把它当成收入：
 /// 当日结余、首页收支、预算已用、周期概况、趋势饼图、CSV 导出都会算错。
+extension Notification.Name {
+    /// 账单保存成功（编辑页发出）：账本列表 / 预算卡据此强制刷新。
+    /// 用于兜底 SwiftUI 的 diff 优化（曾经出现「改了金额但当日结余不重算」）。
+    static let billDidChange = Notification.Name("iFinance.billDidChange")
+}
+
 enum BillMath {
 
     static func normalizedType(_ raw: String?) -> String {

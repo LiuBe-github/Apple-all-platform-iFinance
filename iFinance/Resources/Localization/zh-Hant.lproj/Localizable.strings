@@ -655,3 +655,4 @@
 "memo.toolbar.checklist" = "待辦清單";
 "memo.toolbar.quote" = "引用";
 "memo.markdown.composing_hint" = "輸入法候選上屏後即可使用格式";
+"bill.save_not_persisted" = "儲存校驗失敗：金額沒有寫進資料庫，請重試（已記錄診斷日誌）";

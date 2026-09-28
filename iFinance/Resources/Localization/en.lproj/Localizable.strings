@@ -655,3 +655,4 @@
 "memo.toolbar.checklist" = "Checklist";
 "memo.toolbar.quote" = "Quote";
 "memo.markdown.composing_hint" = "Finish typing the current word to use formatting";
+"bill.save_not_persisted" = "Save verification failed: the amount was not persisted. Please try again.";

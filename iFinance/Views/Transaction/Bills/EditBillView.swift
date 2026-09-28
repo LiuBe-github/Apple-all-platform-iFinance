@@ -25,6 +25,8 @@ struct EditBillView: View {
     // MARK: - State for alert
     @State private var showingAlert = false
     @State private var alertMessageKey = "bill.amount_invalid_msg"
+    /// 最近一次保存结果（调试诊断行显示：写入值 → 库内回读值）
+    @State private var lastSaveSummary = "—"
     @State private var showingDeleteConfirmation = false
     
     init(bill: Bill) {
@@ -100,6 +102,21 @@ struct EditBillView: View {
                     TextField("bill.note_placeholder", text: $note)
                 }
                 
+                #if DEBUG
+                // 调试诊断行：一眼看出「写进去了没有」——若仍复现「改金额没反应」，
+                // 请把这一行截图/抄给我：库内金额 / 输入框 / 最近一次保存回读
+                Section("DEBUG") {
+                    VStack(alignment: .leading, spacing: AppSpacing.xs) {
+                        Text("库内金额：\(String(format: "%.2f", bill.amount?.doubleValue ?? -1)))")
+                        Text("输入框：\(amountString.isEmpty ? "（空）" : amountString)")
+                        Text("类型：\(selectedType) ｜ 分类：\(categoryForSaving ?? "（未选）")")
+                        Text("保存回读：\(lastSaveSummary)")
+                    }
+                    .font(AppTypography.caption)
+                    .foregroundStyle(.secondary)
+                }
+                #endif
+
                 Section {
                     Button("bill.delete") {
                         showingDeleteConfirmation = true
@@ -214,14 +231,29 @@ struct EditBillView: View {
         bill.note = note
         bill.category = categoryForSaving
         bill.date = selectedDate
+        bill.updatedAt = Date()
+        bill.updatedBy = PersistenceController.currentUserIdentifier
         
         // 保存上下文
         do {
             try viewContext.save()
+
+            // 回读校验：确认写进库的就是用户输入的值（曾经的「改完没生效」就是静默失败）
+            let persisted = bill.amount?.doubleValue ?? -1
+            lastSaveSummary = "\(String(format: "%.2f", amountDouble)) → \(String(format: "%.2f", persisted))"
+
+            Logger(subsystem: "com.liube.ifinance", category: "BillSave").notice("保存成功 写入=\(amountDouble, privacy: .public) 库内回读=\(persisted, privacy: .public)")
+
+            if abs(persisted - amountDouble) > 0.001 {
+                HapticManager.shared.error()
+                alertMessageKey = "bill.save_not_persisted"
+                showingAlert = true
+                Logger(subsystem: "com.liube.ifinance", category: "BillSave").error("保存后回读不一致：写入=\(amountDouble, privacy: .public) 库内=\(persisted, privacy: .public)")
+                return
+            }
+
+            NotificationCenter.default.post(name: .billDidChange, object: nil)
             HapticManager.shared.success()
-            #if DEBUG
-            Logger(subsystem: "com.liube.ifinance", category: "BillSave").notice("保存成功 amount=\(amountDouble, privacy: .public) 库内值=\(bill.amount?.doubleValue ?? -1, privacy: .public)")
-            #endif
             dismiss()
         } catch {
             HapticManager.shared.error()
