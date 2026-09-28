@@ -71,30 +71,48 @@ final class MemoMarkdownTests: XCTestCase {
     // MARK: - 渲染
 
     func testRendererStripsInlineMarkers() {
-        let rendered = MemoMarkdownRenderer.attributedString(from: "这是 **重点** 和 `代码`")
-        XCTAssertEqual(String(rendered.characters), "这是 重点 和 代码")
+        let blocks = MemoMarkdownRenderer.blocks(from: "这是 **重点** 和 `代码`")
+        XCTAssertEqual(blocks.count, 1)
+        XCTAssertEqual(String(blocks[0].content.characters), "这是 重点 和 代码")
 
-        let boldRun = rendered.runs.first { $0.inlinePresentationIntent?.contains(.stronglyEmphasized) == true }
+        let boldRun = blocks[0].content.runs.first { $0.inlinePresentationIntent?.contains(.stronglyEmphasized) == true }
         XCTAssertNotNil(boldRun, "粗体应保留为行内语义属性")
     }
 
     func testRendererConvertsBlockPrefixes() {
-        XCTAssertEqual(
-            String(MemoMarkdownRenderer.attributedString(from: "# 标题").characters),
-            "标题"
-        )
-        XCTAssertEqual(
-            String(MemoMarkdownRenderer.attributedString(from: "- [ ] 未完成").characters),
-            "☐  未完成"
-        )
-        XCTAssertEqual(
-            String(MemoMarkdownRenderer.attributedString(from: "- [x] 已完成").characters),
-            "☑  已完成"
-        )
-        XCTAssertEqual(
-            String(MemoMarkdownRenderer.attributedString(from: "- 列表项").characters),
-            "•  列表项"
-        )
+        let heading = MemoMarkdownRenderer.blocks(from: "# 标题")
+        XCTAssertEqual(heading.first?.style, .heading(level: 1))
+        XCTAssertEqual(plainText(of: heading.first), "标题")
+        XCTAssertNil(heading.first?.symbol)
+
+        let unchecked = MemoMarkdownRenderer.blocks(from: "- [ ] 未完成").first
+        XCTAssertEqual(unchecked?.symbol, "☐")
+        XCTAssertEqual(unchecked?.isChecked, false)
+        XCTAssertEqual(plainText(of: unchecked), "未完成")
+
+        let checked = MemoMarkdownRenderer.blocks(from: "- [x] 已完成").first
+        XCTAssertEqual(checked?.symbol, "☑")
+        XCTAssertEqual(checked?.isChecked, true)
+
+        let bullet = MemoMarkdownRenderer.blocks(from: "- 列表项").first
+        XCTAssertEqual(bullet?.symbol, "•")
+        XCTAssertEqual(plainText(of: bullet), "列表项")
+
+        let quote = MemoMarkdownRenderer.blocks(from: "> 引用").first
+        XCTAssertEqual(quote?.symbol, "▎")
+    }
+
+    /// 取块内纯文本（去掉行内标记）
+    private func plainText(of block: MemoMarkdownBlock?) -> String {
+        guard let block else { return "" }
+        return String(block.content.characters)
+    }
+
+    func testBlocksKeepLineOrder() {
+        let blocks = MemoMarkdownRenderer.blocks(from: "第一行\n- 第二行")
+        XCTAssertEqual(blocks.map(\.id), [0, 1])
+        XCTAssertEqual(blocks[0].style, .plain)
+        XCTAssertEqual(blocks[1].style, .bullet)
     }
 
     func testPlainPreviewRemovesAllMarkers() {

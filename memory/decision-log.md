@@ -179,3 +179,11 @@
 | D-79 | 备忘正文支持 **Markdown 子集**：渲染（标题/列表/勾选/引用/粗体/斜体/删除线/行内代码/链接）+ 8 条快捷语法；编辑器用 `UITextView` 包装以拿到选区（SwiftUI `TextEditor` 不暴露选区，无法把语法作用在选中文字上）；打开已有备忘默认进「预览」 | 用户要求「正文增加 MD 语法渲染和快捷语法输入」。要精确包住选中文字必须有选区，`UIViewRepresentable` 是最小代价方案；默认预览符合「打开是想看内容」的直觉，新建时留在编辑 | `MemoMarkdown.swift`（纯逻辑，两版逐字节一致）、`MarkdownTextEditor.swift`、`MemoEditSheet`（编辑/预览分段 + 工具栏）、`MemoListView` 摘要去标记；`MemoMarkdownTests` 11 条 |
 | D-80 | 修「只改账单金额不生效」：**删除 `DayGroupCard` 的自定义 `Equatable`**（两侧持同一批实体，比较恒等 → 触发「没变化」跳过重绘），并给 `TransactionView` 加**账单内容指纹**（id + 金额 + 类型 + 分类 + 日期）在变化时重建预算卡 | 用户反馈「修改账单的金额之后，不会有影响」。根因是自定义 `==` 读的是同一批对象的当前值，永远相等；只比数量（`bills.count`）同样漏掉「编辑金额」这类改动 | `BillsCardView`（两版）、`TransactionView.billRevision` + `.onChange` |
 
+## R. 构建提速 / 输入法卡顿 / 金额改不动（2026-09-28 第十一轮）
+
+| 编号 | 决策 | 理由 | 落地 |
+|------|------|------|------|
+| D-81 | Markdown 渲染**不在纯逻辑层设置 SwiftUI 属性**：`MemoMarkdownRenderer` 只产出「行级样式 + 行内 AttributedString」，字号 / 颜色 / 删除线由视图层修饰器设置 | `rendered.font = ...` / `.foregroundColor = ...` 走 SwiftUI 属性作用域，单文件 `swiftc -typecheck` 要 8.47 秒；增量构建每次重建模块接口，直接拖慢所有构建。分离后 1.76 秒 | `MemoMarkdown.swift`（新增 `MemoMarkdownBlock`）、`MemoEditSheet.markdownPreview` 逐块渲染；`MemoMarkdownTests` 改用 `blocks(from:)` |
+| D-82 | `MarkdownTextEditor` **编辑中不回灌文本**：`updateUIView` 在 `uiView.isFirstResponder` 时直接返回，只有非编辑态（打开 sheet 载入内容）才同步；同时移除「每次按键都上报选区」的回调 | 输入法组合（marked text）期间 binding 常落后一两个字，`uiView.text = text` 会打断组合、清掉候选，表现为「打字非常卡」；选区回调每次按键都改父状态，额外触发整页重绘 | `MarkdownTextEditor.swift`（两版逐字节一致） |
+| D-83 | 账单编辑页**不再用 `.disabled` 静默禁用保存**，改为点击后按具体原因弹提示；并在打开时归一化类型（`BillEditRules.normalizedType`）、金额输入归一化（`BillAmountInput`） | 用户报「改金额没影响、再打开又是旧值」：旧数据的 `Bill.type` 是模型默认值「支出」等中文 → 分段控件无匹配项、分类校验永远失败 → 保存按钮永久禁用，点按毫无反应（改动根本没写库）。静默禁用是根因放大器 | `BillEditRules.swift`（两版逐字节一致）、`EditBillView`（两版）、新增 `BillInputTests` 7 条 |
+

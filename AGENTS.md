@@ -137,6 +137,7 @@ Watch 概览 → requestSync → transferUserInfo(action: requestTodayBills)
 | 标签栏头像（「我的」标签） | `.tabItem` 里放 `.resizable()` 图片会被拉伸铺满整条标签栏；且标签栏会把非符号图片**当模板**渲染成纯色块。必须传固定尺寸位图（`AvatarImageCache.thumbnail(for:diameter:)`），并保证 UIImage 为 `withRenderingMode(.alwaysOriginal)` |
 | `UserProfile.avatarData` | 该属性是 Core Data **外部二进制存储**（引用 + `_SUPPORT/_EXTERNAL_DATA` 文件）。**禁止用裸 SQL 往这列写图片字节**：Core Data 会把字节当引用读，轻则读到 nil、重则启动崩（`Missing bytes from file at path .../_EXTERNAL_DATA`）。造测试数据请走 App 流程或 Core Data API |
 | 文本解析换行 | Swift 中 `"\r\n"` 是**一个** Character：CSV/文本解析里 `ch == "\n"` 漏掉 CRLF，会把 Windows/Excel 导出的文件当成一整行（`CSVImporter.parseRows` 已修为覆盖 `\n` / `\r\n` / `\r`，新写解析逻辑请照此处理） |
+| AttributedString 与 SwiftUI 属性作用域 | 在纯逻辑 / 模型层写 `attributed.font = ...`、`.foregroundColor = ...`（SwiftUI attribute scope）会让**单文件类型检查慢十几倍**：`MemoMarkdown.swift` 曾因此 8.47s（同类文件 0.4s），而增量构建每次都要重建模块接口 → 整个工程构建变慢。做法：纯逻辑层只产出「样式枚举 + 行内 AttributedString」，字号 / 颜色 / 删除线交给视图层的 SwiftUI 修饰器 |
 | 视图不要写「比较实体内容」的 Equatable | `BillsCardView` 的 `DayGroupCard` 曾用 `zip(bills, bills).allSatisfy { $0.amount == $1.amount }` 判断内容变化——两侧是同一批 Core Data / SwiftData 实例，比较的是同一个当前值，**恒为 true**，于是编辑金额后视图被判定「没变化」而跳过重绘（症状：改金额后列表当日净额、预算卡都不动）。需要感知实体字段变化时用「内容指纹」（`TransactionView.billRevision`）+ `.onChange`，或直接依赖 SwiftUI 默认重绘 |
 | 分类体系（第四轮新增） | 自定义分类与二级分类定义存在**本机 UserDefaults**（`CategoryStore`，按账号隔离，键 `custom_categories_v1_<账号>`），**不改三份数据模型**；账单里只存名字或 `父/子` 路径。改名会同步历史账单、删除不会（历史账单保留原分类名）。macOS / watchOS 不识别自定义分类，显示为灰色纯文本 |
 | 分类图标唯一性 | 一级分类图标在同一类型内不得重复、二级分类在同一父级下不得重复；新增/调整分类后必须跑 `iFinanceTests/CategoryIconTests`（同时校验符号在系统中真实存在） |

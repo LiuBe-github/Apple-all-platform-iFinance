@@ -23,7 +23,6 @@ struct MemoEditSheet: View {
     @State private var showsDeleteConfirm = false
     @State private var showsMarkdownPreview = false
     @State private var pendingCommand: MemoMarkdownCommand?
-    @State private var editorSelection = NSRange(location: 0, length: 0)
 
     private var isEditing: Bool { note != nil }
 
@@ -53,8 +52,7 @@ struct MemoEditSheet: View {
                                 } else {
                                     MarkdownTextEditor(
                                         text: $content,
-                                        pendingCommand: $pendingCommand,
-                                        onSelectionChange: { editorSelection = $0 }
+                                        pendingCommand: $pendingCommand
                                     )
                                     .frame(minHeight: AppLayout.editorMinHeight)
                                     .background(
@@ -171,6 +169,7 @@ struct MemoEditSheet: View {
         }
     }
 
+    /// 预览：逐行渲染（行级样式在视图层设置，避免 `AttributedString` 的 SwiftUI 属性作用域拖慢类型检查）
     private var markdownPreview: some View {
         ScrollView {
             if content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -180,12 +179,26 @@ struct MemoEditSheet: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(AppSpacing.md)
             } else {
-                Text(MemoMarkdownRenderer.attributedString(from: content))
-                    .font(AppTypography.body)
-                    .foregroundStyle(.primary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(AppSpacing.md)
-                    .textSelection(.enabled)
+                VStack(alignment: .leading, spacing: AppSpacing.sm) {
+                    ForEach(MemoMarkdownRenderer.blocks(from: content)) { block in
+                        HStack(alignment: .top, spacing: AppSpacing.sm) {
+                            if let symbol = block.symbol {
+                                Text(symbol)
+                                    .font(block.font)
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            Text(block.content)
+                                .font(block.font)
+                                .foregroundStyle(block.isChecked ? Color.secondary : Color.primary)
+                                .strikethrough(block.isChecked, color: .secondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .textSelection(.enabled)
+                        }
+                    }
+                }
+                .padding(AppSpacing.md)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
         .frame(minHeight: AppLayout.editorMinHeight)

@@ -193,16 +193,61 @@ enum MemoMarkdownEditor {
 
 // MARK: - 渲染
 
+/// 行级语法类型
+enum MemoMarkdownLineStyle: Equatable {
+    case plain
+    case heading(level: Int)
+    case bullet
+    case checklist(done: Bool)
+    case quote
+}
+
+/// 渲染出的一「行」：行级样式 + 行内语法（粗体 / 斜体 / 删除线 / 代码 / 链接）
+///
+/// 注意：这里只产出**行级样式 + 行内 AttributedString**，字号 / 颜色 / 删除线等
+/// 交给视图层用 SwiftUI 修饰器设置——`AttributedString` 的 SwiftUI 属性作用域
+/// （`.font = ...`、`.foregroundColor = ...`）会让类型检查变慢十几倍：
+/// 本文件曾因为这类赋值单文件 `swiftc -typecheck` 要 8.5 秒（同类文件约 0.4 秒），
+/// 增量构建每次都要重建模块接口，直接拖慢整个构建。
+struct MemoMarkdownBlock: Identifiable, Equatable {
+    let id: Int
+    let style: MemoMarkdownLineStyle
+    /// 行内语法解析结果（Foundation 属性作用域，交给系统解析）
+    let content: AttributedString
+
+    /// 行首符号（列表 / 勾选框 / 引用）
+    var symbol: String? {
+        switch style {
+        case .plain, .heading: return nil
+        case .bullet: return "•"
+        case .checklist(let done): return done ? "☑" : "☐"
+        case .quote: return "▎"
+        }
+    }
+
+    var isChecked: Bool {
+        if case .checklist(let done) = style { return done }
+        return false
+    }
+
+    /// 行级字号（标题更大，勾选完成 / 引用用次级样式）
+    var font: Font {
+        switch style {
+        case .heading(let level):
+            switch level {
+            case 1: return .title3.bold()
+            case 2: return .headline
+            default: return .subheadline.weight(.semibold)
+            }
+        case .quote: return AppTypography.secondary
+        default: return AppTypography.body
+        }
+    }
+}
+
 enum MemoMarkdownRenderer {
 
-    /// 行级语法类型
-    enum LineStyle: Equatable {
-        case plain
-        case heading(level: Int)
-        case bullet
-        case checklist(done: Bool)
-        case quote
-    }
+    typealias LineStyle = MemoMarkdownLineStyle
 
     /// 解析单行的行级语法，返回样式与去掉前缀后的正文
     static func parse(_ line: String) -> (style: LineStyle, content: String) {
@@ -235,50 +280,17 @@ enum MemoMarkdownRenderer {
         return (.plain, line)
     }
 
-    /// 把 Markdown 源文本渲染成 `AttributedString`（行级前缀转成符号，行内语法交给系统解析）
-    static func attributedString(from source: String) -> AttributedString {
-        guard !source.isEmpty else { return AttributedString() }
+    /// 把 Markdown 源文本按行解析成可渲染的块（视图逐行渲染，样式在视图层设置）
+    static func blocks(from source: String) -> [MemoMarkdownBlock] {
+        guard !source.isEmpty else { return [] }
 
-        var output = AttributedString()
-        let lines = source.components(separatedBy: "\n")
-
-        for (index, line) in lines.enumerated() {
-            let (style, content) = parse(line)
-            var rendered = inline(content)
-
-            switch style {
-            case .plain:
-                break
-            case .heading(let level):
-                let font: Font = level == 1
-                    ? .title3.bold()
-                    : (level == 2 ? .headline : .subheadline.weight(.semibold))
-                rendered.font = font
-            case .bullet:
-                var bullet = AttributedString("•  ")
-                bullet.foregroundColor = .secondary
-                rendered = bullet + rendered
-            case .checklist(let done):
-                var box = AttributedString(done ? "☑  " : "☐  ")
-                box.foregroundColor = done ? .secondary : .accentColor
-                var body = rendered
-                if done {
-                    body.strikethroughStyle = .single
-                    body.foregroundColor = .secondary
-                }
-                rendered = box + body
-            case .quote:
-                var bar = AttributedString("▎ ")
-                bar.foregroundColor = .secondary
-                rendered = bar + rendered
+        return source
+            .components(separatedBy: "\n")
+            .enumerated()
+            .map { index, line in
+                let (style, content) = parse(line)
+                return MemoMarkdownBlock(id: index, style: style, content: inline(content))
             }
-
-            output += rendered
-            if index < lines.count - 1 {
-                output += AttributedString("\n")
-            }
-        }
-        return output
     }
 
     /// 列表 / 详情里的一行纯文本预览（去掉 Markdown 标记）

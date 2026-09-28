@@ -17,8 +17,6 @@ struct MarkdownTextEditor: UIViewRepresentable {
     @Binding var text: String
     /// 工具栏下发的语法指令，执行后由协调器清空
     @Binding var pendingCommand: MemoMarkdownCommand?
-    /// 选区变化回调（UTF-16 偏移，与 `UITextView.selectedRange` 一致）
-    var onSelectionChange: (NSRange) -> Void = { _ in }
 
     func makeCoordinator() -> Coordinator {
         Coordinator(parent: self)
@@ -52,7 +50,7 @@ struct MarkdownTextEditor: UIViewRepresentable {
             )
             uiView.text = result.text
             uiView.selectedRange = result.selection
-            context.coordinator.isApplyingProgrammaticChange = true
+            // 先同步 binding 再让代理的 didChange 跑：代理看到 textView.text == parent.text 时不会重复写
             if text != result.text { text = result.text }
             HapticManager.shared.light()
             // 不能在本轮更新里改状态，异步清空指令
@@ -60,33 +58,34 @@ struct MarkdownTextEditor: UIViewRepresentable {
             return
         }
 
+        // 正在输入时**绝不**把 binding 里的文本灌回 UITextView：
+        // 中文 / 日文输入法在组合（marked text）过程中，binding 往往落后一两个字符，
+        // 一旦这里重新赋值就会打断输入法组合、清掉候选，表现为「打字非常卡」。
+        // 非编辑态（例如刚打开 sheet 载入内容）才需要同步。
+        guard !uiView.isFirstResponder else { return }
+
         if uiView.text != text {
-            let maxLocation = (text as NSString).length
-            let location = min(uiView.selectedRange.location, maxLocation)
             uiView.text = text
-            uiView.selectedRange = NSRange(location: location, length: 0)
+            uiView.selectedRange = NSRange(location: 0, length: 0)
         }
     }
 
     final class Coordinator: NSObject, UITextViewDelegate {
         var parent: MarkdownTextEditor
-        /// 程序性改文本时避免回调里再写一次 binding
-        var isApplyingProgrammaticChange = false
 
         init(parent: MarkdownTextEditor) {
             self.parent = parent
         }
 
         func textViewDidChange(_ textView: UITextView) {
-            guard !isApplyingProgrammaticChange else {
-                isApplyingProgrammaticChange = false
-                return
-            }
-            parent.text = textView.text ?? ""
+            let current = textView.text ?? ""
+            if parent.text != current { parent.text = current }
         }
 
-        func textViewDidChangeSelection(_ textView: UITextView) {
-            parent.onSelectionChange(textView.selectedRange)
+        /// 输入法组合结束 / 失焦时再补一次同步，避免最后一次组合内容没写回
+        func textViewDidEndEditing(_ textView: UITextView) {
+            let current = textView.text ?? ""
+            if parent.text != current { parent.text = current }
         }
     }
 }

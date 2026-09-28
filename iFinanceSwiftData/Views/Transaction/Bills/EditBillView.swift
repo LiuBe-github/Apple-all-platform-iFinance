@@ -23,16 +23,20 @@ struct EditBillView: View {
     @State private var selectedDate = Date()
     // MARK: - State for alert
     @State private var showingAlert = false
+    @State private var alertMessageKey = "bill.amount_invalid_msg"
     @State private var showingDeleteConfirmation = false
     
     init(bill: Bill) {
         self.bill = bill
         
         // 初始化表单状态
+        // 类型先归一化：历史数据可能是模型默认值「支出」等中文类型，直接用会导致
+        // 分段控件无匹配项、分类校验永远失败（保存按钮点了没反应）
+        let normalizedType = BillEditRules.normalizedType(bill.type)
         _amountString = State(initialValue: bill.amount == nil ? "" : bill.amountString)
-        _selectedType = State(initialValue: bill.type ?? "expenditure")
+        _selectedType = State(initialValue: normalizedType)
         _note = State(initialValue: bill.note ?? "")
-        _categoryRawValue = State(initialValue: BillEditRules.normalizedCategory(bill.category, for: bill.type ?? "expenditure"))
+        _categoryRawValue = State(initialValue: BillEditRules.normalizedCategory(bill.category, for: normalizedType))
         _selectedDate = State(initialValue: bill.date ?? Date())
     }
     
@@ -50,14 +54,12 @@ struct EditBillView: View {
                 Section("bill.amount") {
                     TextField("bill.input_amount", text: $amountString)
                         .keyboardType(.decimalPad)
-                        .onSubmit {
-                            validateAmount()
-                        }
                         .onChange(of: amountString) { _, newValue in
-                            // 可选：实时清理非法字符（只保留数字和小数点）
-                            let filtered = newValue.filter { "0123456789.".contains($0) }
-                            if filtered != newValue {
-                                amountString = filtered
+                            // 全角数字 / 中文句号 / 千分位统一成半角：
+                            // 以前只保留 `0-9.`，第三方输入法或全角键盘输入的字符会被直接吃掉
+                            let normalized = BillAmountInput.normalize(newValue)
+                            if normalized != newValue {
+                                amountString = normalized
                             }
                         }
                 }
@@ -120,25 +122,32 @@ struct EditBillView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
+                    // 不再用 .disabled 静默禁用：禁用会让「改完金额点保存毫无反应」，
+                    // 用户不知道哪里不合法。改为点击后按具体原因弹提示。
                     Button("common.save") {
                         saveBill()
                     }
-                    .disabled(!isValidInput)
-                    .alert("bill.amount_invalid", isPresented: $showingAlert) {
+                    .fontWeight(.semibold)
+                    .alert(L10n.string(alertMessageKey), isPresented: $showingAlert) {
                         Button("common.ok", role: .cancel) {}
-                    } message: {
-                        Text("bill.amount_invalid_msg")
-                    }
                     }
                 }
+            }
         }
     }
     
-    // 验证输入是否有效（至少金额要能转成数字）
-    private var isValidInput: Bool {
-        guard !amountString.isEmpty, let value = Double(amountString), value > 0 else { return false }
-        // 分类必须与当前类型匹配（转账固定 transfer）
-        return BillEditRules.isValid(categoryForSaving, for: selectedType)
+    // 合法金额（> 0）
+    private var amountValue: Double? {
+        BillAmountInput.value(amountString)
+    }
+
+    private var isValidAmount: Bool {
+        (amountValue ?? 0) > 0
+    }
+
+    /// 分类必须与当前类型匹配（转账固定 transfer）
+    private var hasValidCategory: Bool {
+        BillEditRules.isValid(categoryForSaving, for: selectedType)
     }
 
     /// 保存时写入的分类
@@ -174,8 +183,16 @@ struct EditBillView: View {
     }
     
     private func saveBill() {
-        guard let amountDouble = Double(amountString), amountDouble > 0 else {
+        guard let amountDouble = amountValue, amountDouble > 0 else {
             HapticManager.shared.error()
+            alertMessageKey = "bill.amount_invalid_msg"
+            showingAlert = true
+            return
+        }
+
+        guard hasValidCategory else {
+            HapticManager.shared.error()
+            alertMessageKey = "bill.choose_category"
             showingAlert = true
             return
         }
@@ -214,16 +231,6 @@ struct EditBillView: View {
         }
     }
     
-    
-    // MARK: - Validation
-    private func validateAmount() {
-        guard let amount = Double(amountString),
-              amount > 0 else {
-            showingAlert = true
-            return
-        }
-        // 如果需要，可以在这里做其他处理（比如自动保存）
-    }
 }
 
 // MARK: - 预览支持
