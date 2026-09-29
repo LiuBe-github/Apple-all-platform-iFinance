@@ -130,14 +130,14 @@ Watch 概览 → requestSync → transferUserInfo(action: requestTodayBills)
 | `WatchiFinance Watch App/Models/WatchDataModel.swift` | iPhone 不可达时账单只进本地缓存，没有补传队列 |
 | iOS 语言切换 | 走 `exit(0)` 重启进程；改语言相关逻辑时不要假设热切换 |
 | 工程 scheme | 存在无对应文件的遗留 scheme `Copy of iFinance` |
-| 真机部署慢 | 构建本身很快（增量 3～6s、全量约 24s），慢在部署阶段：iOS scheme 依赖 watch target（`Embed Watch Content`），配对手表时每次 Run 都会推送 Watch App，且 Xcode 会附加调试器。改用 `scripts/run-on-device.sh` 可绕过这两步；另注意设备需解锁且已信任电脑 |
+| 真机部署慢 | `iFinance` Scheme 的普通 Run / Test / Analyze / Profile 已跳过 Watch target，`Embed Watch Content` 只在 Archive 的 deployment postprocessing 执行（发布包仍含 Watch）。Xcode 附加调试器仍有固定开销；不需要断点时用 `scripts/run-on-device.sh` 可进一步跳过附加；开发 Watch 请单独选 `WatchiFinance Watch App` Scheme |
 | 记账键盘输入 | 数字键盘的表达式逻辑在 `Views/Transaction/Bills/NumberPadLogic.swift`（`NumberPadExpression`，纯函数 + 单测）。**校验只能针对「当前数字段」（最后一个运算符之后的部分）**——曾经用整串 `displayText` 判断小数位，导致「小数点出现后运算符后面再也输不进数字」；`AddBillView.parseExpression` 负责求值 |
 | SwiftData 待办/标签删除 | `TodoItem.tags` / `TodoTag.items` 是非可选多对多：`context.delete(model:where:)` 抛 `mandatory MTM nullify inverse`（134050）且被 `try?` 静默吞掉（数据删不掉）。待办与标签必须逐个 `context.delete(_:)`（对象图删除），其余 4 类无关系实体可继续批量删除 |
 | SwiftData 测试夹具 | `PersistenceController(inMemory: true).container.mainContext` 这种临时实例写法会让容器随控制器一起释放，`insert`/`save` 直接 SIGTRAP（崩溃点还会飘到别的测试上）。夹具类或局部常量必须持有 `PersistenceController` |
 | 标签栏头像（「我的」标签） | `.tabItem` 里放 `.resizable()` 图片会被拉伸铺满整条标签栏；且标签栏会把非符号图片**当模板**渲染成纯色块。必须传固定尺寸位图（`AvatarImageCache.thumbnail(for:diameter:)`），并保证 UIImage 为 `withRenderingMode(.alwaysOriginal)` |
 | `UserProfile.avatarData` | 该属性是 Core Data **外部二进制存储**（引用 + `_SUPPORT/_EXTERNAL_DATA` 文件）。**禁止用裸 SQL 往这列写图片字节**：Core Data 会把字节当引用读，轻则读到 nil、重则启动崩（`Missing bytes from file at path .../_EXTERNAL_DATA`）。造测试数据请走 App 流程或 Core Data API |
 | 文本解析换行 | Swift 中 `"\r\n"` 是**一个** Character：CSV/文本解析里 `ch == "\n"` 漏掉 CRLF，会把 Windows/Excel 导出的文件当成一整行（`CSVImporter.parseRows` 已修为覆盖 `\n` / `\r\n` / `\r`，新写解析逻辑请照此处理） |
-| AttributedString 与 SwiftUI 属性作用域 | 在纯逻辑 / 模型层写 `attributed.font = ...`、`.foregroundColor = ...`（SwiftUI attribute scope）会让**单文件类型检查慢十几倍**：`MemoMarkdown.swift` 曾因此 8.47s（同类文件 0.4s），而增量构建每次都要重建模块接口 → 整个工程构建变慢。做法：纯逻辑层只产出「样式枚举 + 行内 AttributedString」，字号 / 颜色 / 删除线交给视图层的 SwiftUI 修饰器 |
+| AttributedString 与 SwiftUI 属性作用域 | 在纯逻辑 / 模型层写 `attributed.font = ...`、`.foregroundColor = ...`（SwiftUI attribute scope）会让**单文件类型检查慢十几倍**：`MemoMarkdown.swift` 曾因此 8.47s（同类文件 0.4s），而增量构建每次都要重建模块接口 → 整个工程构建变慢。做法：纯逻辑层只产出「样式枚举 + 行内 AttributedString」，视图层逐 run 显式映射粗体 / 斜体 / 删除线 / 代码 / 链接；不要在外层用 `.font` 或 `.strikethrough(false)` 覆盖行内语义 |
 | 视图不要写「比较实体内容」的 Equatable | `BillsCardView` 的 `DayGroupCard` 曾用 `zip(bills, bills).allSatisfy { $0.amount == $1.amount }` 判断内容变化——两侧是同一批 Core Data / SwiftData 实例，比较的是同一个当前值，**恒为 true**，于是编辑金额后视图被判定「没变化」而跳过重绘（症状：改金额后列表当日净额、预算卡都不动）。需要感知实体字段变化时用「内容指纹」（`TransactionView.billRevision`）+ `.onChange`，或直接依赖 SwiftUI 默认重绘 |
 | 分类体系（第四轮新增） | 自定义分类与二级分类定义存在**本机 UserDefaults**（`CategoryStore`，按账号隔离，键 `custom_categories_v1_<账号>`），**不改三份数据模型**；账单里只存名字或 `父/子` 路径。改名会同步历史账单、删除不会（历史账单保留原分类名）。macOS / watchOS 不识别自定义分类，显示为灰色纯文本 |
 | 分类图标唯一性 | 一级分类图标在同一类型内不得重复、二级分类在同一父级下不得重复；新增/调整分类后必须跑 `iFinanceTests/CategoryIconTests`（同时校验符号在系统中真实存在） |

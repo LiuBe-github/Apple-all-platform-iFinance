@@ -46,11 +46,7 @@ struct MarkdownTextEditor: UIViewRepresentable {
 
         // ① 一次性格式指令：同一 id 只应用一次（重绘多少次都不会重复套用）
         if let request, context.coordinator.gate.shouldApply(request) {
-            apply(request.command, to: uiView, coordinator: context.coordinator)
-            DispatchQueue.main.async {
-                // 只有还是同一条请求时才清空，避免把用户新点的指令吞掉
-                if self.request?.id == request.id { self.request = nil }
-            }
+            apply(request, to: uiView, coordinator: context.coordinator)
             return
         }
 
@@ -68,50 +64,73 @@ struct MarkdownTextEditor: UIViewRepresentable {
 
     /// 把一条格式指令作用到当前选区；副作用（触觉反馈）由按钮负责，这里只改文本
     private func apply(
-        _ command: MemoMarkdownCommand,
+        _ request: MemoMarkdownRequest,
         to uiView: UITextView,
         coordinator: Coordinator
     ) {
+        // 程序化改写期间屏蔽 delegate 回调，避免在 `updateUIView` 内同步发布 SwiftUI 状态。
+        coordinator.isApplyingProgrammaticChange = true
+        defer { coordinator.isApplyingProgrammaticChange = false }
+
         // 兜底：万一指令到达时还在拼字（按钮已置灰，理论上不会），先提交当前候选再套格式，避免丢字
         if uiView.markedTextRange != nil {
             uiView.unmarkText()
         }
 
         let result = MemoMarkdownEditor.apply(
-            command,
+            request.command,
             to: uiView.text ?? "",
             selection: uiView.selectedRange
         )
         uiView.text = result.text
         uiView.selectedRange = result.selection
-        if text != result.text { text = result.text }
-        coordinator.syncComposingState(uiView)
+        coordinator.commitProgrammaticChange(
+            text: result.text,
+            requestID: request.id,
+            isComposing: uiView.markedTextRange != nil
+        )
     }
 
     final class Coordinator: NSObject, UITextViewDelegate {
         var parent: MarkdownTextEditor
         /// 一次性指令闸门
         var gate = MemoMarkdownRequestGate()
+        /// 程序化套用 Markdown 时，阻止 UITextView delegate 同步回写 SwiftUI 状态
+        var isApplyingProgrammaticChange = false
 
         init(parent: MarkdownTextEditor) {
             self.parent = parent
         }
 
         func textViewDidChange(_ textView: UITextView) {
+            guard !isApplyingProgrammaticChange else { return }
             syncComposingState(textView)
             let current = textView.text ?? ""
             if parent.text != current { parent.text = current }
         }
 
         func textViewDidChangeSelection(_ textView: UITextView) {
+            guard !isApplyingProgrammaticChange else { return }
             syncComposingState(textView)
         }
 
         /// 输入法组合结束 / 失焦时再补一次同步，避免最后一次组合内容没写回
         func textViewDidEndEditing(_ textView: UITextView) {
+            guard !isApplyingProgrammaticChange else { return }
             syncComposingState(textView)
             let current = textView.text ?? ""
             if parent.text != current { parent.text = current }
+        }
+
+        /// `updateUIView` 结束后再回写 binding，避免触发“视图更新期间修改状态”的重入循环。
+        func commitProgrammaticChange(text: String, requestID: UUID, isComposing: Bool) {
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                if self.parent.text != text { self.parent.text = text }
+                if self.parent.isComposing != isComposing { self.parent.isComposing = isComposing }
+                // 只有还是同一条请求时才清空，避免把用户新点的指令吞掉。
+                if self.parent.request?.id == requestID { self.parent.request = nil }
+            }
         }
 
         /// 只在「组合开始 / 结束」时更新 binding，避免每次按键都触发整页重绘

@@ -77,10 +77,12 @@ struct PersistenceController {
     @discardableResult
     func normalizeLegacyBillTypes() -> Int {
         let context = container.mainContext
-        let canonical = ["expenditure", "income", "transfer"]
         let descriptor = FetchDescriptor<Bill>(
             predicate: #Predicate<Bill> { bill in
-                bill.type == nil || !canonical.contains(bill.type ?? "")
+                bill.type == nil
+                    || (bill.type != "expenditure"
+                        && bill.type != "income"
+                        && bill.type != "transfer")
             }
         )
         guard let legacy = try? context.fetch(descriptor), !legacy.isEmpty else { return 0 }

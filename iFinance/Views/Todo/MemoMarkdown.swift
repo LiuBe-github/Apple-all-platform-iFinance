@@ -10,7 +10,6 @@
 //
 
 import Foundation
-import SwiftUI
 
 // MARK: - 快捷语法
 
@@ -263,19 +262,6 @@ struct MemoMarkdownBlock: Identifiable, Equatable {
         return false
     }
 
-    /// 行级字号（标题更大，勾选完成 / 引用用次级样式）
-    var font: Font {
-        switch style {
-        case .heading(let level):
-            switch level {
-            case 1: return .title3.bold()
-            case 2: return .headline
-            default: return .subheadline.weight(.semibold)
-            }
-        case .quote: return AppTypography.secondary
-        default: return AppTypography.body
-        }
-    }
 }
 
 enum MemoMarkdownRenderer {
@@ -328,12 +314,20 @@ enum MemoMarkdownRenderer {
 
     /// 列表 / 详情里的一行纯文本预览（去掉 Markdown 标记）
     static func plainPreview(from source: String, lineLimit: Int = 1) -> String {
-        let lines = source
-            .components(separatedBy: "\n")
-            .map { parse($0).content.trimmingCharacters(in: .whitespaces) }
-            .filter { !$0.isEmpty }
+        let limit = max(1, lineLimit)
+        var lines: [String] = []
+        lines.reserveCapacity(limit)
+
+        // 列表卡片只需要前几行：收集够了就停，避免每次列表重绘都扫描整篇长备忘。
+        source.enumerateLines { line, stop in
+            let content = parse(line).content.trimmingCharacters(in: .whitespaces)
+            guard !content.isEmpty else { return }
+            lines.append(content)
+            stop = lines.count >= limit
+        }
+
         guard !lines.isEmpty else { return "" }
-        let joined = lines.prefix(max(1, lineLimit)).joined(separator: " ")
+        let joined = lines.joined(separator: " ")
         // 顺带去掉行内标记（** / ~~ / ` 等）
         return String(inline(joined).characters)
     }

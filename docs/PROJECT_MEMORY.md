@@ -395,6 +395,8 @@ macOS 端有独立副本：`MaciFinance/Views/Common/AppVisualStyle.swift`（130
 17. **`UserProfile.avatarData` 是 Core Data 外部二进制存储**（`allowsExternalBinaryDataStorage="YES"`）：字节实际落在 `<store>_SUPPORT/_EXTERNAL_DATA/`，列里存引用。**不要用裸 SQL 往这一列写图片字节**——Core Data 会把字节当引用读，轻则 `avatarData` 读到 nil，重则启动时抛 `NSInternalInconsistencyException: Missing bytes from file at path .../_EXTERNAL_DATA`（`AuthManager.bootstrap()` 里崩）。要给模拟器造带头像的账号请走 App 内流程或 Core Data API。
 19. **账单类型一律走 `BillMath`**：历史数据的 `Bill.type` 可能是模型旧默认值「支出」等中文，直接写 `bill.type == "expenditure"` 会把它当成收入（结余算错、预算漏算、CSV 导出被守卫拦掉），甚至让编辑页的分类校验永远失败（保存被静默拦下 → 「改金额没反应、再打开还是旧值」）。做法：启动时 `normalizeLegacyBillTypes` 一次性改写（幂等）+ 所有比较/求和走 `BillMath`（`isExpenditure/isIncome/isTransfer/signedAmount`）。
 18. **不要在 View 上写「比较实体内容」的 `Equatable`**：`DayGroupCard` 曾实现 `static func ==`，用 `zip(lhs.bills, rhs.bills).allSatisfy { $0.amount == $1.amount }` 判断「内容是否变化」。但数组两侧持有的是**同一批** `NSManagedObject` / `@Model` 实例，比较时读到的都是当前值，**恒为相等**——编辑金额后 SwiftUI 会跳过重绘，表现为「改了金额没有任何影响」。已删除该 `Equatable`（`BillsCardView`），并给 `TransactionView` 加「账单内容指纹」（数量 + 金额 + 类型 + 分类 + 日期）用于强制刷新预算卡。
+20. **Xcode 普通 iPhone Run 与 Watch 发布链已分离**：`iFinance` Scheme 的 Run / Test / Analyze / Profile 不构建 Watch，iOS target 不再显式依赖 Watch，`Embed Watch Content` 只在 deployment postprocessing 执行。Archive 仍由 Scheme 显式构建 Watch 并嵌入 `iFinance.app/Watch/`（已实测）。开发 Watch 时选 `WatchiFinance Watch App` Scheme；不要为了日常 Run 重新加回 target dependency。
+21. **Markdown 编辑器禁止在 `updateUIView` 内同步回写 binding**：格式指令先改 `UITextView`，再延后回写 `text/request/isComposing`；否则会形成 SwiftUI 重入更新并卡死。预览的行内样式必须逐 `AttributedString.Run` 映射，外层 `.font` / `.strikethrough(false)` 会覆盖粗体、斜体或删除线语义。
 
 ## 11. 高频任务操作指引
 

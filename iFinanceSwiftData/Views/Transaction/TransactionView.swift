@@ -85,6 +85,11 @@ struct TransactionView: View {
                     // 新增 / 编辑（含改金额）/ 删除账单后，强制重建预算卡
                     budgetCardRefreshId += 1
                 }
+                .onReceive(NotificationCenter.default.publisher(for: .billDidChange)) { _ in
+                    // 编辑现有账单不会改变 Query 的成员集合，父视图可能不会因字段变化重算
+                    // billRevision；直接接收保存成功通知，确保预算卡立即用新金额重建。
+                    budgetCardRefreshId &+= 1
+                }
             }
             .navigationTitle("transaction.title")
             .scrollIndicators(.automatic)

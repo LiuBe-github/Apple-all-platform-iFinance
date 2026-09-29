@@ -28,9 +28,9 @@
 | iPhone 16 Pro（真机） | UDID `00008140-000C05692013C01C` | 需**解锁并信任此电脑**，否则 `devicectl` 显示 unavailable |
 | 配对的 Apple Watch | Watch7,11 | 配对状态会导致每次 Run 额外推送 Watch App |
 
-**真机部署慢的真实原因**（已实测）：
+**真机部署慢的历史原因与当前配置**（已实测）：
 
-1. iOS scheme 通过 `Embed Watch Content` + target dependency 依赖 watch target → 每次 Run 都会构建并推送 Watch App；
+1. 原 iOS scheme 通过 `Embed Watch Content` + target dependency 依赖 watch target → 每次 Run 都会构建并推送 Watch App。现已把普通 Run/Test/Profile/Analyze 与 Watch 分离，仅 Archive 构建并嵌入 Watch；
 2. Xcode 会附加调试器（lldb attach）；
 3. 设备锁定/休眠时 Xcode 反复重试，等待时间显著变长。
 

@@ -71,7 +71,7 @@ final class BillTypeMigrationTests: XCTestCase {
         )
         XCTAssertEqual(types.filter { $0 == "income" }.count, 1, "收入应为 1 条，实际：\(types)")
         XCTAssertEqual(types.filter { $0 == "transfer" }.count, 1, "转账应为 1 条，实际：\(types)")
-        XCTAssertEqual(PersistenceController.normalizeLegacyBillTypes(in: context), 0, "重复执行不应再改写")
+        XCTAssertEqual(controller.normalizeLegacyBillTypes(), 0, "重复执行不应再改写")
     }
 
     func testNormalizeLegacyBillTypesIsIdempotent() throws {

@@ -291,6 +291,7 @@ struct EditBillView: View {
         
         do {
             try viewContext.save()
+            NotificationCenter.default.post(name: .billDidChange, object: nil)
             print("✅ 账单删除成功")
             dismiss() // 返回到上一个页面
         } catch {

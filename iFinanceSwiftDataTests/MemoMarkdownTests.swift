@@ -79,6 +79,19 @@ final class MemoMarkdownTests: XCTestCase {
         XCTAssertNotNil(boldRun, "粗体应保留为行内语义属性")
     }
 
+    func testRendererPreservesEverySupportedInlineStyle() {
+        let block = MemoMarkdownRenderer.blocks(
+            from: "**粗体** *斜体* ~~删除~~ `代码` [链接](https://example.com)"
+        ).first
+        let runs = block?.content.runs
+
+        XCTAssertNotNil(runs?.first { $0.inlinePresentationIntent?.contains(.stronglyEmphasized) == true })
+        XCTAssertNotNil(runs?.first { $0.inlinePresentationIntent?.contains(.emphasized) == true })
+        XCTAssertNotNil(runs?.first { $0.inlinePresentationIntent?.contains(.strikethrough) == true })
+        XCTAssertNotNil(runs?.first { $0.inlinePresentationIntent?.contains(.code) == true })
+        XCTAssertNotNil(runs?.first { $0.link?.absoluteString == "https://example.com" })
+    }
+
     func testRendererConvertsBlockPrefixes() {
         let heading = MemoMarkdownRenderer.blocks(from: "# 标题")
         XCTAssertEqual(heading.first?.style, .heading(level: 1))
@@ -118,6 +131,14 @@ final class MemoMarkdownTests: XCTestCase {
     func testPlainPreviewRemovesAllMarkers() {
         let preview = MemoMarkdownRenderer.plainPreview(from: "# 标题\n- [ ] **任务**\n> 引用", lineLimit: 3)
         XCTAssertEqual(preview, "标题 任务 引用")
+    }
+
+    func testPlainPreviewStopsAtRequestedNonEmptyLines() {
+        let preview = MemoMarkdownRenderer.plainPreview(
+            from: "\n# 第一行\n- **第二行**\n第三行\n末尾",
+            lineLimit: 2
+        )
+        XCTAssertEqual(preview, "第一行 第二行")
     }
 
     func testParseLineStyle() {

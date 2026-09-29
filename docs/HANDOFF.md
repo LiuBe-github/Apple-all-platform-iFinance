@@ -22,9 +22,9 @@ xcodebuild build -project iFinance.xcodeproj -scheme iFinance \
 | 项 | 状态 |
 |----|------|
 | 分支 / 远端 | `codex/platform-18-27`，起点 `main` @ `fd6b1fb`，**未推送远端** |
-| 提交数 | 34 次（… 31 配色回退为原色 · 32 M1 待办/备忘/资产数据层 · 33 M2 待办与备忘标签页 · 34 M3 资产页；完整台账见 [memory/work-history.md](../memory/work-history.md)） |
-| 工作区 | 干净（交接前仅存在本轮已提交的改动） |
-| 代码规模 | `iFinance` 约 16.8k 行 · `iFinanceSwiftData` 约 16.7k 行 · `MaciFinance` 3,663 行 · `WatchiFinance Watch App` 723 行 |
+| 提交数 | 44 次（完整台账见 [memory/work-history.md](../memory/work-history.md)；本轮改动尚未提交） |
+| 工作区 | 有未提交改动：包含账单刷新链路、Xcode Run 提速与 Markdown 修复；不要丢弃或覆盖 |
+| 代码规模 | `iFinance` 约 18.1k 行 · `iFinanceSwiftData` 约 18.1k 行 · `MaciFinance` 3,663 行 · `WatchiFinance Watch App` 723 行 |
 | 测试规模 | `iFinanceTests` 153 个用例（XCTest）· `iFinanceSwiftDataTests` 58 个用例（Swift Testing）· `MaciFinanceTests` 30 个用例 |
 | 外部依赖 | **无**：无第三方库、无服务端、运行时不发网络请求，数据只存本地 |
 | 签名 | `DEVELOPMENT_TEAM = 77MC3D43Z4`、`CODE_SIGN_STYLE = Automatic` —— **接手人必须换成自己的 Team ID**（否则真机与部分构建会失败） |
@@ -39,7 +39,7 @@ xcodebuild build -project iFinance.xcodeproj -scheme iFinance \
 | 模拟器运行时 | iOS 18.4、18.6（下界主力）、**iOS 27.0（上界，已安装）**；watchOS 26.2 / 26.4 / 26.5 |
 | 上界运行时 | **iOS 27.0 已可运行验证**（设备为 iPhone 17 / 18 系列）；watchOS 27 仍不可下载，只能编译级验证 |
 | 已验证设备 | iPhone 16、iPhone SE(3rd)、iPad Pro 11"(M4)、iPhone 17 / 18（iOS 27.0）模拟器；iPhone 16 Pro 真机（UDID `00008140-000C05692013C01C`，需解锁并信任电脑） |
-| 真机部署注意 | scheme 依赖 watch target（`Embed Watch Content`）且 Xcode 会附加调试器，因此 Run 会慢；用 `scripts/run-on-device.sh -s iFinance` 跳过这两步 |
+| 真机部署注意 | `iFinance` 普通 Run 已跳过 Watch 构建/嵌入；Archive 仍含 Watch。Xcode 仍会附加调试器，不需要断点时用 `scripts/run-on-device.sh -s iFinance` 更快；开发 Watch 请选 Watch Scheme |
 
 首次打开工程后请先做三件事：① 把 4 个 target 的 `DEVELOPMENT_TEAM` 改成自己的；② 确认已安装 iOS 18.6 模拟器运行时；③ 跑一遍 §0 的命令确认基线可构建。
 
@@ -154,6 +154,7 @@ scripts/run-on-device.sh -s iFinance --release
 | OI-49 | 第九轮的**待办 / 备忘 / 资产页人工验收未做**（标签栏 5 项顺序与图标、分组折叠、清除已完成、编辑 sheet 键盘、资产环形图与负数余额、Dynamic Type 最大档与深色模式） | 🟡 | 按 PRD TODO-01~07 / AST-01~07 与 §9 验收清单第 13–18 条逐条过一遍 |
 | OI-50 | 重复待办**必须先设截止日**才会在完成时生成下一期（无截止日不生成）；本轮不做本地通知提醒 | ⚪ | 如需无截止日也重复，先定义锚点日期规则再改 `TodoRecurrence`（decision-log D-75） |
 | OI-51/52/53 | 资产能力边界：单币种、无拖动排序、无历史趋势图、快照仅存总量；待办 / 备忘 / 资产不进 CSV、不跨设备同步；资产环形图取色仅保证同页一致 | ⚪ | 需要时再评估（open-items A/B 区） |
+| OI-64/65 | Markdown 格式指令与渲染的自动回归已通过，但中文 / 日文输入法连续操作手感仍需真机确认；工程中还有可继续拆分的大视图 | 🟡 | 优先验证输入法组合期、连点格式按钮、长备忘切预览三个场景 |
 
 ## 9. 接手人自检清单
 

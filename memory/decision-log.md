@@ -201,3 +201,16 @@
 |------|------|------|------|
 | D-87 | 保存放行改为 `BillEditRules.canSave`：**类型没变就放行**（历史空分类 / 与类型不匹配的脏分类原样保留），只有用户主动改类型才要求重选合法分类；写库时的分类改为「选了就用选的 / 没选且类型没变 → 保留库内原值」 | 用户反复反馈「改金额没反应、再打开还是旧值」。分类校验把「只想改金额」的场景也拦住了，而且早期实现是 `.disabled` 静默禁用；显示层本来就支持「未分类」，保存层不该更强硬。顺手修掉「保存会把历史不合法分类清空」的数据风险 | `BillEditRules.swift` + `EditBillView.swift`（两版）；`BillInputTests` 新增 canSave 用例 |
 
+## U. 账本卡片刷新链路（2026-09-28 第十四轮）
+
+| 编号 | 决策 | 理由 | 落地 |
+|------|------|------|------|
+| D-88 | 账单编辑/删除成功后以 `.billDidChange` 作为**显式刷新信号**：父级 `TransactionView` 直接重建预算卡，列表级 `BillsCardView` 自增版本并把它传给 `DayGroupCard` | 内容指纹只能在父视图已进入重算后比较；编辑现有 Core Data / SwiftData 实体不会改变查询集合成员，不能保证触发父视图。子卡片若只接收同一批引用对象，也可能被 SwiftUI diff 跳过。刷新信号与版本输入共同覆盖两层缓存 | 两版 `TransactionView`、`BillsCardView`、`EditBillView.deleteBill` |
+| D-89 | SwiftData 持久化查询谓词避免 optional coalescing + 集合 `contains` 组合，历史账单类型迁移改用 `nil` 或三项显式不等比较 | Xcode 27 可以编译原 `#Predicate`，但 iOS 18.6 的 SQLite 后端生成 `TERNARY(type != nil, type, "") IN {...}` 后抛 `NSInvalidArgumentException`，App 启动即崩溃；显式比较可被 SQL 后端稳定下推 | `iFinanceSwiftData/Data/Persistence.swift.normalizeLegacyBillTypes()`；`BillTypeMigrationTests` |
+
+## V. Xcode 日常构建与 Markdown 渲染链路（2026-09-28 第十五轮）
+
+| 编号 | 决策 | 理由 | 落地 |
+|------|------|------|------|
+| D-90 | `iFinance` 的普通 Run / Test / Analyze / Profile **不再构建 Watch target**；`Embed Watch Content` 只在 deployment postprocessing 执行，Archive 仍显式构建 Watch | 日常 iPhone 迭代不应为一个未改动的 Watch App 重复编译两套模拟器架构并推送配对手表；发布包则必须保留 Watch | `iFinance.xcscheme`；用 `scripts/configure-fast-xcode-run.rb` 通过 xcodeproj 移除显式 target dependency；无签名 Archive 已确认 `Watch/*.app` 存在 |
+| D-91 | Markdown 指令只先改 `UITextView`，binding 与 request 延后到 `updateUIView` 结束后回写；预览只在切入时解析，行内语义由视图层逐 run 显式映射 | 在 `updateUIView` 内同步改 `@Binding` 仍可以触发重入更新；依赖 `Text(AttributedString)` + 外层 `.font/.strikethrough(false)` 会覆盖或弱化行内粗体、删除线等样式 | 两版 `MarkdownTextEditor`、`MemoEditSheet`、`MemoMarkdown`；列表摘要改为收集足够行数后立即停止扫描 |

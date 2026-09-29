@@ -3,21 +3,21 @@
    LastUpgradeVersion = "2640"
    version = "1.7">
    <BuildAction
-      parallelizeBuildables = "YES"
+      parallelizeBuildables = "NO"
       buildImplicitDependencies = "YES"
       buildArchitectures = "Automatic">
       <BuildActionEntries>
          <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "YES"
-            buildForProfiling = "YES"
+            buildForTesting = "NO"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
             buildForArchiving = "YES"
-            buildForAnalyzing = "YES">
+            buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "9A8B0C142F0EA0EE003ECE8B"
-               BuildableName = "iFinance.app"
-               BlueprintName = "iFinance"
+               BlueprintIdentifier = "9A8B0C4A2F0EA158003ECE8B"
+               BuildableName = "WatchiFinance Watch App.app"
+               BlueprintName = "WatchiFinance Watch App"
                ReferencedContainer = "container:iFinance.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -29,9 +29,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "9A8B0C4A2F0EA158003ECE8B"
-               BuildableName = "WatchiFinance Watch App.app"
-               BlueprintName = "WatchiFinance Watch App"
+               BlueprintIdentifier = "9A8B0C142F0EA0EE003ECE8B"
+               BuildableName = "iFinance.app"
+               BlueprintName = "iFinance"
                ReferencedContainer = "container:iFinance.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>

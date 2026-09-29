@@ -104,7 +104,11 @@ struct BillsCardView: View {
                 } else {
                     LazyVStack(spacing: AppSpacing.md) {
                         ForEach(groups, id: \.date) { group in
-                            DayGroupCard(date: group.date, bills: group.bills)
+                            DayGroupCard(
+                                date: group.date,
+                                bills: group.bills,
+                                refreshRevision: billRefreshToken
+                            )
                         }
                     }
                 }
@@ -153,6 +157,8 @@ struct BillsCardView: View {
 private struct DayGroupCard: View {
     let date:  Date
     let bills: [Bill]
+    /// 实体数组里的对象身份不会因字段编辑而改变；显式版本可让金额与当日净额重新求值。
+    let refreshRevision: Int
 
     @State private var appeared = false
 
@@ -196,6 +202,8 @@ private struct DayGroupCard: View {
     }
     
     var body: some View {
+        // 将刷新版本作为本视图的明确输入，避免 SwiftUI 因 bills 仍是同一批实体而跳过更新。
+        let _ = refreshRevision
         VStack(spacing: 0) {
             // ── 日期头部 ──
             HStack(alignment: .center) {

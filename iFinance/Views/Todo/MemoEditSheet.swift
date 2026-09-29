@@ -22,6 +22,8 @@ struct MemoEditSheet: View {
     @State private var errorMessage: String?
     @State private var showsDeleteConfirm = false
     @State private var showsMarkdownPreview = false
+    /// 只在切入预览时解析，避免 SwiftUI body 重算时反复解析整篇 Markdown。
+    @State private var markdownPreviewBlocks: [MemoMarkdownBlock] = []
     @State private var markdownRequest: MemoMarkdownRequest?
     /// 输入法是否正在组合（候选栏显示中）：组合期间格式按钮置灰
     @State private var isComposing = false
@@ -122,6 +124,9 @@ struct MemoEditSheet: View {
                 Button("common.cancel", role: .cancel) {}
             }
             .onAppear(perform: loadIfNeeded)
+            .onChange(of: showsMarkdownPreview) { _, showsPreview in
+                if showsPreview { rebuildMarkdownPreview() }
+            }
         }
     }
 
@@ -196,18 +201,15 @@ struct MemoEditSheet: View {
                     .padding(AppSpacing.md)
             } else {
                 VStack(alignment: .leading, spacing: AppSpacing.sm) {
-                    ForEach(MemoMarkdownRenderer.blocks(from: content)) { block in
+                    ForEach(markdownPreviewBlocks) { block in
                         HStack(alignment: .top, spacing: AppSpacing.sm) {
                             if let symbol = block.symbol {
                                 Text(symbol)
-                                    .font(block.font)
+                                    .font(markdownFont(for: block.style))
                                     .foregroundStyle(.secondary)
                             }
 
-                            Text(block.content)
-                                .font(block.font)
-                                .foregroundStyle(block.isChecked ? Color.secondary : Color.primary)
-                                .strikethrough(block.isChecked, color: .secondary)
+                            markdownInlineText(for: block)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .textSelection(.enabled)
                         }
@@ -224,6 +226,49 @@ struct MemoEditSheet: View {
         )
     }
 
+    /// 显式把 Foundation 的 Markdown 语义映射成 SwiftUI Text 样式。
+    /// 不依赖 `Text(AttributedString)` 在外层 `.font` 之后是否仍保留粗体 / 斜体，避免出现“标记消失但样式没渲染”。
+    private func markdownInlineText(for block: MemoMarkdownBlock) -> Text {
+        let baseFont = markdownFont(for: block.style)
+
+        return block.content.runs.reduce(Text("")) { result, run in
+            let attributed = AttributedString(block.content[run.range])
+            let intent = run.inlinePresentationIntent
+            let font = intent?.contains(.code) == true ? baseFont.monospaced() : baseFont
+            var fragment = Text(attributed).font(font)
+
+            if intent?.contains(.stronglyEmphasized) == true { fragment = fragment.bold() }
+            if intent?.contains(.emphasized) == true { fragment = fragment.italic() }
+            if block.isChecked || intent?.contains(.strikethrough) == true {
+                fragment = fragment.strikethrough(color: .secondary)
+            }
+            if run.link != nil { fragment = fragment.underline() }
+            fragment = fragment.foregroundColor(
+                block.isChecked ? .secondary : (run.link == nil ? .primary : .accentColor)
+            )
+
+            return result + fragment
+        }
+    }
+
+    /// 行级字体留在视图层，避免纯解析文件引入 SwiftUI 属性作用域拖慢模块编译。
+    private func markdownFont(for style: MemoMarkdownLineStyle) -> Font {
+        switch style {
+        case .heading(let level):
+            switch level {
+            case 1: return .title3.bold()
+            case 2: return .headline
+            default: return .subheadline.weight(.semibold)
+            }
+        case .quote: return AppTypography.secondary
+        default: return AppTypography.body
+        }
+    }
+
+    private func rebuildMarkdownPreview() {
+        markdownPreviewBlocks = MemoMarkdownRenderer.blocks(from: content)
+    }
+
     // MARK: - 加载 / 保存
 
     private func loadIfNeeded() {
@@ -232,6 +277,7 @@ struct MemoEditSheet: View {
         content = note.content ?? ""
         // 打开已有备忘默认进「预览」（阅读），新建时留在「编辑」
         showsMarkdownPreview = !content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        if showsMarkdownPreview { rebuildMarkdownPreview() }
     }
 
     private func save() {
